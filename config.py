@@ -1,4 +1,4 @@
-"""Configuration for LLM Building Blocks."""
+"""Configuration for chain-reaction."""
 
 from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings
