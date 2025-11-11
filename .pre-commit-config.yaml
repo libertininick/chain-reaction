@@ -24,3 +24,13 @@ repos:
     rev: 0.8.1
     hooks:
       - id: nbstripout
+
+  # type checking with ty
+  - repo: local
+    hooks:
+      - id: ty-check
+        name: ty type checker
+        entry: uv run ty check .  # run with uv
+        language: system
+        types: [python]  # only trigger on Python file changes
+        pass_filenames: false # check the entire project rather than just staged files
