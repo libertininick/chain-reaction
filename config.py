@@ -7,7 +7,12 @@ from pydantic_settings import BaseSettings
 
 
 class APIKeys(BaseSettings, env_file=".env", env_file_encoding="utf-8"):
-    """API keys for various LLM providers."""
+    """API keys for various LLM providers.
+
+    Attributes:
+        anthropic (SecretStr): API key for Anthropic LLMs.
+        openai (SecretStr): API key for OpenAI LLMs.
+    """
 
     anthropic: SecretStr = Field(default=SecretStr(""), description="API key for Anthropic LLMs.")
     openai: SecretStr = Field(default=SecretStr(""), description="API key for OpenAI LLMs.")
@@ -16,7 +21,7 @@ class APIKeys(BaseSettings, env_file=".env", env_file_encoding="utf-8"):
 class ModelName(StrEnum):
     """Enumeration of supported LLM model names.
 
-    Members:
+    Attributes:
         CLAUDE_HAIKU: Anthropic Claude Haiku model.
         CLAUDE_SONNET: Anthropic Claude Sonnet model.
         CLAUDE_OPUS: Anthropic Claude Opus model.
