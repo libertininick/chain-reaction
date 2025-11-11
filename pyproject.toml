@@ -4,4 +4,7 @@ version = "0.1.0"
 description = "My incremental journey learning to create agentic workflows with LangChain and LangGraph."
 readme = "README.md"
 requires-python = ">=3.14"
-dependencies = []
+dependencies = [
+    "langchain>=1.0.5",
+    "langchain-anthropic>=1.0.2",
+]
