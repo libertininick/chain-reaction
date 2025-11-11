@@ -48,6 +48,15 @@ This project requires an Anthropic or OpenAI API key:
 
 The `.env` file is gitignored to keep your API keys secure.
 
+### Verify Your Setup
+
+After completing the setup steps, run the [getting-started.ipynb](getting-started.ipynb) notebook to verify:
+1. Dependencies are installed correctly
+2. API key(s) are configured properly
+3. You can successfully generate responses from a chat model
+
+The notebook demonstrates a simple LangChain workflow using ChatAnthropic to generate a poem.
+
 ### Development Tools
 
 This project uses pre-commit hooks managed via `uv` to maintain code quality:
