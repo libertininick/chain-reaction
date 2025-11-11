@@ -5,6 +5,15 @@ description = "My incremental journey learning to create agentic workflows with 
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
+    "ipykernel>=7.1.0",
     "langchain>=1.0.5",
     "langchain-anthropic>=1.0.2",
+]
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.4.0",
+    "pydoclint>=0.8.1",
+    "ruff>=0.14.4",
+    "ty>=0.0.1a26",
 ]
