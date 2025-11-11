@@ -17,3 +17,64 @@ dev = [
     "ruff>=0.14.4",
     "ty>=0.0.1a26",
 ]
+
+# pydoclint configuration
+[tool.pydoclint]
+style = "google"
+allow-init-docstring = true
+
+# Ruff configuration
+[tool.ruff]
+include = ["*.py", "*.pyi", "**/pyproject.toml"]
+line-length = 120
+indent-width = 4
+preview = true # Enable preview features.
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[tool.ruff.lint]
+select = [
+  "F",        # pyflakes
+  "E", "W",   # pycodestyle
+  "C90",      # mccabe max-complexity
+  "I",        # isort
+  "N",        # pep8-naming
+  "D",        # pydocstyle
+  "UP",       # pyupgrade
+  "ANN",      # flake8-annotations
+  "S",        # flake8-bandit
+  "BLE",      # flake8-blind-except
+  "FBT",      # flake8-boolean-trap
+  "B",        # flake8-bugbear
+  "A",        # flake8-builtins
+  "C4",       # flake8-comprehensions
+  "ISC",      # flake8-implicit-str-concat
+  "ICN",      # flake8-import-conventions
+  "Q",        # flake8-quotes
+  "SIM",      # flake8-simplify 
+  "TID",      # flake8-tidy-imports 
+  "ARG",      # flake8-unused-arguments
+  "PTH",      # flake8-use-pathlib
+  "PL",       # pylint
+  "RUF",      # Ruff-specific rules
+]
+ignore = [
+  "ANN401",   # Allow any-type
+  "ISC001",   # Ignore single-line-implicit-string-concatenation for ruff format
+  "FBT003",   # Allow boolean pos values in func calls, like `dict.get(... True)`
+]
+per-file-ignores = {"**/{tests}/*" = [ 
+  # Tests can use magic values, assertions, and relative imports
+  "PLR2004", "S101", "TID252",
+]}
+extend-unsafe-fixes = ["E", "F401"]
+
+flake8-tidy-imports = {ban-relative-imports = "all"}
+mccabe = {max-complexity = 5}
+isort = {known-first-party = ["imagescry", "tests"]}
+pydocstyle = {convention = "google"}
+pylint = {allow-magic-value-types = ["int", "str"], max-args = 15, max-positional-args = 5, max-locals = 25}
