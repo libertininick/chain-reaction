@@ -27,9 +27,26 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 # Install dependencies
 uv sync
 
+# Configure API keys
+cp template.env .env
+# Edit .env and add your API keys
+
 # Set up pre-commit hooks
 uv run pre-commit install
 ```
+
+### API Keys
+
+This project requires an Anthropic API key:
+
+1. **Get your Anthropic API key**: Sign up at [Anthropic Console](https://console.anthropic.com/) and create an API key
+2. **Configure your environment**: Copy `template.env` to `.env` and add your key:
+   ```bash
+   cp template.env .env
+   ```
+3. **Edit `.env`**: Replace `<your api key here>` with your actual Anthropic API key
+
+The `.env` file is gitignored to keep your API keys secure.
 
 ### Development Tools
 
