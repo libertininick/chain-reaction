@@ -12,6 +12,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "nbstripout>=0.8.1",
     "pre-commit>=4.4.0",
     "pydoclint>=0.8.1",
     "ruff>=0.14.4",
