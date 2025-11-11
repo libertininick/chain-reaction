@@ -1,36 +1,40 @@
 repos:
-  # Ruff pre-commit hooks
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    # Ruff version.
-    rev: v0.14.1
-    hooks:
-      # Run the linter.
-      - id: ruff
-        types_or: [ python, pyi, jupyter ]
-        args: [ --fix ]
-      # Run the formatter.
-      - id: ruff-format
-        types_or: [ python, pyi, jupyter ]
-
-  # pydoclint pre-commit hooks
-  - repo: https://github.com/jsh9/pydoclint
-    rev: 0.7.3
-    hooks:
-      - id: pydoclint
-        args: [--style=google, --allow-init-docstring=True]
-  
-  # nbstripout pre-commit hook for notebooks
-  - repo: https://github.com/kynan/nbstripout
-    rev: 0.8.1
-    hooks:
-      - id: nbstripout
-
-  # type checking with ty
   - repo: local
     hooks:
+      # Ruff linter
+      - id: ruff
+        name: ruff linter
+        entry: uv run ruff check --fix
+        language: system
+        types_or: [python, pyi, jupyter]
+        require_serial: true
+
+      # Ruff formatter
+      - id: ruff-format
+        name: ruff formatter
+        entry: uv run ruff format
+        language: system
+        types_or: [python, pyi, jupyter]
+        require_serial: true
+
+      # pydoclint docstring linter
+      - id: pydoclint
+        name: pydoclint
+        entry: uv run pydoclint --style=google --allow-init-docstring=True
+        language: system
+        types: [python]
+
+      # nbstripout for Jupyter notebooks
+      - id: nbstripout
+        name: nbstripout
+        entry: uv run nbstripout
+        language: system
+        types: [jupyter]
+
+      # ty type checker
       - id: ty-check
         name: ty type checker
-        entry: uv run ty check .  # run with uv
+        entry: uv run ty check .
         language: system
-        types: [python]  # only trigger on Python file changes
-        pass_filenames: false # check the entire project rather than just staged files
+        types: [python]
+        pass_filenames: false  # check the entire project rather than just staged files

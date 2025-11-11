@@ -26,6 +26,22 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # Install dependencies
 uv sync
+
+# Set up pre-commit hooks
+uv run pre-commit install
+```
+
+### Development Tools
+
+This project uses pre-commit hooks managed via `uv` to maintain code quality:
+- **ruff**: Linting and formatting
+- **pydoclint**: Docstring validation
+- **nbstripout**: Strip Jupyter notebook outputs
+- **ty**: Type checking
+
+All tools run automatically on commit. To run manually:
+```bash
+uv run pre-commit run --all-files
 ```
 
 ---
