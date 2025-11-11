@@ -1,4 +1,4 @@
-"""Configuration for chain-reaction."""
+"""Configuration tools."""
 
 from enum import StrEnum
 
