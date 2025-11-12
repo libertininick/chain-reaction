@@ -86,3 +86,9 @@ mccabe = {max-complexity = 5}
 isort = {known-first-party = ["imagescry", "tests"]}
 pydocstyle = {convention = "google"}
 pylint = {allow-magic-value-types = ["int", "str"], max-args = 15, max-positional-args = 5, max-locals = 25}
+
+
+## ty configuration
+[tool.ty.src]
+include = ["src", "tests"]
+exclude = [".venv/"]
