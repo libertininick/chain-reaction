@@ -4,14 +4,25 @@ My incremental journey learning to create agentic workflows with LangChain and L
 
 ## About
 
-Working through [DeepLearning.AI's LangChain courses](https://www.deeplearning.ai/courses/?courses_date_desc%5Bquery%5D=LangChain) to build hands-on experience with:
-- [ ] [LangChain fundamentals](https://www.deeplearning.ai/short-courses/langchain-for-llm-application-development/)
-- [ ] [Retrieval Augmented Generation (RAG)](https://www.deeplearning.ai/short-courses/langchain-chat-with-your-data/)
-- [ ] [Functions, Tools and Agents](https://www.deeplearning.ai/short-courses/functions-tools-agents-langchain/)
-- [ ] [AI Agents in LangGraph](https://www.deeplearning.ai/short-courses/ai-agents-in-langgraph/)
-- [ ] [Long-Term Agentic Memory](https://www.deeplearning.ai/short-courses/long-term-agentic-memory-with-langgraph/)
+Working through [Generative AI with LangChain](https://github.com/benman1/generative_ai_with_langchain) to build hands-on experience with:
 
-Each course or concept gets its own directory with dedicated experiments and notes.
+- [ ] LangChain fundamentals
+  - [x] Prompts & Responses
+  - [ ] Prompt Templates
+  - [ ] Short-term Memory (for chat conversations)
+- [ ] LangGraph workflows
+- [ ] Retrieval Augmented Generation (RAG)
+- [ ] Functions, Tools and Agents
+- [ ] Multi-agent systems
+- [ ] Evaluation & Testing
+
+Each concept gets its own directory with dedicated experiments and notes.
+
+## Requirements
+
+```plain
+langchain>=1.0.0
+```
 
 ## Setup
 
