@@ -24,7 +24,7 @@ langchain>=1.0.0
 ## Setup
 
 Using `uv` for Python environment management:
-```bash
+```sh
 # Clone repository
 git clone git@github.com:libertininick/chain-reaction.git
 cd chain-reaction
@@ -49,7 +49,7 @@ This project requires an Anthropic or OpenAI API key:
 
 1. **Get your API key**:
 2. **Configure your environment**: Copy `template.env` to `.env` and add your key:
-   ```bash
+   ```sh
    cp template.env .env
    ```
 3. **Edit `.env`**: Replace `<your api key here>` with your actual API key
@@ -74,8 +74,33 @@ This project uses pre-commit hooks managed via `uv` to maintain code quality:
 - **ty**: Type checking
 
 All tools run automatically on commit. To run manually:
-```bash
+```sh
 uv run pre-commit run --all-files
+```
+
+### Updating dependencies
+
+#### Update a single dependency
+
+```sh
+uv lock --upgrade-package <package name>
+uv pip show <package name>
+```
+
+#### Update uv tool and all dependencies
+
+1. Update `uv` tool
+2. Upgrade `Python` version installed by `uv`
+3. Upgrade all dependencies in `uv.lock` file
+4. Sync virtual environment with updated dependencies
+5. Prune `uv` cache to remove dependencies that are no longer needed
+
+```sh
+uv self update \
+&& uv python upgrade \
+&& uv lock --upgrade \
+&& uv sync \
+&& uv cache prune
 ```
 
 ---
