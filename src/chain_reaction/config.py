@@ -42,14 +42,10 @@ class ModelBehavior(BaseModel):
         temperature (float): Sampling temperature for response generation.
             Lower (0.0 - 0.3) for factual, higher (0.7 - 1.0) for creative.
             Defaults to 0.5.
-        top_p (float): Nucleus sampling parameter. Lower values (0.0 - 0.5) for focused responses,
-            higher values (0.8 - 1.0) for diverse responses.
-            Defaults to 0.5.
         max_tokens (int): Maximum number of tokens in the generated response (1 - 4096). Defaults to 1024.
     """
 
     temperature: float = Field(default=0.5, ge=0.0, le=1.0)
-    top_p: float = Field(default=0.5, ge=0.0, le=1.0)
     max_tokens: int = Field(default=1024, ge=1, le=4096)
 
     @classmethod
@@ -63,7 +59,7 @@ class ModelBehavior(BaseModel):
         Returns:
             ModelBehavior: Instance with settings for creativity.
         """
-        return cls(temperature=0.9, top_p=0.9, max_tokens=max_tokens or cls().max_tokens)
+        return cls(temperature=0.9, max_tokens=max_tokens or cls().max_tokens)
 
     @classmethod
     def deterministic(cls, max_tokens: int | None = None) -> ModelBehavior:
@@ -78,7 +74,7 @@ class ModelBehavior(BaseModel):
         Returns:
             ModelBehavior: Instance with settings for deterministic responses.
         """
-        return cls(temperature=0.0, top_p=0.1, max_tokens=max_tokens or cls().max_tokens)
+        return cls(temperature=0.0, max_tokens=max_tokens or cls().max_tokens)
 
     @classmethod
     def factual(cls, max_tokens: int | None = None) -> ModelBehavior:
@@ -91,4 +87,4 @@ class ModelBehavior(BaseModel):
         Returns:
             ModelBehavior: Instance with settings for factual accuracy.
         """
-        return cls(temperature=0.2, top_p=0.3, max_tokens=max_tokens or cls().max_tokens)
+        return cls(temperature=0.2, max_tokens=max_tokens or cls().max_tokens)
