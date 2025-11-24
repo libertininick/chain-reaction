@@ -6,7 +6,7 @@ My incremental journey learning to create agentic workflows with LangChain and L
 
 Working through [Generative AI with LangChain](https://github.com/benman1/generative_ai_with_langchain) to build hands-on experience with:
 
-- [ ] [LangChain fundamentals](1-langchain-fundamentals/README.md)
+- [x] [LangChain fundamentals](1-langchain-fundamentals/README.md)
 - [ ] LangGraph workflows
 - [ ] Retrieval Augmented Generation (RAG)
 - [ ] Functions, Tools and Agents
