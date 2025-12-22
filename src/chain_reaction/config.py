@@ -7,15 +7,17 @@ from pydantic_settings import BaseSettings
 
 
 class APIKeys(BaseSettings, env_file=".env", env_file_encoding="utf-8"):
-    """API keys for various LLM providers.
+    """API keys for various LLM providers and services.
 
     Attributes:
         anthropic (SecretStr): API key for Anthropic LLMs.
         openai (SecretStr): API key for OpenAI LLMs.
+        tavily (SecretStr): API key for Tavily web searches.
     """
 
     anthropic: SecretStr = Field(default=SecretStr(""), description="API key for Anthropic LLMs.")
     openai: SecretStr = Field(default=SecretStr(""), description="API key for OpenAI LLMs.")
+    tavily: SecretStr = Field(default=SecretStr(""), description="API key for Tavily web searches.")
 
 
 class ModelName(StrEnum):
