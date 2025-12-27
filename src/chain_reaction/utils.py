@@ -32,10 +32,16 @@ def get_structured_response[T: BaseModel](response: dict[str, Any], model: type[
         T | None: The structured response if available, otherwise None.
 
     Raises:
+        RuntimeError: If no structured_response is found in the response.
         TypeError: If the structured response is not an instance of the expected model type.
     """
+    # Extract structured response from the response dictionary
     structured_response = response.get("structured_response")
-    if structured_response is not None and not isinstance(structured_response, model):
+    if structured_response is None:
+        raise RuntimeError("No structured_response found in the response.")
+
+    # Check if the structured response is of the expected type
+    if not isinstance(structured_response, model):
         raise TypeError(
             f"structured_response is not of the expected type: {model.__name__}; "
             f"got {type(structured_response).__name__} instead."
