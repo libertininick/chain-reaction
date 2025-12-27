@@ -18,6 +18,7 @@ dev = [
     "nbstripout>=0.8.1",
     "pre-commit>=4.4.0",
     "pydoclint>=0.8.1",
+    "pytest>=9.0.2",
     "ruff>=0.14.4",
     "ty>=0.0.1a26",
 ]
@@ -32,6 +33,16 @@ style = "google"
 allow-init-docstring = true
 skip-checking-short-docstrings = false
 exclude = '\.venv/|\\.git|\\.tox|tests/data'
+
+[tool.pytest.ini_options]
+addopts = "-rf --doctest-modules --doctest-continue-on-failure --strict-markers"
+cache_dir = "./build/pytest"
+console_output_style = "progress"
+doctest_optionflags = "NORMALIZE_WHITESPACE"
+testpaths = [
+  "src",
+  "tests",
+]
 
 # Ruff configuration
 [tool.ruff]
