@@ -5,6 +5,7 @@ description = "My incremental journey learning to create agentic workflows with 
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
+    "diskcache>=5.6.3",
     "ipykernel>=7.1.0",
     "langchain>=1.0.5",
     "langchain-anthropic>=1.0.2",
@@ -31,7 +32,6 @@ build-backend = "uv_build"
 [tool.pydoclint]
 style = "google"
 allow-init-docstring = true
-skip-checking-short-docstrings = false
 exclude = '\.venv/|\\.git|\\.tox|tests/data'
 
 [tool.pytest.ini_options]
