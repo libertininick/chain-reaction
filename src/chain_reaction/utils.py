@@ -2,21 +2,35 @@
 
 from typing import Any
 
+from langchain.agents import AgentState
 from langchain.messages import AnyMessage
 from pydantic import BaseModel
 
 
-def get_last_message(response: dict[str, Any]) -> AnyMessage | None:
-    """Extract the last message from a response dictionary.
+def get_messages(response_or_state: dict[str, Any] | AgentState) -> list[AnyMessage]:
+    """Extract messages from a response dictionary or agent state.
 
     Args:
-        response (dict[str, Any]): A dictionary containing a list of messages under the key "messages".
+        response_or_state (dict[str, Any] | AgentState): A response dictionary or agent state containing a list of
+            messages under the key "messages".
+
+    Returns:
+        list[AnyMessage]: A list of messages extracted from the response or agent state.
+    """
+    return response_or_state.get("messages", [])
+
+
+def get_last_message(response_or_state: dict[str, Any] | AgentState) -> AnyMessage | None:
+    """Extract the last message from a response dictionary or agent state.
+
+    Args:
+        response_or_state (dict[str, Any] | AgentState): A response dictionary or agent state containing a list of
+            messages under the key "messages".
 
     Returns:
         AnyMessage | None: The last message if available, otherwise None.
     """
-    messages = response.get("messages", [])
-    if messages:
+    if messages := get_messages(response_or_state):
         return messages[-1]
     return None
 
