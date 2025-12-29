@@ -9,3 +9,4 @@ LangChain provides the building blocks for large language models (LLM) applicati
   - [x] [Short-term memory for chat conversations & agents](5-short-term-memory.ipynb)
   - [x] [Agent context and state](6-context-and-state.ipynb)
   - [x] [Multi-agent systems](7-multi-agent-systems.ipynb)
+  - [x] [Managing long conversations](8-managing-long-conversations.ipynb)
