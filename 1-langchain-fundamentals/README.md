@@ -11,3 +11,4 @@ LangChain provides the building blocks for large language models (LLM) applicati
   - [x] [Multi-agent systems](7-multi-agent-systems.ipynb)
   - [x] [Managing long conversations](8-managing-long-conversations.ipynb)
   - [x] [Human-in-the-loop](9-human-in-the-loop.ipynb)
+  - [x] [Dynamic agents](10-dynamic-angents.ipynb)
