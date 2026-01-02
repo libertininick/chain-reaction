@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field, SecretStr
 from pydantic_settings import BaseSettings
 
 
-class APIKeys(BaseSettings, env_file=".env", env_file_encoding="utf-8"):
+class APIKeys(BaseSettings, env_file=".env", env_file_encoding="utf-8", extra="ignore"):
     """API keys for various LLM providers and services.
 
     Attributes:
