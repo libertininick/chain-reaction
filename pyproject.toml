@@ -3,7 +3,7 @@ name = "chain-reaction"
 version = "0.1.0"
 description = "My incremental journey learning to create agentic workflows with LangChain and LangGraph."
 readme = "README.md"
-requires-python = ">=3.14"
+requires-python = ">=3.13,<3.14" # jsonschema-rs requires 3.13
 dependencies = [
     "diskcache>=5.6.3",
     "ipykernel>=7.1.0",
@@ -20,7 +20,6 @@ dependencies = [
 dev = [
     "nbstripout>=0.8.1",
     "pre-commit>=4.4.0",
-    "pydoclint>=0.8.1",
     "pytest>=9.0.2",
     "ruff>=0.14.4",
     "ty>=0.0.1a26",

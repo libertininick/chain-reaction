@@ -1,6 +1,6 @@
 """Tools for chat and agent memory management."""
 
-from uuid import UUID, uuid7
+from uuid import UUID, uuid4
 
 from langchain_core.chat_history import InMemoryChatMessageHistory
 from pydantic import BaseModel, Field, validate_call
@@ -61,4 +61,4 @@ class ChatSessionHistoryManager(BaseModel):
         Returns:
             dict[str, str]: A dictionary containing a new session ID.
         """
-        return {"session_id": str(uuid7())}
+        return {"session_id": str(uuid4())}

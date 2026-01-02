@@ -17,13 +17,6 @@ repos:
         types_or: [python, pyi, jupyter]
         require_serial: true
 
-      # pydoclint docstring linter
-      - id: pydoclint
-        name: pydoclint
-        entry: uv run pydoclint --style=google --allow-init-docstring=True
-        language: system
-        types: [python]
-
       # nbstripout for Jupyter notebooks
       - id: nbstripout
         name: nbstripout
@@ -38,3 +31,10 @@ repos:
         language: system
         types: [python]
         pass_filenames: false  # check the entire project rather than just staged files
+
+  # pydoclint pre-commit hooks
+  - repo: https://github.com/jsh9/pydoclint
+    rev: 0.8.3
+    hooks:
+      - id: pydoclint
+        args: [--style=google, --allow-init-docstring=True]
