@@ -15,11 +15,6 @@ Working through [Generative AI with LangChain](https://github.com/benman1/genera
 
 Each concept gets its own directory with dedicated experiments and notes.
 
-## Requirements
-
-```plain
-langchain>=1.0.0
-```
 
 ## Setup
 
@@ -64,6 +59,48 @@ After completing the setup steps, run the [getting-started.ipynb](getting-starte
 3. You can successfully generate responses from a chat model
 
 The notebook demonstrates a simple LangChain workflow using ChatAnthropic to generate a poem.
+
+### LangSmith Studio
+
+0. Create LangSmith API key and add to `.env` file
+
+   ```plain
+   LANGSMITH_API_KEY="<your api key here>"
+   ```
+
+1. Create an agent file: `some_agent.py`
+
+   ```python
+   from langchain.agents import create_agent
+   from langchain.chat_models import init_chat_model
+
+   # Initialize model
+   chat_model = init_chat_model(...)
+
+   # Create an agent
+   agent = create_agent(
+      model=creative_model,
+      ...
+   )
+   ```
+
+2. Configure [`langgraph.json`](langgraph.json)
+
+   ```json
+   {
+      "dependencies": ["."],
+      "graphs": {
+         "<some agent>": "path/to/some_agent.py:agent"
+      },
+      "env": "./.env"
+   }
+   ```
+
+2. Run LangSmith Studio
+
+   ```sh
+   uv run langgraph dev
+   ```
 
 ### Development Tools
 
