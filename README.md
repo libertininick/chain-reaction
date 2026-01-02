@@ -103,6 +103,13 @@ uv self update \
 && uv cache prune
 ```
 
+### Update pre-commit hooks:
+
+```sh
+uv run pre-commit install-hooks \
+&& uv run pre-commit autoupdate
+```
+
 ---
 
 *Learning in public, one chain at a time.* 🔗
