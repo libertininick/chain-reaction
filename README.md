@@ -8,6 +8,7 @@ Working through [Generative AI with LangChain](https://github.com/benman1/genera
 
 - [x] [LangChain fundamentals](1-langchain-fundamentals/README.md)
 - [ ] [LangGraph fundamentals](2-langgraph-fundamentals/README.md)
+- [ ] [Model Context Protocol fundamentals](3-mcp-fundamentals/README.md)
 - [ ] Retrieval Augmented Generation (RAG)
 - [ ] Functions, Tools and Agents
 - [ ] Multi-agent systems
