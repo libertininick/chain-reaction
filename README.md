@@ -6,15 +6,10 @@ My incremental journey learning to create agentic workflows with LangChain and L
 
 Working through [Generative AI with LangChain](https://github.com/benman1/generative_ai_with_langchain) to build hands-on experience with:
 
-- [x] [LangChain fundamentals](1-langchain-fundamentals/README.md)
-- [ ] [LangGraph fundamentals](2-langgraph-fundamentals/README.md)
-- [ ] [Model Context Protocol fundamentals](3-mcp-fundamentals/README.md)
-- [ ] Retrieval Augmented Generation (RAG)
-- [ ] Functions, Tools and Agents
-- [ ] Multi-agent systems
+- [x] [LangChain](1-langchain-fundamentals/README.md)
+- [ ] [LangGraph](2-langgraph-fundamentals/README.md)
+- [ ] [Model Context Protocol](3-mcp-fundamentals/README.md)
 - [ ] Evaluation & Testing
-
-Each concept gets its own directory with dedicated experiments and notes.
 
 
 ## Setup
