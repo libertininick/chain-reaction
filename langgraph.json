@@ -1,7 +1,7 @@
 {
     "dependencies": ["."],
     "graphs": {
-        "scifi_writer": "./1-langchain-fundamentals/agents/scifi_writer.py:agent"
+        "scifi_writer": "./agents/scifi_writer.py:agent"
     },
     "env": "./.env"
 }

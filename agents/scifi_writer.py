@@ -1,4 +1,22 @@
-"""Science Fiction Writer Agent Example."""
+"""Science Fiction Writer Agent Example.
+
+Run with LangSmith agent studio locally:
+
+1. Add agent to your the langgraph.json file:
+
+    ```json
+    "graphs": {
+        "scifi_writer": "./agents/scifi_writer.py:agent"
+    }
+    ```
+
+2. Run the LangGraph development server:
+
+    ```sh
+    uv run langgraph dev
+    ```
+
+"""
 
 import datetime
 

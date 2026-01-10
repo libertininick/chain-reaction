@@ -1,15 +1,41 @@
 # chain-reaction ⚡
 
-My incremental journey learning to create agentic workflows with LangChain and LangGraph.
+My incremental journey learning to create agentic workflows with LangChain, LangGraph, and FastMCP.
 
-## About
+- **LangChain**: LangChain provides the building blocks for large language models (LLM) applications. It's a library of modular components like prompt templates, output parsers, memory systems, and tool integrations that can be composed together.
 
-Working through [Generative AI with LangChain](https://github.com/benman1/generative_ai_with_langchain) to build hands-on experience with:
+- **LangGraph**: LangGraph is a framework built on top of LangChain for creating stateful, agentic workflows. Workflows are defined as a graph of nodes and edges. Nodes represent different steps or agents and edges represent the flow between them. LangGraph is useful for building complex LLM applications that need to maintain state, handle cycles, support human-in-the-loop interactions, or coordinate multiple agents working together.
 
-- [x] [LangChain](1-langchain-fundamentals/README.md)
-- [ ] [LangGraph](2-langgraph-fundamentals/README.md)
-- [ ] [Model Context Protocol](3-mcp-fundamentals/README.md)
-- [ ] Evaluation & Testing
+- **FastMCP**: The Model Context Protocol (MCP) is an open standard for connecting LLMs to external data sources, tools, and services through a unified interface. FastMCP is a high-level Python framework that simplifies MCP server creation with decorator-based syntax.
+
+## Journey
+
+### 🔗 LangChain & LangGraph fundamentals
+  - [x] [Prompts and responses](notebooks/fundamentals/prompts-and-responses.ipynb)
+  - [x] [Intro to chains and LangChain Expression Language (LCEL)](notebooks/fundamentals/intro-to-chains.ipynb)
+  - [x] [A simple LangGraph graph](notebooks/fundamentals/simple-graph.ipynb)
+  - [x] [Create an agent](notebooks/fundamentals/create-an-agent.ipynb)
+  - [x] [Mock SciFi Writer Agent + LangSmith Studio example](agents/scifi_writer.py)
+  - [x] [Locally running (private) agent with Ollama](notebooks/fundamentals/ollama-agent.ipynb)
+
+### 🔗 Agent tools
+  - [x] [Agent tools](notebooks/tools/agent-tools.ipynb)
+  - [x] [Caching tool calls locally](notebooks/tools/cache-tool-calls.ipynb)
+
+### 🔗 MCP
+  - [x] [Bayesian tools MCP server](mcp-servers/bayesian-tools/README.md)
+
+### 🔗 Memory, context, & state
+  - [x] [Short-term memory for chat conversations & agents](notebooks/memory-context-state/short-term-memory.ipynb)
+  - [x] [Agent context and state](notebooks/memory-context-state/context-and-state.ipynb)
+  - [x] [Managing long conversations](notebooks/memory-context-state/managing-long-conversations.ipynb)
+
+### 🔗 Dynamic agents & Human-in-the-loop
+  - [x] [Dynamic agents](notebooks/dynamic-angents.ipynb)
+  - [x] [Human-in-the-loop](notebooks/human-in-the-loop.ipynb)
+
+### 🔗 Multi-agent
+  - [x] [Multi-agent systems](notebooks/multi-agent-systems.ipynb)
 
 
 ## Setup
