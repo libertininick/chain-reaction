@@ -21,6 +21,7 @@ My incremental journey learning to create agentic workflows with LangChain, Lang
 ### 🔗 Agent tools
   - [x] [Agent tools](notebooks/tools/agent-tools.ipynb)
   - [x] [Caching tool calls locally](notebooks/tools/cache-tool-calls.ipynb)
+  - [x] [Limiting number of tool calls with recursion limits](notebooks/tools/recusion-limits.ipynb)
   - [x] [Dynamic tool filtering based on context](notebooks/tools/context-based-tools.ipynb)
 
 ### 🔗 MCP
