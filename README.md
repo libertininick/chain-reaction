@@ -21,6 +21,7 @@ My incremental journey learning to create agentic workflows with LangChain, Lang
 ### 🔗 Agent tools
   - [x] [Agent tools](notebooks/tools/agent-tools.ipynb)
   - [x] [Caching tool calls locally](notebooks/tools/cache-tool-calls.ipynb)
+  - [x] [Dynamic tool filtering based on context](notebooks/tools/context-based-tools.ipynb)
 
 ### 🔗 MCP
   - [x] [Bayesian tools MCP server](mcp-servers/bayesian-tools/README.md)
@@ -30,8 +31,7 @@ My incremental journey learning to create agentic workflows with LangChain, Lang
   - [x] [Agent context and state](notebooks/memory-context-state/context-and-state.ipynb)
   - [x] [Managing long conversations](notebooks/memory-context-state/managing-long-conversations.ipynb)
 
-### 🔗 Dynamic agents & Human-in-the-loop
-  - [x] [Dynamic agents](notebooks/dynamic-angents.ipynb)
+### 🔗 Human-in-the-loop
   - [x] [Human-in-the-loop](notebooks/human-in-the-loop.ipynb)
 
 ### 🔗 Multi-agent
