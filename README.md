@@ -24,6 +24,7 @@ My incremental journey learning to create agentic workflows with LangChain, Lang
   - [x] [Limiting number of tool calls with recursion limits](notebooks/tools/recusion-limits.ipynb)
   - [x] [Dynamic tool filtering based on context](notebooks/tools/context-based-tools.ipynb)
   - [x] [SQL toolkit for agent](notebooks/tools/sql-agent.ipynb)
+  - [ ] [Polars DataFrame toolkit for agent](notebooks/tools/dataframe-agent.ipynb)
 
 ### 🔗 MCP
   - [x] [Bayesian tools MCP server](mcp-servers/bayesian-tools/README.md)
