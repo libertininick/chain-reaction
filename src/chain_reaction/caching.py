@@ -1,4 +1,26 @@
-"""Tools for caching function and tool calls."""
+"""Decorators and utility functions for caching the results of function and tool calls using diskcache.
+
+Example usage:
+
+Define a function or tool and decorate it with `@cache_calls(cache)` to enable caching of its results.
+```python
+from diskcache import Cache
+from chain_reaction.caching import cache_calls
+
+cache = Cache("./build/cache")
+
+@cache_calls(cache)
+def expensive_tool(query: str) -> str:
+    ...
+```
+
+Evict cached calls for a specific function using `evict_calls(cache, func)`.
+```python
+# Evict cached calls for the expensive_tool function
+evict_calls(cache, expensive_tool)
+```
+
+"""
 
 from collections.abc import Callable
 from functools import wraps
