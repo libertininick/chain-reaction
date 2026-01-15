@@ -1,4 +1,23 @@
-"""Configuration tools."""
+"""Configuration tools for API key management, LLM model selection, and model behavior presets.
+
+Example usage:
+
+Configure chat model
+```python
+from langchain.chat_models import init_chat_model
+from chain_reaction.config import APIKeys, ModelBehavior, ModelName
+
+# Load api keys from .env
+api_keys = APIKeys()
+
+# Initialize chat model with a given LLM and Behavior
+model = init_chat_model(
+    model=ModelName.CLAUDE_HAIKU,
+    api_key=api_keys.anthropic,
+    **ModelBehavior.factual().model_dump(),
+)
+```
+"""
 
 from __future__ import annotations
 
