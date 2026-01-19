@@ -6,6 +6,7 @@ from collections.abc import Collection, Mapping
 from typing import Self
 
 import polars as pl
+from pydantic import validate_call
 
 from chain_reaction.dataframe_toolkit.identifier import DataFrameId
 
@@ -13,7 +14,7 @@ from chain_reaction.dataframe_toolkit.identifier import DataFrameId
 class DataFrameContext:
     """A registry of Polars DataFrames with SQL query support.
 
-    Manages DataFrames by name and provides access via a Polars SQLContext
+    Manages DataFrames by frame_id and provides access via a Polars SQLContext
     for SQL queries. When frames are registered or unregistered, both the
     internal mapping and the underlying SQLContext are updated.
 
@@ -23,12 +24,12 @@ class DataFrameContext:
 
         Initialize context and register a DataFrame
         >>> ctx = DataFrameContext()
-        >>> ctx.register("df_abcd1234", df)
-        DataFrameContext(frames=['df_abcd1234'])
+        >>> ctx.register("df_00000001", df)
+        DataFrameContext(frames=['df_00000001'])
 
         List registered frames
         >>> ctx.frame_ids
-        ['df_abcd1234']
+        ['df_00000001']
 
         Number of registered frames
         >>> len(ctx)
@@ -36,22 +37,22 @@ class DataFrameContext:
 
         Register another DataFrame
         >>> df2 = pl.DataFrame({"a": [1, 1, 2], "c": ["apple", "banana", "cherry"]})
-        >>> ctx.register("df_efgh5678", df2)
-        DataFrameContext(frames=['df_abcd1234', 'df_efgh5678'])
+        >>> ctx.register("df_00000002", df2)
+        DataFrameContext(frames=['df_00000001', 'df_00000002'])
 
         Execute a SQL query against the registered DataFrame
         >>> result = ctx.execute_sql(
-        ...     "SELECT df_abcd1234.a"
-        ...     " FROM df_abcd1234 JOIN df_efgh5678 ON df_abcd1234.a = df_efgh5678.a"
+        ...     "SELECT df_00000001.a"
+        ...     " FROM df_00000001 JOIN df_00000002 ON df_00000001.a = df_00000002.a"
         ...     " WHERE c = 'banana'"
         ... )
 
         Get a registered DataFrame by its identifier
-        >>> retrieved_df = ctx.get_frame("df_abcd1234")
+        >>> retrieved_df = ctx.get_frame("df_00000001")
 
         Unregister a DataFrame
-        >>> ctx.unregister("df_abcd1234")
-        DataFrameContext(frames=['df_efgh5678'])
+        >>> ctx.unregister("df_00000001")
+        DataFrameContext(frames=['df_00000002'])
         >>> len(ctx)
         1
 
@@ -62,6 +63,7 @@ class DataFrameContext:
         0
     """
 
+    @validate_call(config={"arbitrary_types_allowed": True})
     def __init__(self, frames: Mapping[DataFrameId, pl.DataFrame | pl.LazyFrame] | None = None) -> None:
         """Initialize the DataFrameContext.
 
@@ -92,8 +94,8 @@ class DataFrameContext:
 
     def __repr__(self) -> str:
         """Return repr(self)."""
-        frame_names = ", ".join(f"'{name}'" for name in self._frames)
-        return f"DataFrameContext(frames=[{frame_names}])"
+        frame_ids = ", ".join(f"'{frame_id}'" for frame_id in self._frames)
+        return f"DataFrameContext(frames=[{frame_ids}])"
 
     @property
     def frame_ids(self) -> list[DataFrameId]:
@@ -120,26 +122,28 @@ class DataFrameContext:
 
         return self._sql_context.execute(query, eager=eager)
 
-    def get_frame(self, fame_id: DataFrameId) -> pl.DataFrame | pl.LazyFrame:
+    @validate_call(config={"arbitrary_types_allowed": True})
+    def get_frame(self, frame_id: DataFrameId) -> pl.DataFrame | pl.LazyFrame:
         """Get a registered DataFrame by its identifier.
 
         Args:
-            fame_id (DataFrameId): The identifier of the registered frame.
+            frame_id (DataFrameId): The identifier of the registered frame.
 
         Returns:
             pl.DataFrame | pl.LazyFrame: The registered DataFrame or LazyFrame.
 
         Raises:
-            KeyError: If the name is not registered.
+            KeyError: If the frame_id is not registered.
         """
-        if fame_id not in self._frames:
-            msg = f"Frame '{fame_id}' is not registered"
+        if frame_id not in self._frames:
+            msg = f"Frame '{frame_id}' is not registered"
             raise KeyError(msg)
 
-        return self._frames[fame_id]
+        return self._frames[frame_id]
 
+    @validate_call(config={"arbitrary_types_allowed": True})
     def register(self, frame_id: DataFrameId, frame: pl.DataFrame | pl.LazyFrame) -> Self:
-        """Register a DataFrame or LazyFrame with the given name.
+        """Register a DataFrame or LazyFrame with the given frame_id.
 
         Args:
             frame_id (DataFrameId): The identifier to register the frame under.
@@ -162,11 +166,12 @@ class DataFrameContext:
 
         return self
 
+    @validate_call(config={"arbitrary_types_allowed": True})
     def register_many(self, frames: Mapping[DataFrameId, pl.DataFrame | pl.LazyFrame]) -> Self:
         """Register multiple DataFrames or LazyFrames.
 
         Args:
-            frames (Mapping[DataFrameId, pl.DataFrame | pl.LazyFrame]): Mapping of names to DataFrames to register.
+            frames (Mapping[DataFrameId, pl.DataFrame | pl.LazyFrame]): Mapping of frame_ids to DataFrames to register.
 
         Returns:
             Self: Self for method chaining.
@@ -175,21 +180,24 @@ class DataFrameContext:
             self.register(frame_id, frame)
         return self
 
+    @validate_call(config={"arbitrary_types_allowed": True})
     def unregister(self, frame_ids: str | Collection[str]) -> Self:
-        """Unregister a DataFrames by name.
+        """Unregister a DataFrames by frame_id.
 
         Args:
-            frame_ids (str | Collection[str]): The name or names of the frames to unregister.
+            frame_ids (str | Collection[str]): The frame_id or frame_ids of the frames to unregister.
 
         Returns:
             Self: Self for method chaining.
 
         Raises:
-            KeyError: If the name is not registered.
+            KeyError: If the frame_id is not registered.
         """
+        # Convert single frame_id to list
         if isinstance(frame_ids, str):
             frame_ids = [frame_ids]
 
+        # Unregister each specified frame
         for frame_id in frame_ids:
             # Verify registration exists
             if frame_id not in self._frames:
