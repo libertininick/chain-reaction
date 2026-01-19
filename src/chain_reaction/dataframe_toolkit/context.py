@@ -7,6 +7,8 @@ from typing import Self
 
 import polars as pl
 
+from chain_reaction.dataframe_toolkit.identifier import DataFrameId
+
 
 class DataFrameContext:
     """A registry of Polars DataFrames with SQL query support.
@@ -21,12 +23,12 @@ class DataFrameContext:
 
         Initialize context and register a DataFrame
         >>> ctx = DataFrameContext()
-        >>> ctx.register("my_table", df)
-        DataFrameContext(frames=['my_table'])
+        >>> ctx.register("df_abcd1234", df)
+        DataFrameContext(frames=['df_abcd1234'])
 
         List registered frames
-        >>> ctx.frame_names
-        ['my_table']
+        >>> ctx.frame_ids
+        ['df_abcd1234']
 
         Number of registered frames
         >>> len(ctx)
@@ -34,20 +36,22 @@ class DataFrameContext:
 
         Register another DataFrame
         >>> df2 = pl.DataFrame({"a": [1, 1, 2], "c": ["apple", "banana", "cherry"]})
-        >>> ctx.register("another_table", df2)
-        DataFrameContext(frames=['my_table', 'another_table'])
+        >>> ctx.register("df_efgh5678", df2)
+        DataFrameContext(frames=['df_abcd1234', 'df_efgh5678'])
 
         Execute a SQL query against the registered DataFrame
         >>> result = ctx.execute_sql(
-        ...     "SELECT my_table.a FROM my_table JOIN another_table ON my_table.a = another_table.a WHERE c = 'banana'"
+        ...     "SELECT df_abcd1234.a"
+        ...     " FROM df_abcd1234 JOIN df_efgh5678 ON df_abcd1234.a = df_efgh5678.a"
+        ...     " WHERE c = 'banana'"
         ... )
 
-        Get a registered DataFrame by name
-        >>> retrieved_df = ctx.get_frame("my_table")
+        Get a registered DataFrame by its identifier
+        >>> retrieved_df = ctx.get_frame("df_abcd1234")
 
         Unregister a DataFrame
-        >>> ctx.unregister("my_table")
-        DataFrameContext(frames=['another_table'])
+        >>> ctx.unregister("df_abcd1234")
+        DataFrameContext(frames=['df_efgh5678'])
         >>> len(ctx)
         1
 
@@ -58,12 +62,12 @@ class DataFrameContext:
         0
     """
 
-    def __init__(self, frames: Mapping[str, pl.DataFrame | pl.LazyFrame] | None = None) -> None:
+    def __init__(self, frames: Mapping[DataFrameId, pl.DataFrame | pl.LazyFrame] | None = None) -> None:
         """Initialize the DataFrameContext.
 
         Args:
-            frames (Mapping[str, pl.DataFrame | pl.LazyFrame] | None): Optional mapping of names to DataFrames to
-                register on initialization. Defaults to None.
+            frames (Mapping[DataFrameId, pl.DataFrame | pl.LazyFrame] | None): Optional mapping of identifiers to
+                DataFrames to register on initialization. Defaults to None.
         """
         # Initialize internal mapping of registered DataFrames
         self._frames: dict[str, pl.DataFrame | pl.LazyFrame] = {}
@@ -75,16 +79,16 @@ class DataFrameContext:
         """int: Number of registered frames."""
         return len(self._frames)
 
-    def __contains__(self, name: str) -> bool:
+    def __contains__(self, frame_id: DataFrameId) -> bool:
         """Check if a frame is registered.
 
         Args:
-            name (str): The name to check.
+            frame_id (DataFrameId): The identifier to check.
 
         Returns:
             bool: True if the frame is registered, False otherwise.
         """
-        return name in self._frames
+        return frame_id in self._frames
 
     def __repr__(self) -> str:
         """Return repr(self)."""
@@ -92,8 +96,8 @@ class DataFrameContext:
         return f"DataFrameContext(frames=[{frame_names}])"
 
     @property
-    def frame_names(self) -> list[str]:
-        """list[str]: Names of all registered DataFrames (alias for `frames`)."""
+    def frame_ids(self) -> list[DataFrameId]:
+        """list[DataFrameId]: Identifiers of all registered DataFrames."""
         return list(self._frames.keys())
 
     def execute_sql(self, query: str, *, eager: bool | None = None) -> pl.DataFrame | pl.LazyFrame:
@@ -116,11 +120,11 @@ class DataFrameContext:
 
         return self._sql_context.execute(query, eager=eager)
 
-    def get_frame(self, name: str) -> pl.DataFrame | pl.LazyFrame:
-        """Get a registered DataFrame by name.
+    def get_frame(self, fame_id: DataFrameId) -> pl.DataFrame | pl.LazyFrame:
+        """Get a registered DataFrame by its identifier.
 
         Args:
-            name (str): The name of the registered frame.
+            fame_id (DataFrameId): The identifier of the registered frame.
 
         Returns:
             pl.DataFrame | pl.LazyFrame: The registered DataFrame or LazyFrame.
@@ -128,54 +132,54 @@ class DataFrameContext:
         Raises:
             KeyError: If the name is not registered.
         """
-        if name not in self._frames:
-            msg = f"Frame '{name}' is not registered"
+        if fame_id not in self._frames:
+            msg = f"Frame '{fame_id}' is not registered"
             raise KeyError(msg)
 
-        return self._frames[name]
+        return self._frames[fame_id]
 
-    def register(self, name: str, frame: pl.DataFrame | pl.LazyFrame) -> Self:
+    def register(self, frame_id: DataFrameId, frame: pl.DataFrame | pl.LazyFrame) -> Self:
         """Register a DataFrame or LazyFrame with the given name.
 
         Args:
-            name (str): The name to register the frame under.
+            frame_id (DataFrameId): The identifier to register the frame under.
             frame (pl.DataFrame | pl.LazyFrame): The DataFrame or LazyFrame to register.
 
         Returns:
             Self: Self for method chaining.
 
         Raises:
-            KeyError: If the name is already registered.
+            KeyError: If the identifier is already registered.
         """
         # Check for existing registration
-        if name in self._frames:
-            msg = f"Frame '{name}' is already registered"
+        if frame_id in self._frames:
+            msg = f"Frame '{frame_id}' is already registered"
             raise KeyError(msg)
 
         # Register in internal mapping and SQL context
-        self._frames[name] = frame
-        self._sql_context.register(name, frame)
+        self._frames[frame_id] = frame
+        self._sql_context.register(frame_id, frame)
 
         return self
 
-    def register_many(self, frames: Mapping[str, pl.DataFrame | pl.LazyFrame]) -> Self:
+    def register_many(self, frames: Mapping[DataFrameId, pl.DataFrame | pl.LazyFrame]) -> Self:
         """Register multiple DataFrames or LazyFrames.
 
         Args:
-            frames (Mapping[str, pl.DataFrame | pl.LazyFrame]): Mapping of names to DataFrames to register.
+            frames (Mapping[DataFrameId, pl.DataFrame | pl.LazyFrame]): Mapping of names to DataFrames to register.
 
         Returns:
             Self: Self for method chaining.
         """
-        for name, frame in frames.items():
-            self.register(name, frame)
+        for frame_id, frame in frames.items():
+            self.register(frame_id, frame)
         return self
 
-    def unregister(self, names: str | Collection[str]) -> Self:
+    def unregister(self, frame_ids: str | Collection[str]) -> Self:
         """Unregister a DataFrames by name.
 
         Args:
-            names (str | Collection[str]): The name or names of the frames to unregister.
+            frame_ids (str | Collection[str]): The name or names of the frames to unregister.
 
         Returns:
             Self: Self for method chaining.
@@ -183,20 +187,20 @@ class DataFrameContext:
         Raises:
             KeyError: If the name is not registered.
         """
-        if isinstance(names, str):
-            names = [names]
+        if isinstance(frame_ids, str):
+            frame_ids = [frame_ids]
 
-        for name in names:
+        for frame_id in frame_ids:
             # Verify registration exists
-            if name not in self._frames:
-                msg = f"Frame '{name}' is not registered"
+            if frame_id not in self._frames:
+                msg = f"Frame '{frame_id}' is not registered"
                 raise KeyError(msg)
 
             # Unregister from SQL context
-            self._sql_context.unregister(name)
+            self._sql_context.unregister(frame_id)
 
             # Remove from internal mapping
-            self._frames.pop(name)
+            self._frames.pop(frame_id)
 
         return self
 
@@ -206,6 +210,7 @@ class DataFrameContext:
         Returns:
             Self: Self for method chaining.
         """
-        for name in list(self._frames):  # Copy keys to avoid mutation during iteration
-            self.unregister(name)
+        all_frame_ids = list(self._frames.keys())
+        for frame_id in all_frame_ids:
+            self.unregister(frame_id)
         return self

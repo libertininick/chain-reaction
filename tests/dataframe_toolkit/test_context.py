@@ -65,7 +65,7 @@ class TestInitialization:
     def test_init_empty_context(self) -> None:
         """Verify empty context initialization creates an empty registry.
 
-        An empty context should have zero frames, an empty frame_names list,
+        An empty context should have zero frames, an empty frame_ids list,
         and a repr indicating no frames are registered.
         """
         ctx = DataFrameContext()
@@ -73,7 +73,7 @@ class TestInitialization:
         with check:
             assert len(ctx) == 0, "Empty context should have length 0"
         with check:
-            assert ctx.frame_names == [], "Empty context should have empty frame_names"
+            assert ctx.frame_ids == [], "Empty context should have empty frame_ids"
         with check:
             assert repr(ctx) == "DataFrameContext(frames=[])", "Empty context repr should show no frames"
 
@@ -97,7 +97,7 @@ class TestInitialization:
         with check:
             assert ctx.get_frame("df2") is sample_lazy_df, "Should return the same LazyFrame object"
         with check:
-            assert set(ctx.frame_names) == {"df1", "df2"}, "Frame names should match mapping keys"
+            assert set(ctx.frame_ids) == {"df1", "df2"}, "Frame names should match mapping keys"
 
     def test_init_with_duplicate_names_raises_key_error(self, sample_df: pl.DataFrame) -> None:
         """Verify that duplicate names in initialization raise KeyError.
@@ -197,7 +197,7 @@ class TestRegistration:
         with check:
             assert len(ctx) == 3, "Context should have 3 frames"
         with check:
-            assert set(ctx.frame_names) == {"a", "b", "c"}, "All frame names should be registered"
+            assert set(ctx.frame_ids) == {"a", "b", "c"}, "All frame names should be registered"
         with check:
             assert ctx.get_frame("a") is sample_df, "Should retrieve first frame"
         with check:
@@ -598,20 +598,20 @@ class TestContainerProtocol:
 class TestProperties:
     """Tests for context properties."""
 
-    def test_frame_names_empty_context(self) -> None:
-        """Verify frame_names property on empty context returns empty list.
+    def test_frame_ids_empty_context(self) -> None:
+        """Verify frame_ids property on empty context returns empty list.
 
         An empty context should return an empty list of frame names.
         """
         ctx = DataFrameContext()
 
         with check:
-            assert ctx.frame_names == [], "Empty context should have empty frame_names"
+            assert ctx.frame_ids == [], "Empty context should have empty frame_ids"
 
-    def test_frame_names_with_frames(
+    def test_frame_ids_with_frames(
         self, sample_df: pl.DataFrame, sample_lazy_df: pl.LazyFrame, sample_df_2: pl.DataFrame
     ) -> None:
-        """Verify frame_names property with registered frames.
+        """Verify frame_ids property with registered frames.
 
         The property should return a list containing all registered frame names
         in registration order.
@@ -621,7 +621,7 @@ class TestProperties:
         ctx.register("second", sample_lazy_df)
         ctx.register("third", sample_df_2)
 
-        names = ctx.frame_names
+        names = ctx.frame_ids
 
         with check:
             assert len(names) == 3, "Should return 3 frame names"
@@ -630,16 +630,16 @@ class TestProperties:
         with check:
             assert names == ["first", "second", "third"], "Should maintain registration order"
 
-    def test_frame_names_returns_copy(self, sample_df: pl.DataFrame) -> None:
+    def test_frame_ids_returns_copy(self, sample_df: pl.DataFrame) -> None:
         """Verify that mutating returned list doesn't affect context.
 
-        The frame_names property should return a new list each time, preventing
+        The frame_ids property should return a new list each time, preventing
         external mutation of internal state.
         """
         ctx = DataFrameContext()
         ctx.register("table", sample_df)
 
-        names = ctx.frame_names
+        names = ctx.frame_ids
         names.append("malicious")
 
         with check:
@@ -647,7 +647,7 @@ class TestProperties:
         with check:
             assert "malicious" not in ctx, "External mutation should not affect context"
         with check:
-            assert ctx.frame_names == ["table"], "frame_names should return clean list"
+            assert ctx.frame_ids == ["table"], "frame_ids should return clean list"
 
 
 class TestClear:
@@ -678,13 +678,13 @@ class TestClear:
         ctx.register("b", sample_lazy_df)
         ctx.register("c", sample_df_2)
 
-        original_names = set(ctx.frame_names)
+        original_names = set(ctx.frame_ids)
         ctx.clear()
 
         with check:
             assert len(ctx) == 0, "Context should be empty after clear"
         with check:
-            assert ctx.frame_names == [], "frame_names should be empty"
+            assert ctx.frame_ids == [], "frame_ids should be empty"
         for name in original_names:
             with check:
                 assert name not in ctx, f"Frame '{name}' should not be in context after clear"
@@ -747,7 +747,7 @@ class TestMethodChaining:
         with check:
             assert len(ctx) == 0, "Context should be empty after clear"
         with check:
-            assert ctx.frame_names == [], "frame_names should be empty"
+            assert ctx.frame_ids == [], "frame_ids should be empty"
 
     def test_method_chaining_register_many_unregister(
         self, sample_df: pl.DataFrame, sample_lazy_df: pl.LazyFrame, sample_df_2: pl.DataFrame
