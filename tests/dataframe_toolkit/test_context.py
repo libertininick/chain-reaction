@@ -73,7 +73,7 @@ class TestInitialization:
         with check:
             assert len(ctx) == 0, "Empty context should have length 0"
         with check:
-            assert ctx.frame_ids == [], "Empty context should have empty frame_ids"
+            assert ctx.frame_ids == (), "Empty context should have empty frame_ids"
         with check:
             assert repr(ctx) == "DataFrameContext(frames=[])", "Empty context repr should show no frames"
 
@@ -99,8 +99,8 @@ class TestInitialization:
         with check:
             assert set(ctx.frame_ids) == {"df_00000001", "df_00000002"}, "Frame frame_ids should match mapping keys"
 
-    def test_init_with_duplicate_frame_ids_raises_key_error(self, sample_df: pl.DataFrame) -> None:
-        """Verify that duplicate frame_ids in initialization raise KeyError.
+    def test_init_with_duplicate_frame_ids_raises_value_error(self, sample_df: pl.DataFrame) -> None:
+        """Verify that duplicate frame_ids in initialization raise ValueError.
 
         Since register_many() calls register() for each frame, attempting to
         register duplicate frame_ids during initialization should fail.
@@ -109,7 +109,7 @@ class TestInitialization:
         ctx = DataFrameContext()
         ctx.register("df_00000001", sample_df)
 
-        with pytest.raises(KeyError, match="already registered"):
+        with pytest.raises(ValueError, match="already registered"):
             ctx.register("df_00000001", sample_df)
 
 
@@ -144,8 +144,8 @@ class TestRegistration:
             assert "df_00000001" in ctx, "Frame frame_id should be in context"
             assert ctx.get_frame("df_00000001") is sample_lazy_df, "Should return the same LazyFrame object"
 
-    def test_register_duplicate_frame_id_raises_key_error(self, sample_df: pl.DataFrame) -> None:
-        """Verify that registering a duplicate frame_id raises KeyError.
+    def test_register_duplicate_frame_id_raises_value_error(self, sample_df: pl.DataFrame) -> None:
+        """Verify that registering a duplicate frame_id raises ValueError.
 
         Attempting to register a frame with an already-registered frame_id should
         fail to prevent accidental overwrites and maintain registry integrity.
@@ -153,7 +153,7 @@ class TestRegistration:
         ctx = DataFrameContext()
         ctx.register("df_00000001", sample_df)
 
-        with pytest.raises(KeyError, match="already registered"):
+        with pytest.raises(ValueError, match="already registered"):
             ctx.register("df_00000001", sample_df)
 
     def test_register_returns_self(self, sample_df: pl.DataFrame) -> None:
@@ -416,6 +416,16 @@ class TestSQLQueryExecution:
         with pytest.raises(ValueError, match="empty or whitespace"):
             ctx.execute_sql("   \n\t  ")
 
+    def test_execute_sql_empty_context_raises_value_error(self) -> None:
+        """Verify error when executing SQL with no registered DataFrames.
+
+        Executing a SQL query without any registered frames should fail.
+        """
+        ctx = DataFrameContext()
+
+        with pytest.raises(ValueError):
+            ctx.execute_sql("SELECT * FROM df_00000001")
+
     def test_execute_sql_syntax_error(self, sample_df: pl.DataFrame) -> None:
         """Verify behavior with SQL syntax error.
 
@@ -593,12 +603,12 @@ class TestProperties:
     def test_frame_ids_empty_context(self) -> None:
         """Verify frame_ids property on empty context returns empty list.
 
-        An empty context should return an empty list of frame_ids.
+        An empty context should return an empty tuple of frame_ids.
         """
         ctx = DataFrameContext()
 
         with check:
-            assert ctx.frame_ids == [], "Empty context should have empty frame_ids"
+            assert ctx.frame_ids == (), "Empty context should have empty frame_ids"
 
     def test_frame_ids_with_frames(
         self, sample_df: pl.DataFrame, sample_lazy_df: pl.LazyFrame, sample_df_2: pl.DataFrame
@@ -622,26 +632,7 @@ class TestProperties:
                 "Should contain all registered frame_ids"
             )
         with check:
-            assert frame_ids == ["df_00000001", "df_00000002", "df_00000003"], "Should maintain registration order"
-
-    def test_frame_ids_returns_copy(self, sample_df: pl.DataFrame) -> None:
-        """Verify that mutating returned list doesn't affect context.
-
-        The frame_ids property should return a new list each time, preventing
-        external mutation of internal state.
-        """
-        ctx = DataFrameContext()
-        ctx.register("df_00000001", sample_df)
-
-        frame_ids = ctx.frame_ids
-        frame_ids.append("malicious")
-
-        with check:
-            assert len(ctx) == 1, "Context should still have 1 frame"
-        with check:
-            assert "malicious" not in ctx, "External mutation should not affect context"
-        with check:
-            assert ctx.frame_ids == ["df_00000001"], "frame_ids should return clean list"
+            assert frame_ids == ("df_00000001", "df_00000002", "df_00000003"), "Should maintain registration order"
 
 
 class TestClear:
@@ -678,7 +669,7 @@ class TestClear:
         with check:
             assert len(ctx) == 0, "Context should be empty after clear"
         with check:
-            assert ctx.frame_ids == [], "frame_ids should be empty"
+            assert ctx.frame_ids == (), "frame_ids should be empty"
         for frame_id in original_frame_ids:
             with check:
                 assert frame_id not in ctx, f"Frame '{frame_id}' should not be in context after clear"
@@ -741,7 +732,7 @@ class TestMethodChaining:
         with check:
             assert len(ctx) == 0, "Context should be empty after clear"
         with check:
-            assert ctx.frame_ids == [], "frame_ids should be empty"
+            assert ctx.frame_ids == (), "frame_ids should be empty"
 
     def test_method_chaining_register_many_unregister(
         self, sample_df: pl.DataFrame, sample_lazy_df: pl.LazyFrame, sample_df_2: pl.DataFrame
@@ -782,7 +773,7 @@ class TestSQLContextSynchronization:
 
         # Unregister and verify SQL fails
         ctx.unregister("df_00000001")
-        with pytest.raises(SQLInterfaceError):  # Polars exception for missing table
+        with pytest.raises(ValueError):  # No registered frames
             ctx.execute_sql("SELECT * FROM df_00000001")
 
         # Re-register with different data

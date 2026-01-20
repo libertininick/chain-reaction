@@ -29,7 +29,7 @@ class DataFrameContext:
 
         List registered frames
         >>> ctx.frame_ids
-        ['df_00000001']
+        ('df_00000001',)
 
         Number of registered frames
         >>> len(ctx)
@@ -78,7 +78,11 @@ class DataFrameContext:
         self.register_many(frames or {})
 
     def __len__(self) -> int:
-        """int: Number of registered frames."""
+        """Return the number of registered frames.
+
+        Returns:
+            int: The count of registered DataFrames and LazyFrames.
+        """
         return len(self._frames)
 
     def __contains__(self, frame_id: DataFrameId) -> bool:
@@ -98,9 +102,9 @@ class DataFrameContext:
         return f"DataFrameContext(frames=[{frame_ids}])"
 
     @property
-    def frame_ids(self) -> list[DataFrameId]:
-        """list[DataFrameId]: Identifiers of all registered DataFrames."""
-        return list(self._frames.keys())
+    def frame_ids(self) -> tuple[DataFrameId, ...]:
+        """tuple[DataFrameId, ...]: Identifiers of all registered DataFrames."""
+        return tuple(self._frames.keys())
 
     def execute_sql(self, query: str, *, eager: bool | None = None) -> pl.DataFrame | pl.LazyFrame:
         """Execute a SQL query against the registered DataFrames.
@@ -114,10 +118,16 @@ class DataFrameContext:
             pl.DataFrame | pl.LazyFrame: The result of the SQL query as a Polars DataFrame or LazyFrame.
 
         Raises:
-            ValueError: If the query is empty or contains only whitespace.
+            ValueError: If the query is empty or contains only whitespace or if no DataFrames are registered.
         """
+        # Validate non-empty query
         if not query or not query.strip():
             msg = "SQL query cannot be empty or whitespace-only"
+            raise ValueError(msg)
+
+        # Validate non-empty registry
+        if not self._frames:
+            msg = "Cannot execute SQL query: no DataFrames are registered in the context"
             raise ValueError(msg)
 
         return self._sql_context.execute(query, eager=eager)
@@ -153,12 +163,18 @@ class DataFrameContext:
             Self: Self for method chaining.
 
         Raises:
-            KeyError: If the identifier is already registered.
+            TypeError: If the frame is not a Polars DataFrame or LazyFrame.
+            ValueError: If the identifier is already registered.
         """
+        # Validate frame type
+        if not isinstance(frame, (pl.DataFrame, pl.LazyFrame)):
+            msg = f"Frame must be a Polars DataFrame or LazyFrame, got {type(frame).__name__}"
+            raise TypeError(msg)
+
         # Check for existing registration
         if frame_id in self._frames:
             msg = f"Frame '{frame_id}' is already registered"
-            raise KeyError(msg)
+            raise ValueError(msg)
 
         # Register in internal mapping and SQL context
         self._frames[frame_id] = frame
@@ -175,9 +191,21 @@ class DataFrameContext:
 
         Returns:
             Self: Self for method chaining.
+
+        Raises:
+            ValueError: If any frame_id is already registered.
         """
+        # Pre-validate all frame_ids do not already exist
+        # Do this before registering any to maintain atomicity
+        for frame_id in frames:
+            if frame_id in self._frames:
+                msg = f"Frame '{frame_id}' is already registered"
+                raise ValueError(msg)
+
+        # Register each frame
         for frame_id, frame in frames.items():
             self.register(frame_id, frame)
+
         return self
 
     @validate_call(config={"arbitrary_types_allowed": True})
@@ -218,7 +246,11 @@ class DataFrameContext:
         Returns:
             Self: Self for method chaining.
         """
-        all_frame_ids = list(self._frames.keys())
-        for frame_id in all_frame_ids:
-            self.unregister(frame_id)
+        # Unregister from SQL context first
+        for frame_id in self._frames:
+            self._sql_context.unregister(frame_id)
+
+        # Clear internal mapping
+        self._frames.clear()
+
         return self
