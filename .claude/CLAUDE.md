@@ -24,13 +24,14 @@ mcp-servers/          # FastMCP server implementations
 **IMPORTANT: YOU MUST follow these rules:**
 
 1. **Use designated frameworks ONLY** - See [frameworks.md](frameworks.md). NEVER substitute alternatives (e.g., no pandas, use polars).
-2. **Fetch docs before coding** - NEVER assume API details. Use WebFetch for framework documentation.
-3. **Use sub-agents for specialized tasks:**
+2. **Always adhere to explicit conventions** - See [development-conventions.md](development-conventions.md).
+3. **Fetch docs when you are uncertain** - NEVER assume API details, if you are uncertain use Context7 MCP to search library/API documentation without me having to explicitly ask.
+4. **Use sub-agents for specialized tasks:**
    - `python-test-writer` - Creating/updating pytest tests
    - `python-code-reviewer` - Code review after significant changes
-4. **NEVER hallucinate** - Only use verified packages. Ask if uncertain about paths, modules, or APIs.
-5. **NEVER delete code** unless explicitly instructed or specified in `TASK.md`.
-6. **NEVER commit changes** unless explicitly instructed or specified in `TASK.md`.
+5. **NEVER hallucinate** - Only use verified packages. Ask if uncertain about paths, modules, or APIs.
+6. **NEVER delete code** unless explicitly instructed or specified in `TASK.md`.
+7. **NEVER commit changes** unless explicitly instructed or specified in `TASK.md`.
 
 
 ## Conventions & Standards

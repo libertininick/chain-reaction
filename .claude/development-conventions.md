@@ -29,7 +29,7 @@ Validate with: `uv run ty check .`
 
 - Explain the **why**, not the how
 - Include example usage when helpful (tested by doctest)
-- Validate with: `uv run pydoclint`
+- Validate with: `uv tool run pydoclint --style=google --allow-init-docstring=True`
 
 ```python
 def calculate_similarity(embedding_a: list[float], embedding_b: list[float]) -> float:
