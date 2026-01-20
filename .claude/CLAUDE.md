@@ -9,6 +9,7 @@ Guidance for Claude Code when working in this repository.
 - `uv run pytest tests/test_<file>.py::test_<name>` - Run specific test
 - `uv run ruff check --fix && uv run ruff format` - Format code
 - `uv run ty check .` - Type check
+- `uv tool run pydoclint --style=google --allow-init-docstring=True src/ tests/` - Check docstring format
 
 ## Project Structure
 
