@@ -76,7 +76,7 @@ class DataFrameReference(BaseModel):
     @classmethod
     def from_dataframe(
         cls,
-        df: pl.DataFrame,
+        dataframe: pl.DataFrame,
         name: str,
         description: str | None = None,
         column_descriptions: dict[str, str] | None = None,
@@ -85,7 +85,7 @@ class DataFrameReference(BaseModel):
         """Create a DataFrameReference from a Polars DataFrame.
 
         Args:
-            df (pl.DataFrame): Polars DataFrame.
+            dataframe (pl.DataFrame): Polars DataFrame.
             name (str): The name of the DataFrame.
             description (str | None): An optional textual description of the DataFrame. Defaults to None.
             column_descriptions (dict[str, str] | None): Optional textual descriptions of the columns. Defaults to None.
@@ -100,11 +100,12 @@ class DataFrameReference(BaseModel):
         return cls(
             id=generate_dataframe_id(),
             name=name,
-            num_rows=df.height,
-            num_columns=df.width,
-            column_names=df.columns,
+            num_rows=dataframe.height,
+            num_columns=dataframe.width,
+            column_names=dataframe.columns,
             column_summaries={
-                col: ColumnSummary.from_series(df[col], description=column_descriptions.get(col)) for col in df.columns
+                col: ColumnSummary.from_series(dataframe[col], description=column_descriptions.get(col))
+                for col in dataframe.columns
             },
             description=description or "",
             parent_ids=parent_ids or [],
