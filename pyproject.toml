@@ -132,3 +132,8 @@ pylint = {allow-magic-value-types = ["int", "str"], max-args = 15, max-positiona
 [tool.ty.src]
 include = ["src", "tests"]
 exclude = [".venv/"]
+
+
+## uv configuration
+[tool.uv]
+exclude-newer = "7 days"
