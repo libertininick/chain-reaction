@@ -32,6 +32,7 @@ My incremental journey learning to create agentic workflows with LangChain, Lang
 
 ### 🔗 Memory, context, & state
   - [x] [Short-term memory for chat conversations & agents](notebooks/memory-context-state/short-term-memory.ipynb)
+  - [x] [ReAct agent with memory in LangGraph](notebooks/memory-context-state/compile-graph-w-memory.ipynb)
   - [x] [Agent context and state](notebooks/memory-context-state/context-and-state.ipynb)
   - [x] [Managing long conversations](notebooks/memory-context-state/managing-long-conversations.ipynb)
 
