@@ -44,7 +44,7 @@ def sample_df_2() -> pl.DataFrame:
 
 @pytest.fixture
 def populated_context(sample_df: pl.DataFrame, sample_lazy_df: pl.LazyFrame) -> DataFrameContext:
-    """Create a pre-configured context with multiple registered frames.
+    """Create a pre-configured context with multiple registered dataframes.
 
     Args:
         sample_df: Sample eager DataFrame fixture.
@@ -65,39 +65,39 @@ class TestInitialization:
     def test_init_empty_context(self) -> None:
         """Verify empty context initialization creates an empty registry.
 
-        An empty context should have zero frames, an empty frame_ids list,
-        and a repr indicating no frames are registered.
+        An empty context should have zero dataframes, an empty frame_ids list,
+        and a repr indicating no dataframes are registered.
         """
         ctx = DataFrameContext()
 
         with check:
             assert len(ctx) == 0, "Empty context should have length 0"
         with check:
-            assert ctx.frame_ids == (), "Empty context should have empty frame_ids"
+            assert ctx.dataframe_ids == (), "Empty context should have empty frame_ids"
         with check:
-            assert repr(ctx) == "DataFrameContext(frames=[])", "Empty context repr should show no frames"
+            assert repr(ctx) == "DataFrameContext(dataframes=[])", "Empty context repr should show no dataframes"
 
     def test_init_with_frames_mapping(self, sample_df: pl.DataFrame, sample_lazy_df: pl.LazyFrame) -> None:
-        """Verify initialization with pre-populated frames registers all frames.
+        """Verify initialization with pre-populated dataframes registers all dataframes.
 
-        When a mapping is provided to the constructor, all frames should be
+        When a mapping is provided to the constructor, all dataframes should be
         registered immediately and accessible by their keys.
         """
-        frames = {"df_00000001": sample_df, "df_00000002": sample_lazy_df}
-        ctx = DataFrameContext(frames=frames)
+        dataframes = {"df_00000001": sample_df, "df_00000002": sample_lazy_df}
+        ctx = DataFrameContext(dataframes=dataframes)
 
         with check:
-            assert len(ctx) == 2, "Context should contain both frames"
+            assert len(ctx) == 2, "Context should contain both dataframes"
         with check:
             assert "df_00000001" in ctx, "Frame 'df_00000001' should be registered"
         with check:
             assert "df_00000002" in ctx, "Frame 'df_00000002' should be registered"
         with check:
-            assert ctx.get_frame("df_00000001") is sample_df, "Should return the same DataFrame object"
+            assert ctx.get_dataframe("df_00000001") is sample_df, "Should return the same DataFrame object"
         with check:
-            assert ctx.get_frame("df_00000002") is sample_lazy_df, "Should return the same LazyFrame object"
+            assert ctx.get_dataframe("df_00000002") is sample_lazy_df, "Should return the same LazyFrame object"
         with check:
-            assert set(ctx.frame_ids) == {"df_00000001", "df_00000002"}, "Frame frame_ids should match mapping keys"
+            assert set(ctx.dataframe_ids) == {"df_00000001", "df_00000002"}, "Frame frame_ids should match mapping keys"
 
     def test_init_with_duplicate_frame_ids_raises_value_error(self, sample_df: pl.DataFrame) -> None:
         """Verify that duplicate frame_ids in initialization raise ValueError.
@@ -128,7 +128,7 @@ class TestRegistration:
         with check:
             assert len(ctx) == 1, "Context should have 1 frame after registration"
             assert "df_00000001" in ctx, "Frame frame_id should be in context"
-            assert ctx.get_frame("df_00000001") is sample_df, "Should return the same DataFrame object"
+            assert ctx.get_dataframe("df_00000001") is sample_df, "Should return the same DataFrame object"
 
     def test_register_lazyframe(self, sample_lazy_df: pl.LazyFrame) -> None:
         """Verify successful registration of a LazyFrame.
@@ -142,7 +142,7 @@ class TestRegistration:
         with check:
             assert len(ctx) == 1, "Context should have 1 frame after registration"
             assert "df_00000001" in ctx, "Frame frame_id should be in context"
-            assert ctx.get_frame("df_00000001") is sample_lazy_df, "Should return the same LazyFrame object"
+            assert ctx.get_dataframe("df_00000001") is sample_lazy_df, "Should return the same LazyFrame object"
 
     def test_register_duplicate_frame_id_raises_value_error(self, sample_df: pl.DataFrame) -> None:
         """Verify that registering a duplicate frame_id raises ValueError.
@@ -173,25 +173,25 @@ class TestRegistration:
     ) -> None:
         """Verify bulk registration with register_many().
 
-        register_many() should allow registering multiple frames at once,
+        register_many() should allow registering multiple dataframes at once,
         making them all accessible with correct frame_ids and data.
         """
         ctx = DataFrameContext()
-        frames = {"df_00000001": sample_df, "df_00000002": sample_lazy_df, "df_00000003": sample_df_2}
-        ctx.register_many(frames)
+        dataframes = {"df_00000001": sample_df, "df_00000002": sample_lazy_df, "df_00000003": sample_df_2}
+        ctx.register_many(dataframes)
 
         with check:
-            assert len(ctx) == 3, "Context should have 3 frames"
+            assert len(ctx) == 3, "Context should have 3 dataframes"
         with check:
-            assert set(ctx.frame_ids) == {"df_00000001", "df_00000002", "df_00000003"}, (
+            assert set(ctx.dataframe_ids) == {"df_00000001", "df_00000002", "df_00000003"}, (
                 "All frame_ids should be registered"
             )
         with check:
-            assert ctx.get_frame("df_00000001") is sample_df, "Should retrieve first frame"
+            assert ctx.get_dataframe("df_00000001") is sample_df, "Should retrieve first frame"
         with check:
-            assert ctx.get_frame("df_00000002") is sample_lazy_df, "Should retrieve second frame"
+            assert ctx.get_dataframe("df_00000002") is sample_lazy_df, "Should retrieve second frame"
         with check:
-            assert ctx.get_frame("df_00000003") is sample_df_2, "Should retrieve third frame"
+            assert ctx.get_dataframe("df_00000003") is sample_df_2, "Should retrieve third frame"
 
     def test_register_many_returns_self(self, sample_df: pl.DataFrame) -> None:
         """Verify that register_many() returns self for method chaining.
@@ -229,11 +229,11 @@ class TestRegistration:
         with check:
             assert len(ctx) == 2, "Context should have 2 registered frame_ids"
         with check:
-            assert ctx.get_frame("df_00000001") is sample_df, "First frame_id should return the DataFrame"
+            assert ctx.get_dataframe("df_00000001") is sample_df, "First frame_id should return the DataFrame"
         with check:
-            assert ctx.get_frame("df_00000002") is sample_df, "Second frame_id should return the same DataFrame"
+            assert ctx.get_dataframe("df_00000002") is sample_df, "Second frame_id should return the same DataFrame"
         with check:
-            assert ctx.get_frame("df_00000001") is ctx.get_frame("df_00000002"), (
+            assert ctx.get_dataframe("df_00000001") is ctx.get_dataframe("df_00000002"), (
                 "Both frame_ids should reference same object"
             )
 
@@ -245,7 +245,7 @@ class TestUnregistration:
         """Verify unregistration with a single frame_id.
 
         Unregistering one frame should remove it from the context while
-        leaving other frames accessible.
+        leaving other dataframes accessible.
         """
         ctx = populated_context
         initial_len = len(ctx)
@@ -256,15 +256,15 @@ class TestUnregistration:
         with check:
             assert "df_00000001" not in ctx, "Unregistered frame should not be in context"
         with check:
-            assert "df_00000002" in ctx, "Other frames should remain registered"
+            assert "df_00000002" in ctx, "Other dataframes should remain registered"
 
     def test_unregister_multiple_frames_by_collection(
         self, sample_df: pl.DataFrame, sample_lazy_df: pl.LazyFrame, sample_df_2: pl.DataFrame
     ) -> None:
         """Verify unregistration with a collection of frame_ids.
 
-        Unregistering multiple frames at once should remove all specified
-        frames while preserving others.
+        Unregistering multiple dataframes at once should remove all specified
+        dataframes while preserving others.
         """
         ctx = DataFrameContext()
         ctx.register("df_00000001", sample_df)
@@ -309,9 +309,9 @@ class TestUnregistration:
         with check:
             assert "df_00000004" in ctx, "frame_id should be available after unregister"
         with check:
-            assert ctx.get_frame("df_00000004") is sample_df_2, "Should retrieve newly registered frame"
+            assert ctx.get_dataframe("df_00000004") is sample_df_2, "Should retrieve newly registered frame"
         with check:
-            assert ctx.get_frame("df_00000004") is not sample_df, "Should not retrieve old frame"
+            assert ctx.get_dataframe("df_00000004") is not sample_df, "Should not retrieve old frame"
 
     def test_unregister_returns_self(self, populated_context: DataFrameContext) -> None:
         """Verify that unregister() returns self for method chaining.
@@ -368,9 +368,9 @@ class TestSQLQueryExecution:
             assert collected["x"].to_list() == [20, 30], "Result should contain filtered values"
 
     def test_execute_sql_join_multiple_frames(self, sample_df: pl.DataFrame, sample_df_2: pl.DataFrame) -> None:
-        """Verify SQL queries across multiple registered frames.
+        """Verify SQL queries across multiple registered dataframes.
 
-        SQL JOIN operations should work across different registered frames,
+        SQL JOIN operations should work across different registered dataframes,
         demonstrating the registry's utility for multi-table queries.
         """
         ctx = DataFrameContext()
@@ -419,7 +419,7 @@ class TestSQLQueryExecution:
     def test_execute_sql_empty_context_raises_value_error(self) -> None:
         """Verify error when executing SQL with no registered DataFrames.
 
-        Executing a SQL query without any registered frames should fail.
+        Executing a SQL query without any registered dataframes should fail.
         """
         ctx = DataFrameContext()
 
@@ -465,7 +465,7 @@ class TestGetFrame:
         ctx = DataFrameContext()
         ctx.register("df_00000001", sample_df)
 
-        result = ctx.get_frame("df_00000001")
+        result = ctx.get_dataframe("df_00000001")
 
         with check:
             assert result is sample_df, "Should return the same DataFrame object"
@@ -483,7 +483,7 @@ class TestGetFrame:
         ctx = DataFrameContext()
         ctx.register("df_00000001", sample_lazy_df)
 
-        result = ctx.get_frame("df_00000001")
+        result = ctx.get_dataframe("df_00000001")
 
         with check:
             assert result is sample_lazy_df, "Should return the same LazyFrame object"
@@ -499,7 +499,7 @@ class TestGetFrame:
         ctx = DataFrameContext()
 
         with pytest.raises(KeyError, match="not registered"):
-            ctx.get_frame("df_00000001")
+            ctx.get_dataframe("df_00000001")
 
 
 class TestContainerProtocol:
@@ -517,9 +517,9 @@ class TestContainerProtocol:
             assert len(ctx) == 0, "Empty context should have length 0"
 
     def test_len_with_frames(self, sample_df: pl.DataFrame, sample_lazy_df: pl.LazyFrame) -> None:
-        """Verify len() with registered frames returns correct count.
+        """Verify len() with registered dataframes returns correct count.
 
-        The length should equal the number of registered frames.
+        The length should equal the number of registered dataframes.
         """
         ctx = DataFrameContext()
         ctx.register("df_00000001", sample_df)
@@ -527,7 +527,7 @@ class TestContainerProtocol:
         ctx.register("df_00000003", sample_df)
 
         with check:
-            assert len(ctx) == 3, "Context should have 3 frames"
+            assert len(ctx) == 3, "Context should have 3 dataframes"
 
     def test_len_after_register_and_unregister(self, sample_df: pl.DataFrame, sample_lazy_df: pl.LazyFrame) -> None:
         """Verify len() updates correctly after registration and unregistration.
@@ -539,7 +539,7 @@ class TestContainerProtocol:
         ctx.register("df_00000002", sample_lazy_df)
 
         with check:
-            assert len(ctx) == 2, "Should have 2 frames after registration"
+            assert len(ctx) == 2, "Should have 2 dataframes after registration"
 
         ctx.unregister("df_00000001")
 
@@ -547,7 +547,7 @@ class TestContainerProtocol:
             assert len(ctx) == 1, "Should have 1 frame after unregistration"
 
     def test_contains_existing_frame(self, sample_df: pl.DataFrame) -> None:
-        """Verify 'in' operator returns True for registered frames.
+        """Verify 'in' operator returns True for registered dataframes.
 
         The membership test should return True for registered frame_ids.
         """
@@ -558,7 +558,7 @@ class TestContainerProtocol:
             assert "df_00000001" in ctx, "Registered frame should be in context"
 
     def test_contains_non_existent_frame(self) -> None:
-        """Verify 'in' operator returns False for non-existent frames.
+        """Verify 'in' operator returns False for non-existent dataframes.
 
         The membership test should return False for frame_ids that were never
         registered or have been unregistered.
@@ -571,15 +571,15 @@ class TestContainerProtocol:
     def test_repr_empty_context(self) -> None:
         """Verify string representation of empty context.
 
-        The repr should clearly indicate that no frames are registered.
+        The repr should clearly indicate that no dataframes are registered.
         """
         ctx = DataFrameContext()
 
         with check:
-            assert repr(ctx) == "DataFrameContext(frames=[])", "Empty context repr should show empty list"
+            assert repr(ctx) == "DataFrameContext(dataframes=[])", "Empty context repr should show empty list"
 
     def test_repr_with_frames(self, sample_df: pl.DataFrame, sample_lazy_df: pl.LazyFrame) -> None:
-        """Verify string representation with registered frames.
+        """Verify string representation with registered dataframes.
 
         The repr should list all registered frame_ids in a clear format.
         """
@@ -590,7 +590,7 @@ class TestContainerProtocol:
         repr_str = repr(ctx)
 
         with check:
-            assert "DataFrameContext(frames=[" in repr_str, "Repr should show DataFrameContext with frames"
+            assert "DataFrameContext(dataframes=[" in repr_str, "Repr should show DataFrameContext with dataframes"
         with check:
             assert "'df_00000001'" in repr_str, "Repr should include first frame_id"
         with check:
@@ -608,12 +608,12 @@ class TestProperties:
         ctx = DataFrameContext()
 
         with check:
-            assert ctx.frame_ids == (), "Empty context should have empty frame_ids"
+            assert ctx.dataframe_ids == (), "Empty context should have empty frame_ids"
 
     def test_frame_ids_with_frames(
         self, sample_df: pl.DataFrame, sample_lazy_df: pl.LazyFrame, sample_df_2: pl.DataFrame
     ) -> None:
-        """Verify frame_ids property with registered frames.
+        """Verify frame_ids property with registered dataframes.
 
         The property should return a list containing all registered frame_ids
         in registration order.
@@ -623,7 +623,7 @@ class TestProperties:
         ctx.register("df_00000002", sample_lazy_df)
         ctx.register("df_00000003", sample_df_2)
 
-        frame_ids = ctx.frame_ids
+        frame_ids = ctx.dataframe_ids
 
         with check:
             assert len(frame_ids) == 3, "Should return 3 frame_ids"
@@ -653,23 +653,23 @@ class TestClear:
     def test_clear_context_with_frames(
         self, sample_df: pl.DataFrame, sample_lazy_df: pl.LazyFrame, sample_df_2: pl.DataFrame
     ) -> None:
-        """Verify clear() unregisters all frames.
+        """Verify clear() unregisters all dataframes.
 
         After calling clear(), the context should be empty with no registered
-        frames accessible.
+        dataframes accessible.
         """
         ctx = DataFrameContext()
         ctx.register("df_00000001", sample_df)
         ctx.register("df_00000002", sample_lazy_df)
         ctx.register("df_00000003", sample_df_2)
 
-        original_frame_ids = set(ctx.frame_ids)
+        original_frame_ids = set(ctx.dataframe_ids)
         ctx.clear()
 
         with check:
             assert len(ctx) == 0, "Context should be empty after clear"
         with check:
-            assert ctx.frame_ids == (), "frame_ids should be empty"
+            assert ctx.dataframe_ids == (), "frame_ids should be empty"
         for frame_id in original_frame_ids:
             with check:
                 assert frame_id not in ctx, f"Frame '{frame_id}' should not be in context after clear"
@@ -695,13 +695,13 @@ class TestMethodChaining:
         """Verify fluent interface with multiple register() calls.
 
         Chaining multiple register() calls should successfully register all
-        frames in sequence.
+        dataframes in sequence.
         """
         ctx = DataFrameContext()
         ctx.register("df_00000001", sample_df).register("df_00000002", sample_df_2)
 
         with check:
-            assert len(ctx) == 2, "Both frames should be registered"
+            assert len(ctx) == 2, "Both dataframes should be registered"
         with check:
             assert "df_00000001" in ctx, "First frame should be registered"
         with check:
@@ -732,7 +732,7 @@ class TestMethodChaining:
         with check:
             assert len(ctx) == 0, "Context should be empty after clear"
         with check:
-            assert ctx.frame_ids == (), "frame_ids should be empty"
+            assert ctx.dataframe_ids == (), "frame_ids should be empty"
 
     def test_method_chaining_register_many_unregister(
         self, sample_df: pl.DataFrame, sample_lazy_df: pl.LazyFrame, sample_df_2: pl.DataFrame
@@ -742,9 +742,9 @@ class TestMethodChaining:
         register_many() should chain smoothly with other methods.
         """
         ctx = DataFrameContext()
-        frames = {"df_00000001": sample_df, "df_00000002": sample_lazy_df, "df_00000003": sample_df_2}
+        dataframes = {"df_00000001": sample_df, "df_00000002": sample_lazy_df, "df_00000003": sample_df_2}
 
-        ctx.register_many(frames).unregister(["df_00000001", "df_00000002"])
+        ctx.register_many(dataframes).unregister(["df_00000001", "df_00000002"])
 
         with check:
             assert len(ctx) == 1, "Should have 1 frame after chained operations"
@@ -760,7 +760,7 @@ class TestSQLContextSynchronization:
     ) -> None:
         """Verify that internal SQLContext stays in sync after operations.
 
-        After registering, unregistering, and re-registering frames, SQL
+        After registering, unregistering, and re-registering dataframes, SQL
         queries should work correctly without stale references.
         """
         ctx = DataFrameContext()
@@ -773,7 +773,7 @@ class TestSQLContextSynchronization:
 
         # Unregister and verify SQL fails
         ctx.unregister("df_00000001")
-        with pytest.raises(ValueError):  # No registered frames
+        with pytest.raises(ValueError):  # No registered dataframes
             ctx.execute_sql("SELECT * FROM df_00000001")
 
         # Re-register with different data
