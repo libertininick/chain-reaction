@@ -162,7 +162,7 @@ uv pip show <package name>
 ```sh
 uv self update \
 && uv python upgrade \
-&& uv lock --upgrade --exclude-newer "1 week" \
+&& uv lock --upgrade \
 && uv sync \
 && uv cache prune
 ```
