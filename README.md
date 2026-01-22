@@ -11,6 +11,7 @@ My incremental journey learning to create agentic workflows with LangChain, Lang
 ## Journey
 
 ### 🔗 LangChain & LangGraph fundamentals
+  - [x] [Getting started](notebooks/fundamentals/getting-started.ipynb)
   - [x] [Prompts and responses](notebooks/fundamentals/prompts-and-responses.ipynb)
   - [x] [Intro to chains and LangChain Expression Language (LCEL)](notebooks/fundamentals/intro-to-chains.ipynb)
   - [x] [A simple LangGraph graph](notebooks/fundamentals/simple-graph.ipynb)
