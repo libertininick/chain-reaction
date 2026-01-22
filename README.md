@@ -22,6 +22,7 @@ My incremental journey learning to create agentic workflows with LangChain, Lang
   - [x] [Agent tools](notebooks/tools/agent-tools.ipynb)
   - [x] [ReAct agent in LangGraph](notebooks/tools/react-agent-graph.ipynb)
   - [x] [Caching tool calls locally](notebooks/tools/cache-tool-calls.ipynb)
+  - [x] [Handling expected errors during tool calls](notebooks/tools/handling-tool-call-errors.ipynb)
   - [x] [Limiting number of tool calls with recursion limits](notebooks/tools/recusion-limits.ipynb)
   - [x] [Dynamic tool filtering based on context](notebooks/tools/context-based-tools.ipynb)
   - [x] [SQL toolkit for agent](notebooks/tools/sql-agent.ipynb)
