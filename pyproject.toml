@@ -20,6 +20,7 @@ dependencies = [
     "pydantic[email]>=2.12.5",
     "scikit-learn>=1.8.0",
     "scipy>=1.16.3",
+    "sqlglot[rs]>=28.6.0",
     "tavily-python>=0.7.17",
 ]
 
