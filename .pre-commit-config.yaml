@@ -1,36 +1,17 @@
 repos:
-  - repo: local
+
+  # Ruff pre-commit hooks
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    # Ruff version.
+    rev: v0.14.14
     hooks:
-      # Ruff linter
-      - id: ruff
-        name: ruff linter
-        entry: uv run ruff check --fix
-        language: system
-        types_or: [python, pyi, jupyter]
-        require_serial: true
-
-      # Ruff formatter
+      # Run the linter.
+      - id: ruff-check
+        types_or: [ python, pyi, jupyter ]
+        args: [ --fix ]
+      # Run the formatter.
       - id: ruff-format
-        name: ruff formatter
-        entry: uv run ruff format
-        language: system
-        types_or: [python, pyi, jupyter]
-        require_serial: true
-
-      # nbstripout for Jupyter notebooks
-      - id: nbstripout
-        name: nbstripout
-        entry: uv run nbstripout
-        language: system
-        types: [jupyter]
-
-      # ty type checker
-      - id: ty-check
-        name: ty type checker
-        entry: uv run ty check .
-        language: system
-        types: [python]
-        pass_filenames: false  # check the entire project rather than just staged files
+        types_or: [ python, pyi, jupyter ]
 
   # pydoclint pre-commit hooks
   - repo: https://github.com/jsh9/pydoclint
@@ -38,3 +19,18 @@ repos:
     hooks:
       - id: pydoclint
         args: [--style=google, --allow-init-docstring=True]
+  
+  # nbstripout pre-commit hook for stripping notebook outputs
+  - repo: https://github.com/kynan/nbstripout
+    rev: 0.9.0
+    hooks:
+      - id: nbstripout
+
+  # ty type checker pre-commit hook
+  - repo: local
+    hooks:
+      - id: ty
+        name: ty check
+        entry: uv run ty check .
+        language: system
+        types: [python]
