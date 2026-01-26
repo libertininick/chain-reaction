@@ -24,10 +24,11 @@ mcp-servers/          # FastMCP server implementations
 
 **IMPORTANT: YOU MUST follow these rules:**
 
-1. **Use designated frameworks ONLY** - See [frameworks.md](frameworks.md). NEVER substitute alternatives (e.g., no pandas, use polars).
+1. **Use designated frameworks ONLY** - See [frameworks.md](frameworks.md). NEVER substitute alternatives.
 2. **Always adhere to explicit conventions** - See [development-conventions.md](development-conventions.md).
 3. **Fetch docs when you are uncertain** - NEVER assume API details, if you are uncertain use Context7 MCP to search library/API documentation without me having to explicitly ask.
 4. **Use sub-agents for specialized tasks:**
+   - `planner` - Creating implementation plans (use `/plan` command)
    - `python-test-writer` - Creating/updating pytest tests
    - `python-code-reviewer` - Code review after significant changes
 5. **NEVER hallucinate** - Only use verified packages. Ask if uncertain about paths, modules, or APIs.
@@ -51,4 +52,5 @@ See [frameworks.md](frameworks.md) for:
 
 Reusable workflows in `.claude/commands/`:
 
+- `/plan <description>` - Create comprehensive implementation plan before coding
 - `/project:implement-and-review <description>` - Implement a new feature and review
