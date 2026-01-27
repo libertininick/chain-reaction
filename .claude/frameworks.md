@@ -4,7 +4,12 @@
 
 1. **Use ONLY these frameworks. NEVER introduce alternatives or substitutes.**
 
-2. **Fetch docs when you are uncertain** - NEVER assume API details, if you are uncertain use Context7 MCP to search library/API documentation without me having to explicitly ask. Use the Context7 ID directly (if available) to retrieve framework documentation. That way, Context7 MCP server can skip the library-matching step and directly continue with retrieving docs.
+2. **Fetch docs when you are uncertain** - NEVER assume API details, if you are uncertain use Context7 MCP to search library/API documentation without me having to explicitly ask. Use the Context7 ID directly (if available) to retrieve framework documentation. That way, Context7 MCP server can skip the library-matching step and directly continue with retrieving docs:
+
+```sh
+# Example: If uncertain about Pydantic validation syntax
+# Use: mcp__context7__query-docs with libraryId=/pydantic/pydantic
+```
 
 3. **Use modern patterns** - Avoid deprecated methods. If uncertain, check latest framework documentation for current idioms.
 
