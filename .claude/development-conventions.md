@@ -1,5 +1,23 @@
 # Development Conventions
 
+## Guiding Principles
+
+| Principle | Guidance |
+|-----------|----------|
+| Simplicity | Prioritize readable code. NEVER over-engineer. |
+| PEP 8 | Follow strictly. Format with `ruff format`. |
+| Explicitness | Avoid magic. Be explicit about types, defaults, and behavior. |
+| Locality | Keep related code together. Minimize distance between definition and usage. |
+
+## Validation Commands
+
+```bash
+uv run ruff check --fix && uv run ruff format  # Lint and format
+uv run ty check .                               # Type check
+uv run pytest --cov --cov-fail-under=90         # Tests with coverage
+uv tool run pydoclint --style=google --allow-init-docstring=True src/ tests/  # Docstrings
+```
+
 ## Code Organization
 
 ### Principles
@@ -9,6 +27,8 @@
 - Code should be organized into discrete, testable units that are easy to maintain and refactor
 - Use composition over inheritance
 - Follow DRY, but NEVER create tight coupling just to avoid repetition
+- No circular dependencies between modules
+- Each function/class should have one clear purpose
 
 ### Module Design
 
@@ -27,7 +47,7 @@ __all__ = ["EmbeddingModel", "SemanticSearch"]
 
 ### Import Organization
 
-Organize imports in this order (enforced by ruff):
+Organize imports in this order (enforced by [ruff](../pyproject.toml)):
 
 1. Standard library
 2. Third-party packages
@@ -48,21 +68,9 @@ from chain_reaction.utils import validate_input
 
 Use absolute imports. Avoid `from module import *`.
 
-## Architecture
-
-- **Separation of concerns**: Modules should be grouped by feature/responsibility
-- **Dependency flow**: No circular dependencies between modules
-- **Loose coupling**: Prefer composition and dependency injection over tight coupling
-- **Single responsibility**: Each function/class should have one clear purpose
-
 ## Naming Conventions
 
 **Names should reveal intent and be self-documenting.**
-
-### Core Principles
-
-1. **Names reveal intent**: A reader should understand the purpose without reading the implementation
-2. **Use `<verb>_<noun>` pattern**: Functions and methods describe actions on subjects
 
 ### Function and Method Names
 
@@ -96,6 +104,21 @@ def response(raw: str): ...           # Parse? Build? Send?
 | `calculate_` | Compute values | `calculate_score`, `calculate_distance` |
 | `transform_` | Convert between formats | `transform_coordinates`, `transform_data` |
 | `is_` / `has_` | Boolean checks | `is_valid`, `has_permission` |
+| `async_` | Async functions | `async_fetch_data`, `async_process_batch` |
+
+### Async Functions
+
+Prefix async functions with `async_`:
+
+```python
+async def async_fetch_data(url: str) -> Response:
+    """Fetch data asynchronously."""
+    ...
+
+async def async_process_batch(items: list[Item]) -> list[Result]:
+    """Process items concurrently."""
+    ...
+```
 
 ### Variable Names
 
@@ -135,13 +158,15 @@ class Misc: ...         # Meaningless
 
 ### Constants
 
-Use `SCREAMING_SNAKE_CASE` with descriptive names:
+Use `SCREAMING_SNAKE_CASE` with descriptive names. Use `Final` for type-checked immutability:
 
 ```python
-# Good - clear purpose
-MAX_RETRY_ATTEMPTS = 3
-DEFAULT_TIMEOUT_SECONDS = 30.0
-SUPPORTED_FILE_FORMATS = frozenset({"json", "csv", "parquet"})
+from typing import Final
+
+# Good - clear purpose with Final annotation
+MAX_RETRY_ATTEMPTS: Final = 3
+DEFAULT_TIMEOUT_SECONDS: Final[float] = 30.0
+SUPPORTED_FILE_FORMATS: Final[frozenset[str]] = frozenset({"json", "csv", "parquet"})
 
 # Bad - unclear or too short
 MAX = 3              # Max of what?
@@ -154,17 +179,16 @@ FORMATS = {...}      # What kind of formats?
 | Element | Convention | Example |
 |---------|------------|---------|
 | Functions/methods | `verb_noun` lowercase | `fetch_user`, `validate_input` |
+| Async functions | `async_` prefix | `async_fetch_data` |
 | Variables | `snake_case`, descriptive | `user_count`, `is_valid` |
 | Classes | `PascalCase` nouns | `SearchIndex`, `UserSession` |
-| Constants | `SCREAMING_SNAKE_CASE` | `MAX_RETRIES`, `DEFAULT_TIMEOUT` |
+| Constants | `SCREAMING_SNAKE_CASE` + `Final` | `MAX_RETRIES`, `DEFAULT_TIMEOUT` |
 | Private members | `_` prefix | `_internal_cache`, `_validate` |
 | Type aliases | `PascalCase` | `JsonValue`, `Embedding` |
 
 ## Type Safety
 
 **IMPORTANT: Type annotations are REQUIRED on all functions and classes.**
-
-Validate with: `uv run ty check .`
 
 ### Modern Type Hints (Python 3.10+)
 
@@ -266,7 +290,7 @@ def encode(texts: list[str]) -> BatchEmbeddings:
 | Rule | Guidance |
 |------|----------|
 | Avoid `Any` | Only use at true system boundaries (e.g., JSON parsing) |
-| Prefer `X \| None` | Over `Optional[X]` for clarity |
+| Prefer `X | None` | Over `Optional[X]` for clarity |
 | Use `Sequence` | Over `list` in parameters when you only need iteration |
 | Use `Mapping` | Over `dict` in parameters when you only need read access |
 | Return concrete types | Return `list`, `dict` but accept `Sequence`, `Mapping` |
@@ -378,7 +402,23 @@ for result in results:
     print(f"{result['doc_id']}: {result['score']:.2f}")  # KeyError: 'doc_id'
 ```
 
-**When to use each**:
+### Configuration with Pydantic Settings
+
+```python
+from pydantic_settings import BaseSettings
+
+class Settings(BaseSettings):
+    """Application settings loaded from environment."""
+
+    openai_api_key: str
+    database_url: str
+    debug: bool = False
+    max_workers: int = 4
+
+    model_config = {"env_prefix": "APP_"}
+```
+
+### When to Use Each
 
 - **Pydantic**: Validation, serialization, API boundaries, configuration
 - **dataclass**: Simple internal data containers, performance-critical code
@@ -386,7 +426,7 @@ for result in results:
 
 ## Error Handling
 
-**Fail fast with clear, actionable error messages.**
+**Fail fast with clear, actionable error messages. Validate inputs early at system boundaries.**
 
 ### Clear Error Messages
 
@@ -450,7 +490,6 @@ except ConnectionError:
 | Let unexpected exceptions propagate | Don't catch and suppress unknown errors |
 | Use exception chaining | `raise ... from e` to preserve context |
 | Avoid exceptions for control flow | Use return values or pattern matching |
-| Fail fast | Validate inputs early, at system boundaries |
 
 ## Documentation
 
@@ -458,7 +497,6 @@ except ConnectionError:
 
 - Explain the **why**, not the how
 - Include example usage when helpful (tested by doctest)
-- Validate with: `uv tool run pydoclint --style=google --allow-init-docstring=True`
 
 ```python
 def calculate_similarity(embedding_a: list[float], embedding_b: list[float]) -> float:
@@ -499,46 +537,6 @@ index = bisect.bisect_left(sorted_items, target)
 # Increment counter by 1
 counter += 1
 ```
-
-## Constants and Configuration
-
-- Define module-level constants in `SCREAMING_SNAKE_CASE`
-- Use `Final` for type-checked immutability
-- Centralize configuration in dedicated modules or Pydantic `Settings` classes
-
-```python
-from typing import Final
-
-MAX_RETRIES: Final = 3
-DEFAULT_TIMEOUT: Final[float] = 30.0
-SUPPORTED_FORMATS: Final[frozenset[str]] = frozenset({"json", "csv", "parquet"})
-```
-
-```python
-from pydantic_settings import BaseSettings
-
-class Settings(BaseSettings):
-    """Application settings loaded from environment."""
-
-    openai_api_key: str
-    database_url: str
-    debug: bool = False
-    max_workers: int = 4
-
-    model_config = {"env_prefix": "APP_"}
-```
-
-## Code Quality Principles
-
-| Principle | Guidance |
-|-----------|----------|
-| Simplicity | Prioritize readable code. NEVER over-engineer. |
-| PEP 8 | Follow strictly. Format with `ruff format`. |
-| Naming | Use descriptive, consistent names. Avoid abbreviations. |
-| Testing | Aim for >=90% coverage. Test after any logic change. |
-| Immutability | Prefer immutable data structures. Use `frozen=True` on dataclasses. |
-| Explicitness | Avoid magic. Be explicit about types, defaults, and behavior. |
-| Locality | Keep related code together. Minimize distance between definition and usage. |
 
 ## Pythonic Patterns
 
@@ -598,6 +596,8 @@ def read_chunks(path: Path, chunk_size: int = 8192) -> Iterator[bytes]:
 Use for complex conditional logic on structured data:
 
 ```python
+from typing import Any
+
 def handle_response(response: dict[str, Any]) -> Result:
     """Handle API response with pattern matching."""
     match response:
@@ -609,20 +609,6 @@ def handle_response(response: dict[str, Any]) -> Result:
             return Result.pending(retry_after=seconds)
         case _:
             raise ValueError(f"Unexpected response format: {response}")
-```
-
-### Async Naming Convention
-
-Prefix async functions with `async_`:
-
-```python
-async def async_fetch_data(url: str) -> Response:
-    """Fetch data asynchronously."""
-    ...
-
-async def async_process_batch(items: list[Item]) -> list[Result]:
-    """Process items concurrently."""
-    ...
 ```
 
 ## Testing
@@ -731,20 +717,12 @@ def test_tokenize(input_text: str, expected_tokens: list[str]):
 
 - Aim for >=90% coverage on core logic
 - 100% coverage on public APIs
-- Run: `uv run pytest --cov --cov-fail-under=90`
 
-## Anti-Patterns to Avoid
+## Common Mistakes
 
-| Anti-Pattern | Why It's Harmful |
-|--------------|------------------|
-| Inheritance when composition works | Creates tight coupling, hard to test |
-| Abstractions for single-use cases | Adds complexity without benefit |
-| "Just in case" features or parameters | YAGNI - increases maintenance burden |
-| Commented-out code in production | Creates confusion, use version control |
-| Bare `except:` clauses | Hides bugs, catches system exceptions |
-| Mutable default arguments | Shared state causes subtle bugs |
-| God classes/functions | Hard to test, understand, and maintain |
-| Implicit dependencies | Makes code hard to test and reason about |
+Avoid these patterns that cause subtle bugs or maintenance issues:
+
+### Mutable Default Arguments
 
 ```python
 # Bad - mutable default argument
@@ -759,3 +737,11 @@ def add_item(item: str, items: list[str] | None = None) -> list[str]:
     items.append(item)
     return items
 ```
+
+### Commented-Out Code
+
+Use version control instead of leaving dead code in the codebase. Commented-out code creates confusion about what's active.
+
+### Implicit Dependencies
+
+Make dependencies explicit through function parameters or constructor injection. Hidden dependencies make code hard to test and reason about.
