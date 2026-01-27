@@ -23,6 +23,51 @@ def process_data(items, threshold=0.5):
 
 Validate with: `uv run ty check .`
 
+## Data Structures
+
+**Use Pydantic models or dataclasses instead of raw dictionaries.**
+
+Structured data classes provide:
+- **IDE support**: Autocompletion, refactoring, go-to-definition
+- **Validation**: Automatic type checking and data validation (Pydantic)
+- **Documentation**: Self-documenting field names and types
+- **Immutability**: Prevent accidental mutations with `frozen=True`
+- **Serialization**: Built-in JSON/dict conversion
+
+```python
+from pydantic import BaseModel, Field
+
+# Good - Pydantic model with validation and documentation
+class SearchResult(BaseModel):
+    """A single search result from the retrieval system."""
+
+    document_id: str = Field(description="Unique identifier for the document")
+    content: str = Field(description="The matched text content")
+    score: float = Field(ge=0.0, le=1.0, description="Relevance score")
+    metadata: dict[str, str] = Field(default_factory=dict)
+
+def search(query: str) -> list[SearchResult]:
+    ...
+
+# Usage - clear attribute access with IDE support
+results = search("python async")
+for result in results:
+    print(f"{result.document_id}: {result.score:.2f}")
+
+
+# Bad - raw dictionary with no validation or documentation
+def search(query: str) -> list[dict]:
+    ...
+
+# Usage - error-prone string keys, no autocompletion
+results = search("python async")
+for result in results:
+    print(f"{result['doc_id']}: {result['score']:.2f}")  # KeyError: 'doc_id'
+```
+
+Use **Pydantic** when you need validation, serialization, or API boundaries.
+Use **dataclasses** for simple internal data containers.
+
 ## Documentation
 
 **All public functions/classes/modules MUST have Google-style docstrings.**
