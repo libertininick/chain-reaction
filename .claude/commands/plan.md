@@ -57,7 +57,7 @@ Phase N: End-to-End Validation
 ## After Planning
 
 Once the plan is approved, use:
-- **`/implement <phase-number>`** - Implement specific phase(s) from the plan
+- **`/implement <phase-number> from <plan-path>`** - Implement specific phase(s) from the plan
 - Or **manually reference** the plan document when implementing
 
 ## CRITICAL: Planner Does NOT Write Code
