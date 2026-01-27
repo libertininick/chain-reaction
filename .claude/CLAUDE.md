@@ -45,3 +45,4 @@ Reusable workflows in `.claude/commands/`:
 
 - `/plan <description>` - Create comprehensive implementation plan before coding
 - `/project:implement Phase <N> from <plan-document-path>` - Implement one or more phases from a coding plan
+- `/review <target>` - Code review (files, `--commit`, `--staged`, optionally with `--plan` context)
