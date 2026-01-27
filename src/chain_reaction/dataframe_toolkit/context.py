@@ -48,7 +48,7 @@ class DataFrameContext:
         ... )
 
         Get a registered DataFrame by its identifier
-        >>> retrieved_df = ctx.get_frame("df_00000001")
+        >>> retrieved_df = ctx.get_dataframe("df_00000001")
 
         Unregister a DataFrame
         >>> ctx.unregister("df_00000001")
