@@ -303,6 +303,8 @@ def encode(texts: list[str]) -> BatchEmbeddings:
 - **Keyword-only arguments**: Use `*` to force keyword arguments for clarity
 - **Return early**: Reduce nesting with guard clauses
 - **Pure functions**: Prefer functions without side effects when possible
+- **Return values over mutation**: Return values rather than modifying state when possible
+- **Separate I/O from logic**: Keep business logic pure; isolate I/O operations at boundaries
 
 ```python
 # Good - keyword-only after *, clear intent, documented defaults
@@ -745,3 +747,15 @@ Use version control instead of leaving dead code in the codebase. Commented-out 
 ### Implicit Dependencies
 
 Make dependencies explicit through function parameters or constructor injection. Hidden dependencies make code hard to test and reason about.
+
+### Premature Abstraction
+
+Don't create abstractions for single-use cases. Three similar lines of code is better than a premature abstraction. Reuse or extend existing functionality before creating new code.
+
+### Speculative Features
+
+Don't add features "just in case" they might be needed later. Only implement what's needed now. YAGNI (You Aren't Gonna Need It).
+
+### Overly Broad Error Handling
+
+Don't add generic error handling that obscures real errors. Catch specific exceptions and let unexpected errors propagate with full context.
