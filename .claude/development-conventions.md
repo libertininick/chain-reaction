@@ -55,6 +55,111 @@ Use absolute imports. Avoid `from module import *`.
 - **Loose coupling**: Prefer composition and dependency injection over tight coupling
 - **Single responsibility**: Each function/class should have one clear purpose
 
+## Naming Conventions
+
+**Names should reveal intent and be self-documenting.**
+
+### Core Principles
+
+1. **Names reveal intent**: A reader should understand the purpose without reading the implementation
+2. **Use `<verb>_<noun>` pattern**: Functions and methods describe actions on subjects
+
+### Function and Method Names
+
+Use the `<verb>_<noun>` pattern to clearly communicate what the function does:
+
+```python
+# Good - verb_noun pattern reveals intent
+def fetch_user(user_id: int) -> User: ...
+def calculate_similarity(vec_a: list[float], vec_b: list[float]) -> float: ...
+def validate_config(config: Config) -> bool: ...
+def parse_response(raw: str) -> Response: ...
+def build_query(filters: list[Filter]) -> Query: ...
+
+# Bad - vague or missing verb
+def user(user_id: int) -> User: ...  # What action?
+def similarity(vec_a, vec_b): ...     # Calculate? Check? Compare?
+def config(config: Config): ...       # Validate? Load? Save?
+def response(raw: str): ...           # Parse? Build? Send?
+```
+
+### Common Verb Prefixes
+
+| Verb | Use For | Example |
+|------|---------|---------|
+| `get_` | Retrieve existing data | `get_user_by_id`, `get_config` |
+| `fetch_` | Retrieve from external source | `fetch_api_data`, `fetch_remote_file` |
+| `create_` | Instantiate new objects | `create_session`, `create_embedding` |
+| `build_` | Construct complex objects | `build_query`, `build_request` |
+| `parse_` | Convert/interpret data | `parse_json`, `parse_response` |
+| `validate_` | Check correctness | `validate_input`, `validate_schema` |
+| `calculate_` | Compute values | `calculate_score`, `calculate_distance` |
+| `transform_` | Convert between formats | `transform_coordinates`, `transform_data` |
+| `is_` / `has_` | Boolean checks | `is_valid`, `has_permission` |
+
+### Variable Names
+
+```python
+# Good - descriptive, reveals content/purpose
+user_count = len(users)
+max_retry_attempts = 3
+embedding_dimensions = 768
+is_authenticated = True
+has_valid_license = check_license(user)
+
+# Bad - single letters, abbreviations, generic names
+n = len(users)       # What is n?
+max = 3              # Max of what? (also shadows builtin)
+dim = 768            # Dimension of what?
+flag = True          # What flag?
+temp = check(user)   # Temporary what?
+```
+
+### Class Names
+
+Use `PascalCase` nouns that describe what the class represents:
+
+```python
+# Good - clear nouns describing the entity
+class SearchIndex: ...
+class EmbeddingModel: ...
+class RetryPolicy: ...
+class ValidationError: ...
+
+# Bad - vague or verb-like names
+class Manager: ...      # Manager of what?
+class Helper: ...       # Too generic
+class DoSearch: ...     # Verb, not noun
+class Misc: ...         # Meaningless
+```
+
+### Constants
+
+Use `SCREAMING_SNAKE_CASE` with descriptive names:
+
+```python
+# Good - clear purpose
+MAX_RETRY_ATTEMPTS = 3
+DEFAULT_TIMEOUT_SECONDS = 30.0
+SUPPORTED_FILE_FORMATS = frozenset({"json", "csv", "parquet"})
+
+# Bad - unclear or too short
+MAX = 3              # Max of what?
+TIMEOUT = 30.0       # In what units?
+FORMATS = {...}      # What kind of formats?
+```
+
+### Guidelines Summary
+
+| Element | Convention | Example |
+|---------|------------|---------|
+| Functions/methods | `verb_noun` lowercase | `fetch_user`, `validate_input` |
+| Variables | `snake_case`, descriptive | `user_count`, `is_valid` |
+| Classes | `PascalCase` nouns | `SearchIndex`, `UserSession` |
+| Constants | `SCREAMING_SNAKE_CASE` | `MAX_RETRIES`, `DEFAULT_TIMEOUT` |
+| Private members | `_` prefix | `_internal_cache`, `_validate` |
+| Type aliases | `PascalCase` | `JsonValue`, `Embedding` |
+
 ## Type Safety
 
 **IMPORTANT: Type annotations are REQUIRED on all functions and classes.**
