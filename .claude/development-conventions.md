@@ -12,7 +12,7 @@
 ## Validation Commands
 
 ```bash
-uv run ruff check --fix && uv run ruff format  # Lint and format
+uv run ruff check --fix && uv run ruff format   # Lint and format
 uv run ty check .                               # Type check
 uv run pytest --cov --cov-fail-under=90         # Tests with coverage
 uv tool run pydoclint --style=google --allow-init-docstring=True src/ tests/  # Docstrings
