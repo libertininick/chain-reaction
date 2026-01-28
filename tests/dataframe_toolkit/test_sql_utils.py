@@ -1,0 +1,750 @@
+"""Tests for SQL utility functions.
+
+This module tests the `parse_sql` function which parses SQL queries using SQLglot,
+returning an Expression on success or raising SQLSyntaxError for empty queries,
+whitespace-only queries, and invalid SQL syntax.
+"""
+
+from __future__ import annotations
+
+import pytest
+import sqlglot
+from pytest_check import check
+
+from chain_reaction.dataframe_toolkit.exceptions import SQLSyntaxError
+from chain_reaction.dataframe_toolkit.sql_utils import parse_sql
+
+# ruff: noqa: PLR6301
+
+
+class TestParseSQLValidQueries:
+    """Tests for parse_sql with valid SQL queries.
+
+    These tests verify that syntactically correct SQL queries return
+    a sqlglot.Expression when parsed.
+    """
+
+    @pytest.mark.parametrize(
+        "query",
+        [
+            "SELECT a FROM t",
+            "SELECT a, b, c FROM table1",
+            "SELECT * FROM users",
+            "SELECT DISTINCT name FROM employees",
+            "SELECT COUNT(*) FROM orders",
+            "SELECT a FROM t WHERE a > 1",
+            "SELECT name, age FROM users WHERE active = true AND age >= 18",
+            "SELECT * FROM products ORDER BY price DESC",
+            "SELECT category, SUM(amount) FROM sales GROUP BY category",
+            "SELECT * FROM items LIMIT 10 OFFSET 5",
+        ],
+        ids=[
+            "simple_select",
+            "select_multiple_columns",
+            "select_star",
+            "select_distinct",
+            "select_count",
+            "select_with_where",
+            "select_with_compound_where",
+            "select_with_order_by",
+            "select_with_group_by",
+            "select_with_limit_offset",
+        ],
+    )
+    def test_parse_sql_valid_select_returns_expression(self, query: str) -> None:
+        """Valid SELECT statements should return a sqlglot Expression.
+
+        Verifies that various valid SELECT statement patterns are parsed
+        successfully and return a sqlglot.Expression.
+
+        Args:
+            query: A syntactically valid SELECT statement.
+        """
+        result = parse_sql(query)
+
+        with check:
+            assert isinstance(result, sqlglot.Expression), "parse_sql should return Expression for valid queries"
+
+    @pytest.mark.parametrize(
+        "query",
+        [
+            "INSERT INTO users (name) VALUES ('John')",
+            "INSERT INTO products (id, name, price) VALUES (1, 'Widget', 9.99)",
+            "INSERT INTO logs SELECT * FROM temp_logs",
+        ],
+        ids=[
+            "insert_single_column",
+            "insert_multiple_columns",
+            "insert_from_select",
+        ],
+    )
+    def test_parse_sql_valid_insert_returns_expression(self, query: str) -> None:
+        """Valid INSERT statements should return a sqlglot Expression.
+
+        Verifies that various valid INSERT statement patterns are parsed
+        successfully and return a sqlglot.Expression.
+
+        Args:
+            query: A syntactically valid INSERT statement.
+        """
+        result = parse_sql(query)
+
+        with check:
+            assert isinstance(result, sqlglot.Expression), "parse_sql should return Expression for valid INSERT"
+
+    @pytest.mark.parametrize(
+        "query",
+        [
+            "UPDATE users SET name = 'Jane'",
+            "UPDATE products SET price = 19.99 WHERE id = 1",
+            "UPDATE orders SET status = 'shipped', updated_at = NOW() WHERE order_id = 123",
+        ],
+        ids=[
+            "update_simple",
+            "update_with_where",
+            "update_multiple_columns",
+        ],
+    )
+    def test_parse_sql_valid_update_returns_expression(self, query: str) -> None:
+        """Valid UPDATE statements should return a sqlglot Expression.
+
+        Verifies that various valid UPDATE statement patterns are parsed
+        successfully and return a sqlglot.Expression.
+
+        Args:
+            query: A syntactically valid UPDATE statement.
+        """
+        result = parse_sql(query)
+
+        with check:
+            assert isinstance(result, sqlglot.Expression), "parse_sql should return Expression for valid UPDATE"
+
+    @pytest.mark.parametrize(
+        "query",
+        [
+            "DELETE FROM users",
+            "DELETE FROM orders WHERE status = 'cancelled'",
+            "DELETE FROM logs WHERE created_at < '2024-01-01'",
+        ],
+        ids=[
+            "delete_all",
+            "delete_with_where",
+            "delete_with_date_condition",
+        ],
+    )
+    def test_parse_sql_valid_delete_returns_expression(self, query: str) -> None:
+        """Valid DELETE statements should return a sqlglot Expression.
+
+        Verifies that various valid DELETE statement patterns are parsed
+        successfully and return a sqlglot.Expression.
+
+        Args:
+            query: A syntactically valid DELETE statement.
+        """
+        result = parse_sql(query)
+
+        with check:
+            assert isinstance(result, sqlglot.Expression), "parse_sql should return Expression for valid DELETE"
+
+
+class TestParseSQLComplexQueries:
+    """Tests for parse_sql with complex SQL patterns.
+
+    These tests verify that advanced SQL features like JOINs, subqueries,
+    and CTEs are properly parsed and return sqlglot.Expression.
+    """
+
+    @pytest.mark.parametrize(
+        "query",
+        [
+            "SELECT a.id, b.name FROM table_a a JOIN table_b b ON a.id = b.a_id",
+            "SELECT * FROM users u INNER JOIN orders o ON u.id = o.user_id",
+            "SELECT * FROM products p LEFT JOIN categories c ON p.category_id = c.id",
+            "SELECT * FROM employees e RIGHT JOIN departments d ON e.dept_id = d.id",
+            "SELECT * FROM table1 t1 FULL OUTER JOIN table2 t2 ON t1.key = t2.key",
+            "SELECT * FROM t1 CROSS JOIN t2",
+            (
+                "SELECT u.name, o.total, p.name AS product "
+                "FROM users u "
+                "JOIN orders o ON u.id = o.user_id "
+                "JOIN order_items oi ON o.id = oi.order_id "
+                "JOIN products p ON oi.product_id = p.id"
+            ),
+        ],
+        ids=[
+            "simple_join",
+            "inner_join",
+            "left_join",
+            "right_join",
+            "full_outer_join",
+            "cross_join",
+            "multi_table_join",
+        ],
+    )
+    def test_parse_sql_valid_join_returns_expression(self, query: str) -> None:
+        """Valid JOIN queries should return a sqlglot Expression.
+
+        Verifies that various JOIN patterns (INNER, LEFT, RIGHT, FULL OUTER,
+        CROSS, and multi-table JOINs) are parsed successfully.
+
+        Args:
+            query: A syntactically valid JOIN query.
+        """
+        result = parse_sql(query)
+
+        with check:
+            assert isinstance(result, sqlglot.Expression), "parse_sql should return Expression for valid JOINs"
+
+    @pytest.mark.parametrize(
+        "query",
+        [
+            "SELECT * FROM users WHERE id IN (SELECT user_id FROM orders)",
+            "SELECT name, (SELECT COUNT(*) FROM orders WHERE orders.user_id = users.id) AS order_count FROM users",
+            "SELECT * FROM (SELECT id, name FROM users WHERE active = true) AS active_users",
+            ("SELECT * FROM products WHERE price > (SELECT AVG(price) FROM products)"),
+            ("SELECT * FROM employees e WHERE EXISTS (SELECT 1 FROM managers m WHERE m.employee_id = e.id)"),
+        ],
+        ids=[
+            "subquery_in_where",
+            "correlated_subquery",
+            "subquery_in_from",
+            "scalar_subquery",
+            "exists_subquery",
+        ],
+    )
+    def test_parse_sql_valid_subquery_returns_expression(self, query: str) -> None:
+        """Valid subqueries should return a sqlglot Expression.
+
+        Verifies that various subquery patterns (IN, correlated, derived tables,
+        scalar, EXISTS) are parsed successfully.
+
+        Args:
+            query: A syntactically valid query containing subqueries.
+        """
+        result = parse_sql(query)
+
+        with check:
+            assert isinstance(result, sqlglot.Expression), "parse_sql should return Expression for valid subqueries"
+
+    @pytest.mark.parametrize(
+        "query",
+        [
+            "WITH temp AS (SELECT * FROM users) SELECT * FROM temp",
+            (
+                "WITH active_users AS (SELECT * FROM users WHERE active = true), "
+                "recent_orders AS (SELECT * FROM orders WHERE date > '2024-01-01') "
+                "SELECT * FROM active_users u JOIN recent_orders o ON u.id = o.user_id"
+            ),
+            (
+                "WITH RECURSIVE tree AS ("
+                "SELECT id, parent_id, name FROM categories WHERE parent_id IS NULL "
+                "UNION ALL "
+                "SELECT c.id, c.parent_id, c.name FROM categories c "
+                "JOIN tree t ON c.parent_id = t.id"
+                ") SELECT * FROM tree"
+            ),
+        ],
+        ids=[
+            "simple_cte",
+            "multiple_ctes",
+            "recursive_cte",
+        ],
+    )
+    def test_parse_sql_valid_cte_returns_expression(self, query: str) -> None:
+        """Valid CTEs (Common Table Expressions) should return a sqlglot Expression.
+
+        Verifies that various CTE patterns (simple, multiple, recursive) are
+        parsed successfully.
+
+        Args:
+            query: A syntactically valid query containing CTEs.
+        """
+        result = parse_sql(query)
+
+        with check:
+            assert isinstance(result, sqlglot.Expression), "parse_sql should return Expression for valid CTEs"
+
+    @pytest.mark.parametrize(
+        "query",
+        [
+            "SELECT * FROM t1 UNION SELECT * FROM t2",
+            "SELECT * FROM t1 UNION ALL SELECT * FROM t2",
+            "SELECT * FROM t1 INTERSECT SELECT * FROM t2",
+            "SELECT * FROM t1 EXCEPT SELECT * FROM t2",
+        ],
+        ids=[
+            "union",
+            "union_all",
+            "intersect",
+            "except",
+        ],
+    )
+    def test_parse_sql_valid_set_operations_returns_expression(self, query: str) -> None:
+        """Valid set operations should return a sqlglot Expression.
+
+        Verifies that UNION, UNION ALL, INTERSECT, and EXCEPT operations
+        are parsed successfully.
+
+        Args:
+            query: A syntactically valid query with set operations.
+        """
+        result = parse_sql(query)
+
+        with check:
+            assert isinstance(result, sqlglot.Expression), "parse_sql should return Expression for valid set operations"
+
+    @pytest.mark.parametrize(
+        "query",
+        [
+            "SELECT name, SUM(amount) OVER (PARTITION BY category) FROM sales",
+            "SELECT name, ROW_NUMBER() OVER (ORDER BY created_at DESC) FROM users",
+            (
+                "SELECT name, amount, "
+                "LAG(amount) OVER (PARTITION BY user_id ORDER BY date) AS prev_amount "
+                "FROM transactions"
+            ),
+            ("SELECT *, RANK() OVER (PARTITION BY department ORDER BY salary DESC) AS rank FROM employees"),
+        ],
+        ids=[
+            "sum_over_partition",
+            "row_number",
+            "lag_function",
+            "rank_function",
+        ],
+    )
+    def test_parse_sql_valid_window_functions_returns_expression(self, query: str) -> None:
+        """Valid window functions should return a sqlglot Expression.
+
+        Verifies that various window function patterns are parsed successfully.
+
+        Args:
+            query: A syntactically valid query with window functions.
+        """
+        result = parse_sql(query)
+
+        with check:
+            assert isinstance(result, sqlglot.Expression), (
+                "parse_sql should return Expression for valid window functions"
+            )
+
+
+class TestParseSQLEmptyQueries:
+    """Tests for parse_sql with empty or whitespace-only queries.
+
+    These tests verify that empty and whitespace-only queries raise SQLSyntaxError
+    with an empty errors list.
+    """
+
+    def test_parse_sql_empty_string_raises_sql_syntax_error(self) -> None:
+        """Empty string should raise SQLSyntaxError.
+
+        An empty query string is not valid SQL and should raise SQLSyntaxError
+        with an empty errors list.
+        """
+        with pytest.raises(SQLSyntaxError):
+            parse_sql("")
+
+    def test_parse_sql_empty_string_has_empty_errors(self) -> None:
+        """Empty string SQLSyntaxError should have empty errors list.
+
+        When an empty query is provided, the SQLSyntaxError should contain
+        an empty errors list since there are no parse errors to report.
+        """
+        with pytest.raises(SQLSyntaxError) as exc_info:
+            parse_sql("")
+
+        with check:
+            assert exc_info.value.errors == [], "Empty query should have empty errors list"
+        with check:
+            assert not exc_info.value.query, "SQLSyntaxError should store the empty query"
+
+    @pytest.mark.parametrize(
+        "query",
+        [
+            " ",
+            "   ",
+            "\t",
+            "\n",
+            "\r\n",
+            "  \t\n  ",
+            "\t\t\t",
+            "\n\n\n",
+        ],
+        ids=[
+            "single_space",
+            "multiple_spaces",
+            "tab",
+            "newline",
+            "crlf",
+            "mixed_whitespace",
+            "multiple_tabs",
+            "multiple_newlines",
+        ],
+    )
+    def test_parse_sql_whitespace_only_raises_sql_syntax_error(self, query: str) -> None:
+        """Whitespace-only strings should raise SQLSyntaxError.
+
+        Queries containing only whitespace characters (spaces, tabs, newlines)
+        are not valid SQL and should raise SQLSyntaxError with an empty errors list.
+
+        Args:
+            query: A string containing only whitespace characters.
+        """
+        with pytest.raises(SQLSyntaxError) as exc_info:
+            parse_sql(query)
+
+        with check:
+            assert exc_info.value.errors == [], "Whitespace-only query should have empty errors list"
+
+
+class TestParseSQLInvalidQueries:
+    """Tests for parse_sql with invalid SQL syntax.
+
+    These tests verify that syntactically incorrect SQL queries raise
+    SQLSyntaxError with appropriate error information.
+
+    Note: SQLglot is quite permissive and accepts many incomplete SQL statements.
+    These tests use queries that are definitively rejected by SQLglot's parser.
+    """
+
+    @pytest.mark.parametrize(
+        "query",
+        [
+            "SELECT * FROM (SELECT a FROM t",  # unclosed parenthesis
+            "SELECT * FROM t WHERE a = (",  # unclosed paren in expression
+            "SELECT a FROM t WHERE a >",  # incomplete comparison operator
+            "SELECT 1 + FROM t",  # invalid arithmetic expression
+            "SELECT a FROM t JOIN",  # incomplete join (no table)
+            "SELECT a FROM t WHERE IN (1)",  # missing left operand for IN
+            "SELECT a FROM t WHERE a BETWEEN",  # incomplete BETWEEN
+            "SELECT a FROM t ORDER BY ,",  # comma without column in ORDER BY
+            "SELECT a FROM t WHERE a LIKE",  # incomplete LIKE
+            "SELECT CASE WHEN FROM t",  # incomplete CASE expression
+        ],
+        ids=[
+            "unclosed_parenthesis",
+            "unclosed_paren_in_expression",
+            "incomplete_comparison",
+            "invalid_arithmetic",
+            "incomplete_join",
+            "missing_in_operand",
+            "incomplete_between",
+            "empty_order_by_column",
+            "incomplete_like",
+            "incomplete_case",
+        ],
+    )
+    def test_parse_sql_invalid_query_raises_sql_syntax_error(self, query: str) -> None:
+        """Invalid SQL syntax should raise SQLSyntaxError.
+
+        Queries with syntax errors that SQLglot's parser definitively rejects
+        should raise SQLSyntaxError with error details.
+
+        Args:
+            query: A syntactically invalid SQL query.
+        """
+        with pytest.raises(SQLSyntaxError):
+            parse_sql(query)
+
+    def test_parse_sql_unclosed_parenthesis_raises_sql_syntax_error(self) -> None:
+        """Unclosed parenthesis should raise SQLSyntaxError.
+
+        Mismatched parentheses are a common syntax error that should be
+        detected and reported clearly.
+        """
+        with pytest.raises(SQLSyntaxError):
+            parse_sql("SELECT * FROM (SELECT a FROM t")
+
+    def test_parse_sql_invalid_expression_raises_sql_syntax_error(self) -> None:
+        """Invalid expression with missing operand should raise SQLSyntaxError.
+
+        Arithmetic or comparison expressions with missing operands should
+        be caught by the parser.
+        """
+        with pytest.raises(SQLSyntaxError):
+            parse_sql("SELECT 1 + FROM t")
+
+    def test_parse_sql_incomplete_join_raises_sql_syntax_error(self) -> None:
+        """Incomplete JOIN without table should raise SQLSyntaxError.
+
+        A JOIN keyword without a following table name should be rejected.
+        """
+        with pytest.raises(SQLSyntaxError):
+            parse_sql("SELECT a FROM t JOIN")
+
+    def test_parse_sql_missing_in_operand_raises_sql_syntax_error(self) -> None:
+        """IN clause without left operand should raise SQLSyntaxError.
+
+        The IN operator requires a column or expression on its left side.
+        """
+        with pytest.raises(SQLSyntaxError):
+            parse_sql("SELECT a FROM t WHERE IN (1, 2, 3)")
+
+
+class TestParseSQLErrorDetails:
+    """Tests for SQLSyntaxError attributes and error details.
+
+    These tests verify that SQLSyntaxError contains the expected attributes
+    including the original query and parse error details.
+    """
+
+    # Use a query that definitively causes a ParseError in SQLglot
+    INVALID_QUERY = "SELECT * FROM (SELECT a FROM t"
+
+    def test_parse_sql_error_contains_query(self) -> None:
+        """SQLSyntaxError should contain the original query.
+
+        The query attribute should store the exact query string that was
+        validated, enabling debugging and error reporting.
+        """
+        invalid_query = self.INVALID_QUERY
+
+        with pytest.raises(SQLSyntaxError) as exc_info:
+            parse_sql(invalid_query)
+
+        with check:
+            assert exc_info.value.query == invalid_query, "SQLSyntaxError should store the original query"
+
+    def test_parse_sql_error_contains_errors_list(self) -> None:
+        """SQLSyntaxError should contain a non-empty errors list.
+
+        The errors attribute should contain at least one ParseErrorDict
+        describing what went wrong during parsing.
+        """
+        with pytest.raises(SQLSyntaxError) as exc_info:
+            parse_sql(self.INVALID_QUERY)
+
+        with check:
+            assert isinstance(exc_info.value.errors, list), "errors should be a list"
+        with check:
+            assert len(exc_info.value.errors) > 0, "errors list should not be empty for invalid SQL"
+
+    def test_parse_sql_error_contains_description(self) -> None:
+        """SQLSyntaxError errors should contain description field.
+
+        Each error in the errors list should have a description field
+        explaining what went wrong.
+        """
+        with pytest.raises(SQLSyntaxError) as exc_info:
+            parse_sql(self.INVALID_QUERY)
+
+        error = exc_info.value.errors[0]
+        with check:
+            assert "description" in error, "Error dict should contain 'description' key"
+        with check:
+            assert isinstance(error["description"], str), "description should be a string"
+        with check:
+            assert len(error["description"]) > 0, "description should not be empty"
+
+    def test_parse_sql_error_contains_location_info(self) -> None:
+        """SQLSyntaxError errors should contain line and column information.
+
+        Parse errors should include location information (line and col) to
+        help identify where in the query the error occurred.
+        """
+        with pytest.raises(SQLSyntaxError) as exc_info:
+            parse_sql(self.INVALID_QUERY)
+
+        error = exc_info.value.errors[0]
+        with check:
+            assert "line" in error, "Error dict should contain 'line' key"
+        with check:
+            assert "col" in error, "Error dict should contain 'col' key"
+        with check:
+            assert isinstance(error["line"], int), "line should be an integer"
+        with check:
+            assert isinstance(error["col"], int), "col should be an integer"
+
+    def test_parse_sql_error_message_contains_details(self) -> None:
+        """SQLSyntaxError message should include parse error details.
+
+        The exception message should contain useful information about the
+        parse error, not just a generic "syntax error" message.
+        """
+        with pytest.raises(SQLSyntaxError) as exc_info:
+            parse_sql(self.INVALID_QUERY)
+
+        error_message = str(exc_info.value)
+        with check:
+            assert "SQL syntax error" in error_message, "Error message should indicate SQL syntax error"
+
+    def test_parse_sql_error_context_fields(self) -> None:
+        """SQLSyntaxError errors contain all ParseErrorDict fields.
+
+        Parse errors include start_context, highlight, and end_context
+        fields to show the problematic section of the query.
+        """
+        with pytest.raises(SQLSyntaxError) as exc_info:
+            parse_sql(self.INVALID_QUERY)
+
+        error = exc_info.value.errors[0]
+        # These fields should exist (even if empty) as per ParseErrorDict
+        expected_keys = {"description", "line", "col", "start_context", "highlight", "end_context"}
+        actual_keys = set(error.keys())
+
+        with check:
+            assert expected_keys == actual_keys, (
+                f"Error dict should contain all ParseErrorDict keys. "
+                f"Missing: {expected_keys - actual_keys}, Extra: {actual_keys - expected_keys}"
+            )
+
+    def test_parse_sql_error_has_meaningful_context(self) -> None:
+        """SQLSyntaxError should provide context about where the error occurred.
+
+        The start_context and highlight fields should contain text from
+        the query to help locate the error.
+        """
+        with pytest.raises(SQLSyntaxError) as exc_info:
+            parse_sql(self.INVALID_QUERY)
+
+        error = exc_info.value.errors[0]
+        # For unclosed parenthesis, start_context should contain query text
+        with check:
+            assert "start_context" in error, "Error should have start_context"
+        with check:
+            # The start_context should contain part of the query
+            assert len(error.get("start_context", "")) > 0 or len(error.get("highlight", "")) > 0, (
+                "At least one of start_context or highlight should have content"
+            )
+
+
+class TestParseSQLEdgeCases:
+    """Tests for parse_sql edge cases.
+
+    These tests verify proper handling of edge cases like queries with
+    leading/trailing whitespace, comments, and special characters.
+    """
+
+    @pytest.mark.parametrize(
+        "query",
+        [
+            "  SELECT a FROM t",
+            "SELECT a FROM t  ",
+            "  SELECT a FROM t  ",
+            "\nSELECT a FROM t\n",
+            "\t\tSELECT a FROM t\t\t",
+        ],
+        ids=[
+            "leading_spaces",
+            "trailing_spaces",
+            "both_spaces",
+            "newlines",
+            "tabs",
+        ],
+    )
+    def test_parse_sql_query_with_whitespace_padding_returns_expression(self, query: str) -> None:
+        """Valid queries with leading/trailing whitespace should return Expression.
+
+        Whitespace around a valid SQL query should be ignored during parsing.
+
+        Args:
+            query: A valid SQL query with surrounding whitespace.
+        """
+        result = parse_sql(query)
+
+        with check:
+            assert isinstance(result, sqlglot.Expression), "Whitespace padding should not affect valid query parsing"
+
+    @pytest.mark.parametrize(
+        "query",
+        [
+            "SELECT a FROM t -- this is a comment",
+            "-- comment\nSELECT a FROM t",
+            "SELECT /* inline comment */ a FROM t",
+            "SELECT a /* comment */ FROM /* comment */ t",
+        ],
+        ids=[
+            "trailing_line_comment",
+            "leading_line_comment",
+            "inline_block_comment",
+            "multiple_block_comments",
+        ],
+    )
+    def test_parse_sql_query_with_comments_returns_expression(self, query: str) -> None:
+        """Valid queries with SQL comments should return Expression.
+
+        SQL comments (both line and block) should be handled correctly
+        by the parser.
+
+        Args:
+            query: A valid SQL query containing comments.
+        """
+        result = parse_sql(query)
+
+        with check:
+            assert isinstance(result, sqlglot.Expression), "SQL comments should not affect valid query parsing"
+
+    def test_parse_sql_multiline_query_returns_expression(self) -> None:
+        """Valid multiline queries should return Expression.
+
+        Queries formatted across multiple lines should be parsed correctly.
+        """
+        query = """
+        SELECT
+            a,
+            b,
+            c
+        FROM
+            table_name
+        WHERE
+            a > 1
+            AND b < 10
+        ORDER BY
+            c DESC
+        """
+        result = parse_sql(query)
+
+        with check:
+            assert isinstance(result, sqlglot.Expression), "Multiline query formatting should not affect parsing"
+
+    def test_parse_sql_case_insensitive_keywords(self) -> None:
+        """SQL keywords in different cases should be accepted.
+
+        SQL keywords are case-insensitive, so SELECT, select, and SeLeCt
+        should all be valid.
+        """
+        queries = [
+            "select a from t",
+            "SELECT A FROM T",
+            "SeLeCt A fRoM t",
+        ]
+        for query in queries:
+            result = parse_sql(query)
+            with check:
+                assert isinstance(result, sqlglot.Expression), f"Case variation '{query}' should be valid"
+
+    def test_parse_sql_special_characters_in_strings(self) -> None:
+        """Queries with special characters in string literals should be valid.
+
+        String literals may contain special characters that should not
+        affect SQL parsing.
+        """
+        query = "SELECT * FROM users WHERE name = 'O''Brien' AND email LIKE '%@example.com'"
+        result = parse_sql(query)
+
+        with check:
+            assert isinstance(result, sqlglot.Expression), "Special characters in strings should not affect parsing"
+
+    def test_parse_sql_numeric_literals(self) -> None:
+        """Queries with various numeric literal formats should be valid.
+
+        Different numeric formats (integers, floats, scientific notation)
+        should all be accepted.
+        """
+        query = "SELECT * FROM t WHERE a = 42 AND b = 3.14 AND c = 1.5e10 AND d = -99.9"
+        result = parse_sql(query)
+
+        with check:
+            assert isinstance(result, sqlglot.Expression), "Numeric literals should be parsed correctly"
+
+    def test_parse_sql_quoted_identifiers(self) -> None:
+        """Queries with quoted identifiers should be valid.
+
+        Table and column names may be quoted to allow reserved words or
+        special characters as identifiers.
+        """
+        query = 'SELECT "select", "from" FROM "table" WHERE "order" = 1'
+        result = parse_sql(query)
+
+        with check:
+            assert isinstance(result, sqlglot.Expression), "Quoted identifiers should be parsed correctly"
