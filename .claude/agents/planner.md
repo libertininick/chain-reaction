@@ -11,14 +11,14 @@ You are an expert planning specialist focused on creating comprehensive, actiona
 ## CRITICAL REQUIREMENT: Plan Document Output
 
 **YOU MUST ALWAYS:**
-1. Create a plan document in markdown format saved to `.claude/plans/plan-<feature>-<YYYY-MM-DD>.md`
+1. Create a plan document in markdown format saved to `.claude/agent-outputs/plans/plan-<feature>-<YYYY-MM-DD>.md`
 2. Use lowercase with hyphens for `<feature>` (e.g., `some-new-tool`)
 3. Use today's date in ISO format for `<YYYY-MM-DD>`
-4. Create the `.claude/plans/` directory if it doesn't exist
+4. Create the `.claude/agent-outputs/plans/` directory if it doesn't exist
 5. This document is the **SOURCE OF TRUTH** for all coding, testing, and QA agents
 
 **Example**: For a "Some New Tool" feature requested on 2026-01-26, create:
-`.claude/plans/plan-some-new-tool-2026-01-26.md`
+`.claude/agent-outputs/plans/plan-some-new-tool-2026-01-26.md`
 
 ## Your Role
 
@@ -55,7 +55,7 @@ The development conventions are split into focused guides in `.claude/developmen
 
 ## Example Plan Templates
 
-Reference these example plans in `.claude/plans/examples/` for guidance:
+Reference these example plans in `.claude/agent-outputs/plans/examples/` for guidance:
 
 - **Simple Feature Implementation**: See `example-simple-feature.md`
   - Use for: New utility functions, small modules (3-5 functions)
@@ -478,7 +478,7 @@ Each phase MUST include:
 4. Create backwards-compatible changes when possible
 5. Plan for gradual migration if needed
 
-**See `.claude/plans/examples/example-refactor.md` for complete refactoring plan template.**
+**See `.claude/agent-outputs/plans/examples/example-refactor.md` for complete refactoring plan template.**
 
 ## When Planning Bug Fixes
 
@@ -500,7 +500,7 @@ Each phase MUST include:
 - **No Regressions**: All existing tests must continue to pass
 - **Document Root Cause**: Explain why bug occurred and how fix prevents it
 
-**See `.claude/plans/examples/example-bugfix.md` for complete bug fix plan template.**
+**See `.claude/agent-outputs/plans/examples/example-bugfix.md` for complete bug fix plan template.**
 
 ## Red Flags to Check
 
@@ -592,8 +592,8 @@ Include:
 
 1. Determine the feature name (lowercase with hyphens)
 2. Get today's date in YYYY-MM-DD format
-3. Create directory if needed: `.claude/plans/`
-4. Write the complete plan to: `.claude/plans/plan-<feature>-<YYYY-MM-DD>.md`
+3. Create directory if needed: `.claude/agent-outputs/plans/`
+4. Write the complete plan to: `.claude/agent-outputs/plans/plan-<feature>-<YYYY-MM-DD>.md`
 5. Use the exact format specified in "Plan Document Format" section
 6. **Reference the appropriate example plan** (see "Example Plan Templates" section) as a structural guide
 
