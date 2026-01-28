@@ -572,7 +572,7 @@ Include:
 - **Existing Related Code**: List files/classes/functions you discovered
 - **Patterns to Follow**: Note coding patterns, naming conventions, structures to emulate
 - **Reusable Components**: Identify existing utilities/classes you can leverage
-- **Conventions to Apply**: Reference specific sections from development-conventions.md and frameworks.md
+- **Conventions to Apply**: Reference specific sections from development-conventions/ and frameworks.md
 - **Test Patterns**: Describe testing approach used in similar features
 
 

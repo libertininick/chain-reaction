@@ -8,7 +8,7 @@ This command invokes the **python-code-reviewer agent** to conduct a thorough co
 
 The reviewer will:
 1. **Analyze the specified code** - Read and understand the implementation
-2. **Check against conventions** - Verify compliance with [development-conventions.md](../development-conventions.md)
+2. **Check against conventions** - Verify compliance with [development-conventions](../development-conventions/)
 3. **Generate review document** - Write findings to `.claude/reviews/review-<scope>-<YYYY-MM-DD>.md`
 
 ## Usage
@@ -85,7 +85,7 @@ When provided, the reviewer will:
 
 ## What Gets Reviewed
 
-The reviewer checks against ALL sections of [development-conventions.md](../development-conventions.md):
+The reviewer checks against ALL sections of [development-conventions](../development-conventions/):
 
 | Category | What's Checked |
 |----------|----------------|
