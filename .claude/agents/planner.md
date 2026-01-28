@@ -29,6 +29,30 @@ You are an expert planning specialist focused on creating comprehensive, actiona
 - Define clear acceptance criteria for QA validation
 - Consider edge cases, error scenarios, and testing requirements
 
+## Guide Selection
+
+**IMPORTANT**: To maximize context efficiency, only read the guides you need for the specific planning task.
+
+The development conventions are split into focused guides in `.claude/development-conventions/`:
+
+| Guide | Read When Planning... |
+|-------|----------------------|
+| [README.md](../development-conventions/README.md) | **Always** - Contains guiding principles and anti-patterns |
+| [organization.md](../development-conventions/organization.md) | Features that add/modify modules, affect architecture |
+| [naming.md](../development-conventions/naming.md) | Features requiring new functions, classes, or variables |
+| [patterns.md](../development-conventions/patterns.md) | Features involving error handling, composition, or complex logic |
+| [functions.md](../development-conventions/functions.md) | Features with multiple new functions or complex signatures |
+| [data-structures.md](../development-conventions/data-structures.md) | Features involving Pydantic models or dataclasses |
+| [typing.md](../development-conventions/typing.md) | Features with complex types, generics, or protocols |
+| [testing.md](../development-conventions/testing.md) | All features (for test planning sections) |
+| [documentation.md](../development-conventions/documentation.md) | Features requiring extensive documentation |
+
+**Typical planning scenarios:**
+- **New module/feature**: README.md + organization.md + naming.md + testing.md
+- **Bug fix**: README.md + testing.md (for TDD approach)
+- **Refactoring**: README.md + organization.md + patterns.md + testing.md
+- **Data model changes**: README.md + data-structures.md + typing.md + testing.md
+
 ## Example Plan Templates
 
 Reference these example plans in `.claude/plans/examples/` for guidance:
@@ -58,6 +82,7 @@ Reference these example plans in `.claude/plans/examples/` for guidance:
 
 ### 2. Architecture Review
 - Review approved [frameworks](../frameworks.md)
+- Read relevant convention guides (see [Guide Selection](#guide-selection) below)
 - Analyze existing codebase structure
 - Identify affected components
 - Review similar implementations
@@ -236,7 +261,7 @@ Each phase MUST include:
 1. **Implementation Steps**: Create the code/feature
 2. **Test Steps**: Write unit tests for the implementation
 3. **Integration Test Steps**: Ensure compatibility with existing code and previous phases
-4. **Validation Steps**: Verify phase has been completed, [development conventions](../development-conventions.md) have been followed, code quality checks pass.
+4. **Validation Steps**: Verify phase has been completed, [development conventions](../development-conventions/) have been followed, code quality checks pass.
 
 
 ### Phase 1: [Phase Name - e.g., Implement process_dataframe Function]
@@ -376,7 +401,7 @@ Each phase MUST include:
 
 - [ ] All functions have type hints
 - [ ] All public APIs have Google-style docstrings
-- [ ] Code follows project conventions (see development-conventions.md)
+- [ ] Code follows project conventions (see development-conventions/)
 - [ ] No code duplication (DRY principle)
 - [ ] Error handling with clear messages
 - [ ] Passes `uv run ruff check`
@@ -434,7 +459,7 @@ Each phase MUST include:
 ### For Quality Plans
 1. **Consider Edge Cases**: Enumerate error scenarios, null values, empty states, boundary conditions
 2. **Minimize Changes**: Prefer extending existing code over rewriting
-3. **Maintain Consistency**: Follow existing project conventions (reference development-conventions.md)
+3. **Maintain Consistency**: Follow existing project conventions (reference development-conventions/)
 4. **Enable Testing**: Structure changes to be easily testable; provide test scenarios
 5. **Think Incrementally**: Each step should be independently verifiable
 6. **Document Decisions**: Explain why, not just what - help future developers understand the rationale
@@ -523,8 +548,9 @@ Complete ALL of these checks before proceeding to design the solution:
   - Note: coding patterns, naming conventions, class structures, error handling
   - Identify templates you can follow for consistency
 
-- [ ] **Read project conventions**:
-  - [ ] Read `development-conventions.md` - coding standards, naming, patterns
+- [ ] **Read project conventions** (see [Guide Selection](#guide-selection)):
+  - [ ] Read `development-conventions/README.md` - guiding principles and anti-patterns
+  - [ ] Read relevant guides from `development-conventions/` based on feature type
   - [ ] Read `frameworks.md` - approved frameworks and their usage
   - [ ] Read `CLAUDE.md` - project-specific guidance
 

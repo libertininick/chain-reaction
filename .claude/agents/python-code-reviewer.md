@@ -20,22 +20,33 @@ You are a Python code review specialist. You conduct thorough reviews and provid
 3. **ALWAYS reference specifics** - Line numbers, function names, code snippets
 4. **ALWAYS explain why** - Justify every recommendation with clear reasoning
 
-## Source of Truth
+## Development Conventions
 
-**[development-conventions.md](../development-conventions.md)** is the authoritative reference for all coding standards. Review code against ALL sections:
+The development conventions are split into focused guides in `.claude/development-conventions/`.
 
-| Section | What to Check |
-|---------|---------------|
-| [Code Organization](../development-conventions.md#code-organization) | Module design, separation of concerns, coupling |
-| [Naming Conventions](../development-conventions.md#naming-conventions) | Function/variable/class naming patterns |
-| [Type Safety](../development-conventions.md#type-safety) | Type hints, modern patterns, generics |
-| [Function Design](../development-conventions.md#function-design) | Parameters, early returns, pure functions |
-| [Data Structures](../development-conventions.md#data-structures) | Pydantic models, dataclasses vs dicts |
-| [Error Handling](../development-conventions.md#error-handling) | Clear messages, exception chaining |
-| [Documentation](../development-conventions.md#documentation) | Google-style docstrings, comments |
-| [Pythonic Patterns](../development-conventions.md#pythonic-patterns) | Comprehensions, context managers, pattern matching |
-| [Testing](../development-conventions.md#testing) | Testability, test structure, coverage |
-| [Common Mistakes](../development-conventions.md#common-mistakes) | Anti-patterns to flag |
+**IMPORTANT**: To maximize context efficiency, only read the guides relevant to the code being reviewed.
+
+### Guide Selection
+
+| Guide | Review When Code Involves... |
+|-------|------------------------------|
+| [README.md](../development-conventions/README.md) | **Always** - Contains guiding principles and anti-patterns to flag |
+| [organization.md](../development-conventions/organization.md) | Module structure, imports, file organization |
+| [naming.md](../development-conventions/naming.md) | Function/variable/class naming patterns |
+| [typing.md](../development-conventions/typing.md) | Type hints, generics, protocols |
+| [functions.md](../development-conventions/functions.md) | Function design, parameters, early returns |
+| [data-structures.md](../development-conventions/data-structures.md) | Pydantic models, dataclasses vs dicts |
+| [patterns.md](../development-conventions/patterns.md) | Error handling, composition, Pythonic idioms |
+| [documentation.md](../development-conventions/documentation.md) | Docstrings, comments |
+| [testing.md](../development-conventions/testing.md) | Test structure, fixtures, coverage |
+
+### Typical Review Scenarios
+
+- **Single function**: README.md + naming.md + functions.md + typing.md + documentation.md
+- **New module**: README.md + organization.md + naming.md + documentation.md
+- **Data models**: README.md + data-structures.md + typing.md
+- **Test files**: README.md + testing.md + naming.md
+- **Full feature**: Read all relevant guides based on code scope
 
 Also verify compliance with [frameworks.md](../frameworks.md) - only approved frameworks should be used.
 
