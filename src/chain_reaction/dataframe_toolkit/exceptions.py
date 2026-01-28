@@ -7,6 +7,7 @@ This module defines a hierarchy of exceptions for SQL validation errors:
 - SQLSyntaxError: Raised when SQL has invalid syntax (parse errors).
 - SQLTableError: Raised when SQL references non-existent tables.
 - SQLColumnError: Raised when SQL references non-existent columns.
+- SQLBlacklistedCommandError: Raised when SQL contains a blacklisted command type.
 
 All exceptions store the query that caused the error and additional
 context-specific information for debugging.
@@ -189,4 +190,60 @@ class SQLColumnError(SQLValidationError):
             f"{self.__class__.__name__}("
             f"message={str(self)!r}, query={self.query!r}, "
             f"invalid_columns={self.invalid_columns!r})"
+        )
+
+
+class SQLBlacklistedCommandError(SQLValidationError):
+    """Raised when a SQL query contains a blacklisted command type.
+
+    This exception is raised when the SQL query contains a command type
+    that is not allowed, such as DELETE, DROP, INSERT, UPDATE, or other
+    data-modifying statements that may be restricted for safety.
+
+    Attributes:
+        command_type (str): The detected SQL command type (e.g., "DELETE", "DROP").
+        blacklist (set[str]): The set of blacklisted commands that are not allowed.
+
+    Example:
+        >>> err = SQLBlacklistedCommandError(
+        ...     message="Command 'DELETE' is not allowed",
+        ...     query="DELETE FROM users WHERE id = 1",
+        ...     command_type="DELETE",
+        ...     blacklist={"DELETE", "DROP", "INSERT", "UPDATE"},
+        ... )
+        >>> err.command_type
+        'DELETE'
+        >>> "DELETE" in err.blacklist
+        True
+    """
+
+    command_type: str
+    blacklist: set[str]
+
+    def __init__(
+        self,
+        message: str,
+        query: str | None = None,
+        command_type: str = "",
+        blacklist: set[str] | None = None,
+    ) -> None:
+        """Initialize SQLBlacklistedCommandError.
+
+        Args:
+            message (str): Description of the blacklist violation.
+            query (str | None): The SQL query containing the blacklisted command.
+            command_type (str): The detected SQL command type (e.g., "DELETE", "DROP").
+            blacklist (set[str] | None): The set of blacklisted commands that are not
+                allowed. Defaults to an empty set if not provided.
+        """
+        super().__init__(message, query=query)
+        self.command_type = command_type
+        self.blacklist = blacklist or set()
+
+    def __repr__(self) -> str:
+        """Return detailed representation for debugging."""
+        return (
+            f"{self.__class__.__name__}("
+            f"message={str(self)!r}, query={self.query!r}, "
+            f"command_type={self.command_type!r}, blacklist={self.blacklist!r})"
         )

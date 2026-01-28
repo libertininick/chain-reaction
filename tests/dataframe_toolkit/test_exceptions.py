@@ -7,13 +7,12 @@ catchability patterns.
 
 from __future__ import annotations
 
-from typing import Literal, assert_never
-
 import pytest
 from pytest_check import check
 
 from chain_reaction.dataframe_toolkit.exceptions import (
     ParseErrorDict,
+    SQLBlacklistedCommandError,
     SQLColumnError,
     SQLSyntaxError,
     SQLTableError,
@@ -316,6 +315,101 @@ class TestSQLColumnError:
             assert len(error.invalid_columns["orders"]) == 1, "Orders should have 1 invalid column"
 
 
+class TestSQLBlacklistedCommandError:
+    """Tests for SQLBlacklistedCommandError exception class."""
+
+    def test_sql_blacklisted_command_error_inherits_from_validation_error(self) -> None:
+        """Verify SQLBlacklistedCommandError can be caught as SQLValidationError.
+
+        SQLBlacklistedCommandError should be a subclass of SQLValidationError,
+        enabling unified exception handling across all SQL validation error types.
+        """
+        query = "DELETE FROM users WHERE id = 1"
+        command_type = "DELETE"
+        blacklist = {"DELETE", "DROP", "INSERT", "UPDATE"}
+        error = SQLBlacklistedCommandError(
+            "Command 'DELETE' is not allowed",
+            query=query,
+            command_type=command_type,
+            blacklist=blacklist,
+        )
+
+        # Verify it's catchable as SQLValidationError
+        with pytest.raises(SQLValidationError):
+            raise error
+
+        # Verify instance checks
+        with check:
+            assert isinstance(error, SQLValidationError), "Should be an instance of SQLValidationError"
+        with check:
+            assert isinstance(error, SQLBlacklistedCommandError), "Should be an instance of SQLBlacklistedCommandError"
+
+    def test_sql_blacklisted_command_error_stores_attributes(self) -> None:
+        """Verify SQLBlacklistedCommandError stores all attributes correctly.
+
+        The command_type and blacklist should be accessible via their respective
+        attributes for detailed error reporting that identifies exactly which
+        command was blocked and the full set of disallowed commands.
+        """
+        query = "DROP TABLE users"
+        command_type = "DROP"
+        blacklist = {"DELETE", "DROP", "INSERT", "UPDATE"}
+        message = "Command 'DROP' is not allowed"
+
+        error = SQLBlacklistedCommandError(message, query=query, command_type=command_type, blacklist=blacklist)
+
+        with check:
+            assert error.command_type == command_type, "Command type should be stored and retrievable"
+        with check:
+            assert error.blacklist == blacklist, "Blacklist should be stored and retrievable"
+        with check:
+            assert error.query == query, "Query should be inherited from base class"
+        with check:
+            assert str(error) == message, "Message should be accessible via str()"
+
+    def test_sql_blacklisted_command_error_defaults(self) -> None:
+        """Verify SQLBlacklistedCommandError uses correct default values.
+
+        When only message is provided, command_type should default to empty string
+        and blacklist should default to an empty set rather than None for
+        consistent iteration behavior.
+        """
+        error = SQLBlacklistedCommandError("Blacklisted command detected")
+
+        with check:
+            assert not error.command_type, "Command type should default to empty string"
+        with check:
+            assert error.blacklist == set(), "Blacklist should default to empty set"
+        with check:
+            assert error.query is None, "Query should default to None"
+
+    def test_sql_blacklisted_command_error_repr(self) -> None:
+        """Verify SQLBlacklistedCommandError has informative repr output.
+
+        The repr should include the class name, message, query, command_type,
+        and blacklist for debugging purposes.
+        """
+        query = "INSERT INTO users VALUES (1, 'test')"
+        command_type = "INSERT"
+        blacklist = {"DELETE", "DROP", "INSERT"}
+        message = "Command 'INSERT' is not allowed"
+
+        error = SQLBlacklistedCommandError(message, query=query, command_type=command_type, blacklist=blacklist)
+
+        repr_str = repr(error)
+
+        with check:
+            assert "SQLBlacklistedCommandError" in repr_str, "Repr should include class name"
+        with check:
+            assert message in repr_str, "Repr should include message"
+        with check:
+            assert query in repr_str, "Repr should include query"
+        with check:
+            assert command_type in repr_str, "Repr should include command_type"
+        with check:
+            assert "blacklist=" in repr_str, "Repr should include blacklist key"
+
+
 class TestAllExceptionsStoreQuery:
     """Tests verifying all exception types store the query attribute."""
 
@@ -326,12 +420,14 @@ class TestAllExceptionsStoreQuery:
             (SQLSyntaxError, {"errors": [{"description": "parse failed", "line": 1}]}),
             (SQLTableError, {"invalid_tables": ["tbl"]}),
             (SQLColumnError, {"invalid_columns": {"tbl": ["col"]}}),
+            (SQLBlacklistedCommandError, {"command_type": "DELETE", "blacklist": {"DELETE", "DROP"}}),
         ],
         ids=[
             "SQLValidationError",
             "SQLSyntaxError",
             "SQLTableError",
             "SQLColumnError",
+            "SQLBlacklistedCommandError",
         ],
     )
     def test_all_exceptions_store_query(
@@ -369,7 +465,12 @@ class TestExceptionsCatchableByBaseClass:
         """
         # Test that all exception types are catchable by SQLValidationError
         errors_caught: list[str] = []
-        error_types: list[Literal["syntax", "table", "column"]] = ["syntax", "table", "column"]
+        error_types = [
+            "syntax",
+            "table",
+            "column",
+            "blacklist",
+        ]
         for error_type in error_types:
             try:
                 self._simulate_exceptions(error_type)
@@ -380,13 +481,17 @@ class TestExceptionsCatchableByBaseClass:
                     assert e.query == "SELECT * FROM users", f"Query should be accessible on {type(e).__name__}"
 
         with check:
-            assert len(errors_caught) == 3, "All three exceptions should be caught"
+            assert len(errors_caught) == 4, "All four exceptions should be caught"
         with check:
             assert "SQLSyntaxError" in errors_caught, "SQLSyntaxError should be caught by base class"
         with check:
             assert "SQLTableError" in errors_caught, "SQLTableError should be caught by base class"
         with check:
             assert "SQLColumnError" in errors_caught, "SQLColumnError should be caught by base class"
+        with check:
+            assert "SQLBlacklistedCommandError" in errors_caught, (
+                "SQLBlacklistedCommandError should be caught by base class"
+            )
 
     def test_specific_exceptions_not_caught_by_siblings(self) -> None:
         """Verify that sibling exceptions do not catch each other.
@@ -422,16 +527,18 @@ class TestExceptionsCatchableByBaseClass:
                 pass
 
     @staticmethod
-    def _simulate_exceptions(error_type: Literal["syntax", "table", "column"]) -> None:
+    def _simulate_exceptions(error_type: str) -> None:
         """Simulate different SQL validation errors.
 
         Args:
-            error_type (Literal["syntax", "table", "column"]): The type of error to simulate.
+            error_type (str): The type of error to simulate.
 
         Raises:
             SQLSyntaxError: When error_type is "syntax".
             SQLTableError: When error_type is "table".
             SQLColumnError: When error_type is "column".
+            SQLBlacklistedCommandError: When error_type is "blacklist".
+            ValueError: If an unknown error_type is provided.
         """
         query = "SELECT * FROM users"
         if error_type == "syntax":
@@ -440,6 +547,9 @@ class TestExceptionsCatchableByBaseClass:
             raise SQLTableError("Table not found", query=query, invalid_tables=["users"])
         elif error_type == "column":
             raise SQLColumnError("Column not found", query=query, invalid_columns={"users": ["id"]})
+        elif error_type == "blacklist":
+            raise SQLBlacklistedCommandError(
+                "Blacklisted command", query=query, command_type="DELETE", blacklist={"DELETE", "DROP"}
+            )
         else:
-            # We should never reach this branch based on acceptable values of error_type
-            assert_never(error_type)
+            raise ValueError(f"Unknown error_type: {error_type}")
