@@ -119,6 +119,8 @@ ignore = [
 per-file-ignores = {"**/{tests}/*" = [ 
   # Tests can use magic values, assertions, and relative imports
   "PLR2004", "S101", "TID252",
+  # Tests can import private names
+  "PLC2701",
 ]}
 extend-unsafe-fixes = ["E", "F401"]
 
