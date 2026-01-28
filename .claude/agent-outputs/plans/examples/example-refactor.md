@@ -424,7 +424,7 @@ Refactor the existing SQL generation logic scattered across multiple files into 
 
 - [x] All functions have type hints
 - [x] All public APIs have Google-style docstrings
-- [x] Code follows project conventions (see development-conventions.md)
+- [x] Code follows project conventions (see development-conventions/)
 - [x] No code duplication (DRY principle) - this is a primary goal
 - [x] Error handling with clear messages
 - [x] Passes `uv run ruff check`

@@ -21,8 +21,8 @@ The update process will:
 
 **Examples:**
 ```
-/update-plan .claude/plans/plan-api-refactor-2024-01-22.md
-/update-plan .claude/plans/plan-api-refactor-2024-01-22.md --completed-phases 1,2
+/update-plan .claude/agent-outputs/plans/plan-api-refactor-2024-01-22.md
+/update-plan .claude/agent-outputs/plans/plan-api-refactor-2024-01-22.md --completed-phases 1,2
 ```
 
 ## Prerequisites

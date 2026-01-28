@@ -14,13 +14,13 @@ mcp-servers/          # FastMCP server implementations
 ## Quick Reference
 
 - Install/sync dependencies: `uv sync`
-- For validation commands (lint, format, type check, tests), see [development-conventions.md](development-conventions.md#validation-commands).
+- For validation commands (lint, format, type check, tests), see [development-conventions](development-conventions/README.md#validation-commands).
 
 ## Source of Truth Documents
 
 | Document | Purpose |
 |----------|---------|
-| [development-conventions.md](development-conventions.md) | **All code standards**: organization, naming, types, docstrings, testing, error handling, patterns |
+| [development-conventions](development-conventions/) | **All code standards**: organization, naming, types, docstrings, testing, error handling, patterns |
 | [frameworks.md](frameworks.md) | Approved frameworks, documentation links, when to fetch docs |
 
 ## Claude-Specific Rules
@@ -28,7 +28,7 @@ mcp-servers/          # FastMCP server implementations
 **IMPORTANT: YOU MUST follow these rules:**
 
 1. **Use designated frameworks ONLY** - See [frameworks.md](frameworks.md). NEVER substitute alternatives.
-2. **Follow all conventions** - See [development-conventions.md](development-conventions.md) for the complete reference.
+2. **Follow all conventions** - See [development-conventions](development-conventions/) for the complete reference.
 3. **Fetch docs when uncertain** - Use Context7 MCP to search library/API documentation. NEVER assume API details.
 4. **Use sub-agents for specialized tasks:**
    - `planner` - Creating implementation plans (use `/plan` command)

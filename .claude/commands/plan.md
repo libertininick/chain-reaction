@@ -10,7 +10,7 @@ The planner will:
 1. **Analyze requirements** - Clarify what needs to be built and ask questions if unclear
 2. **Explore codebase** - Review existing patterns, conventions, and similar implementations
 3. **Design solution** - Break down implementation into phases with specific, testable steps
-4. **Create plan document** - Write comprehensive plan to `.claude/plans/plan-<feature>-<YYYY-MM-DD>.md`
+4. **Create plan document** - Write comprehensive plan to `.claude/agent-outputs/plans/plan-<feature>-<YYYY-MM-DD>.md`
 5. **Iterate with feedback** - Refine plan based on your input until approved
 
 ## When to Use This Command

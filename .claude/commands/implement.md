@@ -16,15 +16,15 @@ This command orchestrates implementation of phases from an approved plan documen
 
 **Examples:**
 ```
-/implement Phase 1 from .claude/plans/plan-api-refactor-2024-01-22.md
-/implement Phase 3 and 4 from .claude/plans/plan-api-refactor-2024-01-22.md
-/implement .claude/plans/plan-api-refactor-2024-01-22.md
+/implement Phase 1 from .claude/agent-outputs/plans/plan-api-refactor-2024-01-22.md
+/implement Phase 3 and 4 from .claude/agent-outputs/plans/plan-api-refactor-2024-01-22.md
+/implement .claude/agent-outputs/plans/plan-api-refactor-2024-01-22.md
 ```
 
 ## Prerequisites
 
 1. Create a plan first using `/plan <feature-description>`
-2. Have the plan approved and saved to `.claude/plans/plan-<feature>-<date>.md`
+2. Have the plan approved and saved to `.claude/agent-outputs/plans/plan-<feature>-<date>.md`
 
 ## Execution Flow
 
@@ -37,14 +37,14 @@ For each specified phase:
 
 2. **Implement Source Code**
    - Dispatch to `python-code-writer` agent
-   - Agent follows [development-conventions.md](../development-conventions.md) and [frameworks.md](../frameworks.md)
+   - Agent follows [development-conventions](../development-conventions/) and [frameworks.md](../frameworks.md)
 
 3. **Implement Tests**
    - Dispatch to `python-test-writer` agent
-   - Agent follows [development-conventions.md](../development-conventions.md#testing)
+   - Agent follows [testing.md](../development-conventions/testing.md)
 
 4. **Validate**
-   - Run validation commands per [development-conventions.md](../development-conventions.md#validation-commands)
+   - Run validation commands per [development-conventions](../development-conventions/README.md#validation-commands)
 
 ## After Implementation
 
