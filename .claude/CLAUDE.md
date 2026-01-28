@@ -47,3 +47,4 @@ Reusable workflows in `.claude/commands/`:
 - `/project:implement Phase <N> from <plan-document-path>` - Implement one or more phases from a coding plan
 - `/review <target>` - Code review (files, `--commit`, `--staged`, optionally with `--plan` context)
 - `/update-plan <plan-path>` - Sync with main and update plan to reflect completed phases and changes
+- `/pr-description` - Generate PR description from branch changes (optionally with `--plan` and `--phases` context)

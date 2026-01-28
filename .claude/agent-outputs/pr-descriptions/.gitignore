@@ -1,0 +1,2 @@
+# Ignore actual PR description files created by agents
+pr-*.md
