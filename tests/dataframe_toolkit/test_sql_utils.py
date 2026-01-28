@@ -12,7 +12,7 @@ import sqlglot
 from pytest_check import check
 
 from chain_reaction.dataframe_toolkit.exceptions import SQLSyntaxError
-from chain_reaction.dataframe_toolkit.sql_utils import parse_sql
+from chain_reaction.dataframe_toolkit.sql_utils import _get_sql_command_type, parse_sql
 
 # ruff: noqa: PLR6301
 
@@ -748,3 +748,171 @@ class TestParseSQLEdgeCases:
 
         with check:
             assert isinstance(result, sqlglot.Expression), "Quoted identifiers should be parsed correctly"
+
+
+class TestGetSQLCommandType:
+    """Tests for _get_sql_command_type helper function.
+
+    These tests verify that sqlglot expression types are correctly mapped
+    to their corresponding SQL command type strings.
+    """
+
+    def test_get_sql_command_type_select_returns_select(self) -> None:
+        """SELECT query should return 'SELECT' command type.
+
+        A simple SELECT statement parsed by sqlglot should map to the
+        'SELECT' command type string.
+        """
+        expression = sqlglot.parse_one("SELECT a, b FROM t")
+        result = _get_sql_command_type(expression)
+
+        with check:
+            assert result == "SELECT", "SELECT query should return 'SELECT'"
+
+    def test_get_sql_command_type_delete_returns_delete(self) -> None:
+        """DELETE query should return 'DELETE' command type.
+
+        A DELETE statement parsed by sqlglot should map to the
+        'DELETE' command type string.
+        """
+        expression = sqlglot.parse_one("DELETE FROM users WHERE id = 1")
+        result = _get_sql_command_type(expression)
+
+        with check:
+            assert result == "DELETE", "DELETE query should return 'DELETE'"
+
+    def test_get_sql_command_type_insert_returns_insert(self) -> None:
+        """INSERT query should return 'INSERT' command type.
+
+        An INSERT statement parsed by sqlglot should map to the
+        'INSERT' command type string.
+        """
+        expression = sqlglot.parse_one("INSERT INTO users (name) VALUES ('John')")
+        result = _get_sql_command_type(expression)
+
+        with check:
+            assert result == "INSERT", "INSERT query should return 'INSERT'"
+
+    def test_get_sql_command_type_update_returns_update(self) -> None:
+        """UPDATE query should return 'UPDATE' command type.
+
+        An UPDATE statement parsed by sqlglot should map to the
+        'UPDATE' command type string.
+        """
+        expression = sqlglot.parse_one("UPDATE users SET name = 'Jane' WHERE id = 1")
+        result = _get_sql_command_type(expression)
+
+        with check:
+            assert result == "UPDATE", "UPDATE query should return 'UPDATE'"
+
+    @pytest.mark.parametrize(
+        "query",
+        [
+            "DROP TABLE users",
+            "DROP INDEX idx_name",
+        ],
+        ids=[
+            "drop_table",
+            "drop_index",
+        ],
+    )
+    def test_get_sql_command_type_drop_returns_drop(self, query: str) -> None:
+        """DROP query should return 'DROP' command type.
+
+        DROP TABLE and DROP INDEX statements parsed by sqlglot should
+        both map to the 'DROP' command type string.
+
+        Args:
+            query: A DROP statement (TABLE or INDEX).
+        """
+        expression = sqlglot.parse_one(query)
+        result = _get_sql_command_type(expression)
+
+        with check:
+            assert result == "DROP", f"'{query}' should return 'DROP'"
+
+    def test_get_sql_command_type_create_returns_create(self) -> None:
+        """CREATE query should return 'CREATE' command type.
+
+        A CREATE TABLE statement parsed by sqlglot should map to the
+        'CREATE' command type string.
+        """
+        expression = sqlglot.parse_one("CREATE TABLE users (id INT, name VARCHAR(100))")
+        result = _get_sql_command_type(expression)
+
+        with check:
+            assert result == "CREATE", "CREATE query should return 'CREATE'"
+
+    def test_get_sql_command_type_truncate_returns_truncate(self) -> None:
+        """TRUNCATE query should return 'TRUNCATE' command type.
+
+        A TRUNCATE TABLE statement parsed by sqlglot should map to the
+        'TRUNCATE' command type string.
+        """
+        expression = sqlglot.parse_one("TRUNCATE TABLE users")
+        result = _get_sql_command_type(expression)
+
+        with check:
+            assert result == "TRUNCATE", "TRUNCATE query should return 'TRUNCATE'"
+
+    def test_get_sql_command_type_alter_returns_alter(self) -> None:
+        """ALTER query should return 'ALTER' command type.
+
+        An ALTER TABLE statement parsed by sqlglot should map to the
+        'ALTER' command type string.
+        """
+        expression = sqlglot.parse_one("ALTER TABLE users ADD COLUMN email VARCHAR(255)")
+        result = _get_sql_command_type(expression)
+
+        with check:
+            assert result == "ALTER", "ALTER query should return 'ALTER'"
+
+    def test_get_sql_command_type_union_returns_select(self) -> None:
+        """UNION query should return 'SELECT' command type.
+
+        A UNION set operation is considered a SELECT query and should
+        map to the 'SELECT' command type string.
+        """
+        expression = sqlglot.parse_one("SELECT a FROM t1 UNION SELECT a FROM t2")
+        result = _get_sql_command_type(expression)
+
+        with check:
+            assert result == "SELECT", "UNION query should return 'SELECT'"
+
+    def test_get_sql_command_type_intersect_returns_select(self) -> None:
+        """INTERSECT query should return 'SELECT' command type.
+
+        An INTERSECT set operation is considered a SELECT query and should
+        map to the 'SELECT' command type string.
+        """
+        expression = sqlglot.parse_one("SELECT a FROM t1 INTERSECT SELECT a FROM t2")
+        result = _get_sql_command_type(expression)
+
+        with check:
+            assert result == "SELECT", "INTERSECT query should return 'SELECT'"
+
+    def test_get_sql_command_type_except_returns_select(self) -> None:
+        """EXCEPT query should return 'SELECT' command type.
+
+        An EXCEPT set operation is considered a SELECT query and should
+        map to the 'SELECT' command type string.
+        """
+        expression = sqlglot.parse_one("SELECT a FROM t1 EXCEPT SELECT a FROM t2")
+        result = _get_sql_command_type(expression)
+
+        with check:
+            assert result == "SELECT", "EXCEPT query should return 'SELECT'"
+
+    def test_get_sql_command_type_unrecognized_returns_none(self) -> None:
+        """Unrecognized expression type should return None.
+
+        Expression types not in the mapping should return None to indicate
+        the command type could not be determined.
+        """
+        # Create a mock expression type that won't be in the mapping
+        # Using a SHOW statement which is not in _EXPRESSION_TYPE_MAP
+        expression = sqlglot.parse_one("SHOW TABLES")
+        result = _get_sql_command_type(expression)
+
+        with check:
+            assert result is None, "Unrecognized expression type should return None"

@@ -7,10 +7,29 @@ from __future__ import annotations
 
 import sqlglot
 import sqlglot.errors
+from sqlglot import exp
 
 from chain_reaction.dataframe_toolkit.exceptions import ParseErrorDict, SQLSyntaxError
 
-__all__ = ["parse_sql"]
+# Common destructive SQL commands that modify or delete data/schema.
+# Use with parse_sql's blacklist parameter to block these operations.
+DESTRUCTIVE_COMMANDS: frozenset[str] = frozenset({"DROP", "DELETE", "INSERT", "UPDATE", "TRUNCATE", "ALTER", "CREATE"})
+
+# Mapping of sqlglot expression types to SQL command type strings.
+# Set operations (Union, Intersect, Except) are considered SELECT queries.
+_EXPRESSION_TYPE_MAP: dict[type[exp.Expression], str] = {
+    exp.Select: "SELECT",
+    exp.Delete: "DELETE",
+    exp.Insert: "INSERT",
+    exp.Update: "UPDATE",
+    exp.Drop: "DROP",
+    exp.Create: "CREATE",
+    exp.TruncateTable: "TRUNCATE",
+    exp.Alter: "ALTER",
+    exp.Union: "SELECT",
+    exp.Intersect: "SELECT",
+    exp.Except: "SELECT",
+}
 
 
 def parse_sql(query: str, *, dialect: str | None = None) -> sqlglot.Expression:
@@ -69,3 +88,16 @@ def parse_sql(query: str, *, dialect: str | None = None) -> sqlglot.Expression:
             query=query,
             errors=errors,
         ) from e
+
+
+def _get_sql_command_type(expression: exp.Expression) -> str | None:
+    """Map a sqlglot expression to its SQL command type string.
+
+    Args:
+        expression (exp.Expression): A parsed sqlglot expression.
+
+    Returns:
+        str | None: The SQL command type (e.g., "SELECT", "DELETE") or None if
+            the expression type is not recognized.
+    """
+    return _EXPRESSION_TYPE_MAP.get(type(expression))
