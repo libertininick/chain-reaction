@@ -6,17 +6,28 @@ This module provides functions for validating SQL syntax using SQLglot.
 from __future__ import annotations
 
 from collections.abc import Collection
+from typing import Final
 
 import sqlglot
 from sqlglot import exp
 
 from chain_reaction.dataframe_toolkit.exceptions import ParseErrorDict, SQLBlacklistedCommandError, SQLSyntaxError
 
+__all__ = ["DESTRUCTIVE_COMMANDS", "parse_sql"]
+
 # Common destructive SQL commands that modify or delete data/schema.
 # Use with parse_sql's blacklist parameter to block these operations.
-DESTRUCTIVE_COMMANDS: frozenset[str] = frozenset({"DROP", "DELETE", "INSERT", "UPDATE", "TRUNCATE", "ALTER", "CREATE"})
+DESTRUCTIVE_COMMANDS: Final[frozenset[str]] = frozenset({
+    "DROP",
+    "DELETE",
+    "INSERT",
+    "UPDATE",
+    "TRUNCATE",
+    "ALTER",
+    "CREATE",
+})
 
-# Mapping of sqlglot expression types to SQL command type strings.
+# Mapping of sqlglot expression types to SQL command type strings for blacklist checking.
 # Set operations (Union, Intersect, Except) are considered SELECT queries.
 _EXPRESSION_TYPE_MAP: dict[type[exp.Expression], str] = {
     exp.Select: "SELECT",
@@ -106,18 +117,17 @@ def parse_sql(
             errors=errors,
         ) from e
 
-    # Check if the query's command type is blacklisted (if a blacklist is provided)
-    if (
-        blacklist
-        and (command_type := _get_sql_command_type(expression)) is not None
-        and _in_blacklist(expression, blacklist)
-    ):
-        raise SQLBlacklistedCommandError(
-            message="SQL command not allowed.",
-            query=query,
-            command_type=command_type,
-            blacklist={cmd.upper() for cmd in blacklist},
-        )
+    # Check if the query's command type is blacklisted (if provided)
+    if blacklist and (command_type := _get_sql_command_type(expression)) is not None:
+        # Normalize to uppercase for case-insensitive comparison
+        normalized_blacklist = {cmd.upper() for cmd in blacklist}
+        if command_type.upper() in normalized_blacklist:
+            raise SQLBlacklistedCommandError(
+                message=f"SQL command '{command_type}' is not allowed.",
+                query=query,
+                command_type=command_type,
+                blacklist=normalized_blacklist,
+            )
 
     return expression
 
@@ -133,23 +143,3 @@ def _get_sql_command_type(expression: exp.Expression) -> str | None:
             the expression type is not recognized.
     """
     return _EXPRESSION_TYPE_MAP.get(type(expression))
-
-
-def _in_blacklist(expression: exp.Expression, blacklist: Collection[str]) -> bool:
-    """Check if the expression's command type is in the blacklist.
-
-    Args:
-        expression (exp.Expression): A parsed sqlglot expression.
-        blacklist (Collection[str]): Collection of SQL command types to block (case-insensitive).
-
-    Returns:
-        bool: True if the command type is in the blacklist, False otherwise.
-            Returns False if the expression type is not recognized.
-    """
-    command_type = _get_sql_command_type(expression)
-    if command_type is None:
-        return False
-
-    # Normalize both sides to uppercase for case-insensitive comparison
-    normalized_blacklist = {cmd.upper() for cmd in blacklist}
-    return command_type.upper() in normalized_blacklist
