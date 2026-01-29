@@ -2,14 +2,11 @@
 
 Generate a pull request description from current branch changes: $ARGUMENTS
 
-## What This Does
+## Template Reference
 
-This command analyzes all changes on the current branch compared to `main` and generates a comprehensive, well-structured PR description.
-
-The generator will:
-1. **Analyze branch changes** - Compare current branch to main and understand all modifications
-2. **Extract context from plan** (if provided) - Use the implementation plan to understand intent and design decisions
-3. **Generate PR description** - Create a formatted description following the required template
+**IMPORTANT**: Before generating, load the PR description template skill for format and examples:
+- Use `/pr-description-template format` to see the required format
+- Use `/pr-description-template feature|bugfix|refactor` for examples based on change type
 
 ## Usage
 
@@ -28,7 +25,12 @@ The generator will:
 
 ## Execution Flow
 
-### 1. Gather Branch Information
+### 1. Load Template
+
+Read the PR description template skill to understand the required format:
+- `.claude/skills/pr-description-template/skill.md` - Format specification and guidelines
+
+### 2. Gather Branch Information
 
 ```bash
 # Get current branch name
@@ -44,14 +46,15 @@ git diff main...HEAD
 git diff main...HEAD --name-status
 ```
 
-### 2. Analyze Changes
+### 3. Analyze Changes
 
 For each changed file:
 - Categorize by type (source code, tests, documentation, configuration)
 - Identify semantic changes (new features, refactors, bug fixes)
 - Note any files that touch critical areas
+- Determine which template type best fits (feature, bugfix, or refactor)
 
-### 3. Extract Plan Context (if provided)
+### 4. Extract Plan Context (if provided)
 
 If `--plan` is specified:
 - Read the plan document
@@ -60,61 +63,18 @@ If `--plan` is specified:
 - Determine which phases were implemented (from `--phases` or by analyzing completed work)
 - Identify remaining phases for "Future Phases" section
 
-### 4. Check Development Conventions
+### 5. Check Development Conventions
 
 Review changes against [development-conventions](../development-conventions/):
 - Note any intentional deviations that should be documented
 - These MUST be called out in "Key Design Decisions"
 
-### 5. Generate PR Description
+### 6. Generate PR Description
 
-Output the PR description in the following format:
-
-```markdown
-## Summary
-
-<High-level summary of changes and context for why the changes were made. Should answer: What does this PR do? Why is it needed?>
-
-## What's Included
-
-<Compact list organized by category to help reviewer understand scope at a glance>
-
-**Source Code:**
-- `path/to/file.py` - Brief description of change
-
-**Tests:**
-- `tests/test_file.py` - What's being tested
-
-**Documentation:**
-- `docs/file.md` - What was documented (or note if missing)
-
-**Configuration:**
-- `pyproject.toml` - Dependencies added/changed
-
-## Key Design Decisions
-
-<Design decisions to document for reviewer context. Focus on "why this approach" not implementation details>
-
-1. **Decision**: Rationale for why this approach was chosen over alternatives
-
-2. **Convention Deviation** (if any): Any intentional deviations from [development-conventions](../.claude/development-conventions/) with justification
-
-## Critical Areas for Review
-
-<Prioritized areas deserving careful review. Help reviewer focus their attention on what matters most>
-
-1. **`path/to/critical/file.py:L10-L50`** - Description of why this needs careful review (e.g., complex logic, security implications, breaking change)
-
-2. **`path/to/another/file.py`** - Why this is important to review
-
-## Future Phases
-
-<Optional: Only include if this PR is a partial implementation of a larger plan>
-
-The following phases from the [implementation plan](<plan-path>) are planned for future PRs:
-- **Phase N**: Brief description of what's coming
-- **Phase M**: Brief description of what's coming
-```
+Generate the PR description following the format from the template skill. Reference the appropriate example:
+- `.claude/skills/pr-description-template/example-feature.md` - For new features
+- `.claude/skills/pr-description-template/example-bugfix.md` - For bug fixes
+- `.claude/skills/pr-description-template/example-refactor.md` - For refactoring
 
 ## Output
 
