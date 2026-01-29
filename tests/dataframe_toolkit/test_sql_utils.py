@@ -11,8 +11,16 @@ import pytest
 import sqlglot
 from pytest_check import check
 
-from chain_reaction.dataframe_toolkit.exceptions import SQLSyntaxError
-from chain_reaction.dataframe_toolkit.sql_utils import parse_sql
+from chain_reaction.dataframe_toolkit.exceptions import (
+    SQLBlacklistedCommandError,
+    SQLSyntaxError,
+    SQLValidationError,
+)
+from chain_reaction.dataframe_toolkit.sql_utils import (
+    DESTRUCTIVE_COMMANDS,
+    _get_sql_command_type,
+    parse_sql,
+)
 
 # ruff: noqa: PLR6301
 
@@ -748,3 +756,350 @@ class TestParseSQLEdgeCases:
 
         with check:
             assert isinstance(result, sqlglot.Expression), "Quoted identifiers should be parsed correctly"
+
+
+class TestGetSQLCommandType:
+    """Tests for _get_sql_command_type helper function.
+
+    These tests verify that sqlglot expression types are correctly mapped
+    to their corresponding SQL command type strings.
+    """
+
+    def test_get_sql_command_type_select_returns_select(self) -> None:
+        """SELECT query should return 'SELECT' command type.
+
+        A simple SELECT statement parsed by sqlglot should map to the
+        'SELECT' command type string.
+        """
+        expression = sqlglot.parse_one("SELECT a, b FROM t")
+        result = _get_sql_command_type(expression)
+
+        with check:
+            assert result == "SELECT", "SELECT query should return 'SELECT'"
+
+    def test_get_sql_command_type_delete_returns_delete(self) -> None:
+        """DELETE query should return 'DELETE' command type.
+
+        A DELETE statement parsed by sqlglot should map to the
+        'DELETE' command type string.
+        """
+        expression = sqlglot.parse_one("DELETE FROM users WHERE id = 1")
+        result = _get_sql_command_type(expression)
+
+        with check:
+            assert result == "DELETE", "DELETE query should return 'DELETE'"
+
+    def test_get_sql_command_type_insert_returns_insert(self) -> None:
+        """INSERT query should return 'INSERT' command type.
+
+        An INSERT statement parsed by sqlglot should map to the
+        'INSERT' command type string.
+        """
+        expression = sqlglot.parse_one("INSERT INTO users (name) VALUES ('John')")
+        result = _get_sql_command_type(expression)
+
+        with check:
+            assert result == "INSERT", "INSERT query should return 'INSERT'"
+
+    def test_get_sql_command_type_update_returns_update(self) -> None:
+        """UPDATE query should return 'UPDATE' command type.
+
+        An UPDATE statement parsed by sqlglot should map to the
+        'UPDATE' command type string.
+        """
+        expression = sqlglot.parse_one("UPDATE users SET name = 'Jane' WHERE id = 1")
+        result = _get_sql_command_type(expression)
+
+        with check:
+            assert result == "UPDATE", "UPDATE query should return 'UPDATE'"
+
+    @pytest.mark.parametrize(
+        "query",
+        [
+            "DROP TABLE users",
+            "DROP INDEX idx_name",
+        ],
+        ids=[
+            "drop_table",
+            "drop_index",
+        ],
+    )
+    def test_get_sql_command_type_drop_returns_drop(self, query: str) -> None:
+        """DROP query should return 'DROP' command type.
+
+        DROP TABLE and DROP INDEX statements parsed by sqlglot should
+        both map to the 'DROP' command type string.
+
+        Args:
+            query: A DROP statement (TABLE or INDEX).
+        """
+        expression = sqlglot.parse_one(query)
+        result = _get_sql_command_type(expression)
+
+        with check:
+            assert result == "DROP", f"'{query}' should return 'DROP'"
+
+    def test_get_sql_command_type_create_returns_create(self) -> None:
+        """CREATE query should return 'CREATE' command type.
+
+        A CREATE TABLE statement parsed by sqlglot should map to the
+        'CREATE' command type string.
+        """
+        expression = sqlglot.parse_one("CREATE TABLE users (id INT, name VARCHAR(100))")
+        result = _get_sql_command_type(expression)
+
+        with check:
+            assert result == "CREATE", "CREATE query should return 'CREATE'"
+
+    def test_get_sql_command_type_truncate_returns_truncate(self) -> None:
+        """TRUNCATE query should return 'TRUNCATE' command type.
+
+        A TRUNCATE TABLE statement parsed by sqlglot should map to the
+        'TRUNCATE' command type string.
+        """
+        expression = sqlglot.parse_one("TRUNCATE TABLE users")
+        result = _get_sql_command_type(expression)
+
+        with check:
+            assert result == "TRUNCATE", "TRUNCATE query should return 'TRUNCATE'"
+
+    def test_get_sql_command_type_alter_returns_alter(self) -> None:
+        """ALTER query should return 'ALTER' command type.
+
+        An ALTER TABLE statement parsed by sqlglot should map to the
+        'ALTER' command type string.
+        """
+        expression = sqlglot.parse_one("ALTER TABLE users ADD COLUMN email VARCHAR(255)")
+        result = _get_sql_command_type(expression)
+
+        with check:
+            assert result == "ALTER", "ALTER query should return 'ALTER'"
+
+    def test_get_sql_command_type_union_returns_select(self) -> None:
+        """UNION query should return 'SELECT' command type.
+
+        A UNION set operation is considered a SELECT query and should
+        map to the 'SELECT' command type string.
+        """
+        expression = sqlglot.parse_one("SELECT a FROM t1 UNION SELECT a FROM t2")
+        result = _get_sql_command_type(expression)
+
+        with check:
+            assert result == "SELECT", "UNION query should return 'SELECT'"
+
+    def test_get_sql_command_type_intersect_returns_select(self) -> None:
+        """INTERSECT query should return 'SELECT' command type.
+
+        An INTERSECT set operation is considered a SELECT query and should
+        map to the 'SELECT' command type string.
+        """
+        expression = sqlglot.parse_one("SELECT a FROM t1 INTERSECT SELECT a FROM t2")
+        result = _get_sql_command_type(expression)
+
+        with check:
+            assert result == "SELECT", "INTERSECT query should return 'SELECT'"
+
+    def test_get_sql_command_type_except_returns_select(self) -> None:
+        """EXCEPT query should return 'SELECT' command type.
+
+        An EXCEPT set operation is considered a SELECT query and should
+        map to the 'SELECT' command type string.
+        """
+        expression = sqlglot.parse_one("SELECT a FROM t1 EXCEPT SELECT a FROM t2")
+        result = _get_sql_command_type(expression)
+
+        with check:
+            assert result == "SELECT", "EXCEPT query should return 'SELECT'"
+
+    def test_get_sql_command_type_unrecognized_returns_none(self) -> None:
+        """Unrecognized expression type should return None.
+
+        Expression types not in the mapping should return None to indicate
+        the command type could not be determined.
+        """
+        # Create a mock expression type that won't be in the mapping
+        # Using a SHOW statement which is not in _EXPRESSION_TYPE_MAP
+        expression = sqlglot.parse_one("SHOW TABLES")
+        result = _get_sql_command_type(expression)
+
+        with check:
+            assert result is None, "Unrecognized expression type should return None"
+
+
+class TestParseSQLBlacklist:
+    """Tests for parse_sql blacklist functionality.
+
+    These tests verify the optional blacklist parameter that blocks specific
+    SQL command types from being parsed successfully.
+    """
+
+    def test_parse_sql_without_blacklist_allows_destructive_commands(self) -> None:
+        """DELETE without blacklist should succeed for backward compatibility.
+
+        When no blacklist is provided, destructive commands like DELETE should
+        be parsed successfully and return an Expression.
+        """
+        result = parse_sql("DELETE FROM t")
+
+        with check:
+            assert isinstance(result, sqlglot.Expression), "DELETE without blacklist should return Expression"
+
+    def test_parse_sql_blacklist_allows_non_matching_commands(self) -> None:
+        """SELECT with DELETE blacklisted should succeed.
+
+        Commands not in the blacklist should be parsed successfully even when
+        other commands are blacklisted.
+        """
+        result = parse_sql("SELECT * FROM t", blacklist={"DELETE"})
+
+        with check:
+            assert isinstance(result, sqlglot.Expression), "SELECT should succeed when DELETE is blacklisted"
+
+    def test_parse_sql_blacklist_blocks_matching_commands(self) -> None:
+        """DELETE with DELETE blacklisted should raise SQLBlacklistedCommandError.
+
+        Commands that match entries in the blacklist should be blocked.
+        """
+        with pytest.raises(SQLBlacklistedCommandError):
+            parse_sql("DELETE FROM t", blacklist={"DELETE"})
+
+    def test_parse_sql_blacklist_case_insensitive_lowercase_blacklist(self) -> None:
+        """DELETE with lowercase 'delete' blacklisted should raise.
+
+        Blacklist matching should be case-insensitive, so lowercase blacklist
+        entries should still block uppercase SQL commands.
+        """
+        with pytest.raises(SQLBlacklistedCommandError):
+            parse_sql("DELETE FROM t", blacklist={"delete"})
+
+    def test_parse_sql_blacklist_case_insensitive_lowercase_query(self) -> None:
+        """Lowercase 'delete' query with DELETE blacklisted should raise.
+
+        Blacklist matching should be case-insensitive, so lowercase SQL commands
+        should still be blocked by uppercase blacklist entries.
+        """
+        with pytest.raises(SQLBlacklistedCommandError):
+            parse_sql("delete from t", blacklist={"DELETE"})
+
+    def test_parse_sql_blacklist_destructive_commands_allows_select(self) -> None:
+        """SELECT with DESTRUCTIVE_COMMANDS blacklist should succeed.
+
+        The DESTRUCTIVE_COMMANDS set should only block data-modifying
+        commands, not read-only SELECT statements.
+        """
+        result = parse_sql("SELECT * FROM users", blacklist=DESTRUCTIVE_COMMANDS)
+
+        with check:
+            assert isinstance(result, sqlglot.Expression), "SELECT should succeed with DESTRUCTIVE_COMMANDS blacklist"
+
+    def test_parse_sql_blacklist_destructive_commands_blocks_delete(self) -> None:
+        """DELETE with DESTRUCTIVE_COMMANDS blacklist should raise.
+
+        The DESTRUCTIVE_COMMANDS set includes DELETE, so it should be blocked.
+        """
+        with pytest.raises(SQLBlacklistedCommandError):
+            parse_sql("DELETE FROM users WHERE id = 1", blacklist=DESTRUCTIVE_COMMANDS)
+
+    def test_parse_sql_blacklist_error_attributes_set_correctly(self) -> None:
+        """SQLBlacklistedCommandError attributes should be set correctly.
+
+        The exception should have command_type and blacklist attributes
+        populated with the correct values.
+        """
+        blacklist = {"DELETE", "DROP"}
+        with pytest.raises(SQLBlacklistedCommandError) as exc_info:
+            parse_sql("DELETE FROM t", blacklist=blacklist)
+
+        with check:
+            assert exc_info.value.command_type == "DELETE", "command_type should be 'DELETE'"
+        with check:
+            # Blacklist is normalized to uppercase
+            assert exc_info.value.blacklist == {"DELETE", "DROP"}, (
+                "blacklist should contain the normalized blacklisted commands"
+            )
+        with check:
+            assert exc_info.value.query == "DELETE FROM t", "query should contain the original query string"
+
+    def test_parse_sql_blacklist_insert_blocked(self) -> None:
+        """INSERT with INSERT blacklisted should raise SQLBlacklistedCommandError.
+
+        The INSERT command should be correctly identified and blocked.
+        """
+        with pytest.raises(SQLBlacklistedCommandError):
+            parse_sql("INSERT INTO t VALUES (1)", blacklist={"INSERT"})
+
+    def test_parse_sql_blacklist_update_blocked(self) -> None:
+        """UPDATE with UPDATE blacklisted should raise SQLBlacklistedCommandError.
+
+        The UPDATE command should be correctly identified and blocked.
+        """
+        with pytest.raises(SQLBlacklistedCommandError):
+            parse_sql("UPDATE t SET a = 1", blacklist={"UPDATE"})
+
+    def test_parse_sql_blacklist_drop_blocked(self) -> None:
+        """DROP with DROP blacklisted should raise SQLBlacklistedCommandError.
+
+        The DROP command should be correctly identified and blocked.
+        """
+        with pytest.raises(SQLBlacklistedCommandError):
+            parse_sql("DROP TABLE t", blacklist={"DROP"})
+
+    def test_parse_sql_blacklist_create_blocked(self) -> None:
+        """CREATE with CREATE blacklisted should raise SQLBlacklistedCommandError.
+
+        The CREATE command should be correctly identified and blocked.
+        """
+        with pytest.raises(SQLBlacklistedCommandError):
+            parse_sql("CREATE TABLE t (id INT)", blacklist={"CREATE"})
+
+    def test_parse_sql_blacklist_truncate_blocked(self) -> None:
+        """TRUNCATE with TRUNCATE blacklisted should raise SQLBlacklistedCommandError.
+
+        The TRUNCATE command should be correctly identified and blocked.
+        """
+        with pytest.raises(SQLBlacklistedCommandError):
+            parse_sql("TRUNCATE TABLE t", blacklist={"TRUNCATE"})
+
+    def test_parse_sql_blacklist_alter_blocked(self) -> None:
+        """ALTER with ALTER blacklisted should raise SQLBlacklistedCommandError.
+
+        The ALTER command should be correctly identified and blocked.
+        """
+        with pytest.raises(SQLBlacklistedCommandError):
+            parse_sql("ALTER TABLE t ADD COLUMN c INT", blacklist={"ALTER"})
+
+    def test_parse_sql_blacklist_empty_set_allows_all(self) -> None:
+        """DELETE with empty blacklist should succeed.
+
+        An empty blacklist set should not block any commands.
+        """
+        result = parse_sql("DELETE FROM t", blacklist=set())
+
+        with check:
+            assert isinstance(result, sqlglot.Expression), "Empty blacklist should allow all commands"
+
+    def test_parse_sql_blacklist_select_can_be_blocked(self) -> None:
+        """SELECT with SELECT blacklisted should raise SQLBlacklistedCommandError.
+
+        Even SELECT queries can be blacklisted if needed for specific use cases.
+        """
+        with pytest.raises(SQLBlacklistedCommandError):
+            parse_sql("SELECT * FROM t", blacklist={"SELECT"})
+
+    def test_parse_sql_blacklist_union_queries_detected_as_select(self) -> None:
+        """UNION query with SELECT blacklisted should raise.
+
+        Set operations like UNION are treated as SELECT queries and should
+        be blocked when SELECT is in the blacklist.
+        """
+        with pytest.raises(SQLBlacklistedCommandError):
+            parse_sql("SELECT a FROM t1 UNION SELECT a FROM t2", blacklist={"SELECT"})
+
+    def test_parse_sql_blacklist_error_inherits_from_sql_validation_error(self) -> None:
+        """SQLBlacklistedCommandError should be catchable as SQLValidationError.
+
+        The exception hierarchy allows catching all SQL validation errors
+        with a single except clause.
+        """
+        with pytest.raises(SQLValidationError):
+            parse_sql("DELETE FROM t", blacklist={"DELETE"})
