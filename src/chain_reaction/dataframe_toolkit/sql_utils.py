@@ -10,10 +10,16 @@ from typing import Final
 
 import sqlglot
 from sqlglot import exp
+from sqlglot.optimizer.scope import build_scope
 
-from chain_reaction.dataframe_toolkit.exceptions import ParseErrorDict, SQLBlacklistedCommandError, SQLSyntaxError
+from chain_reaction.dataframe_toolkit.exceptions import (
+    ParseErrorDict,
+    SQLBlacklistedCommandError,
+    SQLSyntaxError,
+    SQLTableError,
+)
 
-__all__ = ["DESTRUCTIVE_COMMANDS", "parse_sql"]
+__all__ = ["DESTRUCTIVE_COMMANDS", "parse_sql", "validate_sql_tables"]
 
 # Common destructive SQL commands that modify or delete data/schema.
 # Use with parse_sql's blacklist parameter to block these operations.
@@ -132,6 +138,68 @@ def parse_sql(
     return expression
 
 
+def validate_sql_tables(query: str | exp.Expression, valid_tables: set[str]) -> None:
+    """Validate that a SQL query only references allowed tables.
+
+    Parses the query (if string) and extracts all table references using scope
+    analysis to correctly distinguish actual database tables from CTEs. Validates
+    that at least one valid table is referenced and no unknown tables are used.
+
+    Note:
+        When passing a string query, SQLSyntaxError may be raised by the
+        underlying parse_sql() call if the SQL syntax is invalid.
+
+    Args:
+        query (str | exp.Expression): The SQL query string or a pre-parsed
+            sqlglot Expression (e.g., from parse_sql()).
+        valid_tables (set[str]): Set of allowed table names. Matching is
+            case-insensitive.
+
+    Raises:
+        SQLTableError: If no valid tables are referenced, or if unknown tables
+            are referenced. The exception includes the list of invalid table names.
+
+    Examples:
+        >>> validate_sql_tables("SELECT a FROM users", {"users"})
+
+        >>> try:
+        ...     validate_sql_tables("SELECT a FROM unknown_table", {"users"})
+        ... except SQLTableError as e:
+        ...     print(f"Invalid tables: {e.invalid_tables}")
+        Invalid tables: ['unknown_table']
+    """
+    # Parse the query if it's a string
+    if isinstance(query, str):
+        expression = parse_sql(query)
+        query_str = query
+    else:
+        expression = query
+        query_str = expression.sql()
+
+    # Extract table names using scope traversal (correctly handles CTEs)
+    referenced_table_names = _extract_table_names(expression)
+
+    if not referenced_table_names:
+        raise SQLTableError(
+            message="Query does not reference any tables.",
+            query=query_str,
+            invalid_tables=[],
+        )
+
+    # Normalize valid_tables to lowercase for case-insensitive matching
+    normalized_valid_tables = {t.lower() for t in valid_tables}
+
+    # Find invalid table references
+    invalid_tables = sorted(set(referenced_table_names) - normalized_valid_tables)
+
+    if invalid_tables:
+        raise SQLTableError(
+            message=f"Query references invalid tables: {invalid_tables}",
+            query=query_str,
+            invalid_tables=invalid_tables,
+        )
+
+
 def _get_sql_command_type(expression: exp.Expression) -> str | None:
     """Map a sqlglot expression to its SQL command type string.
 
@@ -143,3 +211,30 @@ def _get_sql_command_type(expression: exp.Expression) -> str | None:
             the expression type is not recognized.
     """
     return _EXPRESSION_TYPE_MAP.get(type(expression))
+
+
+def _extract_table_names(expression: exp.Expression) -> list[str]:
+    """Extract table names from a parsed SQL expression using scope traversal.
+
+    Uses sqlglot's scope analysis to correctly distinguish actual database tables
+    from CTEs and subqueries.
+
+    Args:
+        expression (exp.Expression): A parsed sqlglot expression.
+
+    Returns:
+        list[str]: List of lowercase table names referenced in the query.
+            Returns empty list if no tables are found.
+    """
+    root = build_scope(expression)
+    if root is None:
+        return []  # pragma: no cover
+
+    tables: list[exp.Table] = [
+        source
+        for scope in root.traverse()
+        for _alias, (_node, source) in scope.selected_sources.items()
+        if isinstance(source, exp.Table)
+    ]
+
+    return [table.name.lower() for table in tables]
