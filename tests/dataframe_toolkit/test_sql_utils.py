@@ -1,8 +1,8 @@
 """Tests for SQL utility functions.
 
-This module tests the `parse_sql` function which parses SQL queries using SQLglot,
-returning an Expression on success or raising SQLSyntaxError for empty queries,
-whitespace-only queries, and invalid SQL syntax.
+This module tests the SQL parsing and validation functions including:
+- `parse_sql`: Parses SQL queries and validates syntax
+- `validate_sql_tables`: Validates table references against allowed tables
 """
 
 from __future__ import annotations
@@ -14,12 +14,14 @@ from pytest_check import check
 from chain_reaction.dataframe_toolkit.exceptions import (
     SQLBlacklistedCommandError,
     SQLSyntaxError,
+    SQLTableError,
     SQLValidationError,
 )
 from chain_reaction.dataframe_toolkit.sql_utils import (
     DESTRUCTIVE_COMMANDS,
     _get_sql_command_type,
     parse_sql,
+    validate_sql_tables,
 )
 
 # ruff: noqa: PLR6301
@@ -1103,3 +1105,238 @@ class TestParseSQLBlacklist:
         """
         with pytest.raises(SQLValidationError):
             parse_sql("DELETE FROM t", blacklist={"DELETE"})
+
+
+class TestValidateSQLTables:
+    """Tests for validate_sql_tables function.
+
+    These tests verify that validate_sql_tables correctly validates table
+    references in SQL queries against a set of allowed tables.
+    """
+
+    # -------------------------------------------------------------------------
+    # Success Cases (should not raise)
+    # -------------------------------------------------------------------------
+
+    def test_validate_sql_tables_single_valid_table_succeeds(self) -> None:
+        """Query referencing a single valid table should not raise.
+
+        A simple SELECT query referencing a table that exists in the
+        valid_tables set should pass validation without error.
+        """
+        # Arrange
+        query = "SELECT a FROM users"
+        valid_tables = {"users"}
+
+        # Act & Assert - should not raise
+        validate_sql_tables(query, valid_tables)
+
+    def test_validate_sql_tables_multiple_valid_tables_join_succeeds(self) -> None:
+        """Query joining multiple valid tables should not raise.
+
+        A JOIN query referencing multiple tables that all exist in the
+        valid_tables set should pass validation without error.
+        """
+        # Arrange
+        query = "SELECT * FROM users u JOIN orders o ON u.id = o.user_id"
+        valid_tables = {"users", "orders"}
+
+        # Act & Assert - should not raise
+        validate_sql_tables(query, valid_tables)
+
+    def test_validate_sql_tables_case_insensitive_query_uppercase_succeeds(self) -> None:
+        """Query with uppercase table name should match lowercase valid_tables.
+
+        Table name matching should be case-insensitive, so USERS in the
+        query should match 'users' in valid_tables.
+        """
+        # Arrange
+        query = "SELECT * FROM USERS"
+        valid_tables = {"users"}
+
+        # Act & Assert - should not raise
+        validate_sql_tables(query, valid_tables)
+
+    def test_validate_sql_tables_case_insensitive_valid_tables_uppercase_succeeds(self) -> None:
+        """Query with lowercase table name should match uppercase valid_tables.
+
+        Table name matching should be case-insensitive, so users in the
+        query should match 'USERS' in valid_tables.
+        """
+        # Arrange
+        query = "SELECT * FROM users"
+        valid_tables = {"USERS"}
+
+        # Act & Assert - should not raise
+        validate_sql_tables(query, valid_tables)
+
+    def test_validate_sql_tables_with_table_alias_succeeds(self) -> None:
+        """Query using table alias should validate the actual table name.
+
+        Table aliases (e.g., 'u' for 'users') should not affect validation;
+        the underlying table name should be checked against valid_tables.
+        """
+        # Arrange
+        query = "SELECT u.id FROM users u"
+        valid_tables = {"users"}
+
+        # Act & Assert - should not raise
+        validate_sql_tables(query, valid_tables)
+
+    def test_validate_sql_tables_accepts_pre_parsed_expression_succeeds(self) -> None:
+        """Pre-parsed sqlglot Expression should be accepted as query parameter.
+
+        The function should accept either a string query or a pre-parsed
+        sqlglot Expression from parse_sql().
+        """
+        # Arrange
+        expression = parse_sql("SELECT * FROM users")
+        valid_tables = {"users"}
+
+        # Act & Assert - should not raise
+        validate_sql_tables(expression, valid_tables)
+
+    # -------------------------------------------------------------------------
+    # Failure Cases (should raise SQLTableError)
+    # -------------------------------------------------------------------------
+
+    def test_validate_sql_tables_invalid_table_raises_error(self) -> None:
+        """Query referencing only invalid tables should raise SQLTableError.
+
+        When the query references a table not in valid_tables, SQLTableError
+        should be raised with the invalid table name in the invalid_tables list.
+        """
+        # Arrange
+        query = "SELECT * FROM unknown_table"
+        valid_tables = {"users"}
+
+        # Act & Assert
+        with pytest.raises(SQLTableError) as exc_info:
+            validate_sql_tables(query, valid_tables)
+
+        with check:
+            assert "unknown_table" in exc_info.value.invalid_tables, "invalid_tables should contain 'unknown_table'"
+
+    def test_validate_sql_tables_mix_valid_invalid_raises_error(self) -> None:
+        """Query with mix of valid and invalid tables should raise SQLTableError.
+
+        When some tables are valid but others are not, SQLTableError should
+        be raised listing only the invalid tables.
+        """
+        # Arrange
+        query = "SELECT * FROM users JOIN bad_table ON users.id = bad_table.user_id"
+        valid_tables = {"users"}
+
+        # Act & Assert
+        with pytest.raises(SQLTableError) as exc_info:
+            validate_sql_tables(query, valid_tables)
+
+        with check:
+            assert exc_info.value.invalid_tables == ["bad_table"], "invalid_tables should contain only 'bad_table'"
+
+    def test_validate_sql_tables_no_tables_raises_error(self) -> None:
+        """Query without table references should raise SQLTableError.
+
+        Queries like 'SELECT 1' that don't reference any tables should
+        raise SQLTableError with an empty invalid_tables list.
+        """
+        # Arrange
+        query = "SELECT 1"
+        valid_tables = {"users"}
+
+        # Act & Assert
+        with pytest.raises(SQLTableError) as exc_info:
+            validate_sql_tables(query, valid_tables)
+
+        with check:
+            assert exc_info.value.invalid_tables == [], (
+                "invalid_tables should be empty for queries with no table references"
+            )
+
+    def test_validate_sql_tables_all_invalid_tables_raises_error(self) -> None:
+        """Query referencing only invalid tables should list all in error.
+
+        When multiple tables are referenced and none are valid, all invalid
+        table names should be included in the SQLTableError.
+        """
+        # Arrange
+        query = "SELECT * FROM foo JOIN bar ON foo.id = bar.foo_id"
+        valid_tables = {"users"}
+
+        # Act & Assert
+        with pytest.raises(SQLTableError) as exc_info:
+            validate_sql_tables(query, valid_tables)
+
+        with check:
+            assert "foo" in exc_info.value.invalid_tables, "invalid_tables should contain 'foo'"
+        with check:
+            assert "bar" in exc_info.value.invalid_tables, "invalid_tables should contain 'bar'"
+
+    # -------------------------------------------------------------------------
+    # CTE and Subquery Tests
+    # -------------------------------------------------------------------------
+
+    def test_validate_sql_tables_cte_not_counted_as_table_succeeds(self) -> None:
+        """CTE names should not be treated as database tables.
+
+        Common Table Expressions (CTEs) define temporary result sets that
+        should not be validated against valid_tables. Only the actual
+        database tables referenced within the CTE should be validated.
+        """
+        # Arrange
+        query = "WITH temp AS (SELECT * FROM users) SELECT * FROM temp"
+        valid_tables = {"users"}
+
+        # Act & Assert - should not raise because 'temp' is a CTE, not a table
+        validate_sql_tables(query, valid_tables)
+
+    def test_validate_sql_tables_subquery_table_validated_succeeds(self) -> None:
+        """Tables in subqueries should be validated against valid_tables.
+
+        Tables referenced inside subqueries should be included in the
+        validation, not just tables in the main query.
+        """
+        # Arrange
+        query = "SELECT * FROM users WHERE id IN (SELECT user_id FROM orders)"
+        valid_tables = {"users", "orders"}
+
+        # Act & Assert - should not raise
+        validate_sql_tables(query, valid_tables)
+
+    # -------------------------------------------------------------------------
+    # Error Attribute Tests
+    # -------------------------------------------------------------------------
+
+    def test_validate_sql_tables_error_contains_query(self) -> None:
+        """SQLTableError should contain the original query string.
+
+        The query attribute should store the exact query string that was
+        validated, enabling debugging and error reporting.
+        """
+        # Arrange
+        query = "SELECT * FROM invalid_table"
+        valid_tables = {"users"}
+
+        # Act & Assert
+        with pytest.raises(SQLTableError) as exc_info:
+            validate_sql_tables(query, valid_tables)
+
+        with check:
+            assert exc_info.value.query == query, "SQLTableError should store the original query"
+
+    def test_validate_sql_tables_error_contains_invalid_tables_list(self) -> None:
+        """SQLTableError invalid_tables attribute should be a list.
+
+        The invalid_tables attribute should be a list type containing
+        the names of tables that failed validation.
+        """
+        # Arrange
+        query = "SELECT * FROM bad_table"
+        valid_tables = {"users"}
+
+        # Act & Assert
+        with pytest.raises(SQLTableError) as exc_info:
+            validate_sql_tables(query, valid_tables)
+
+        with check:
+            assert isinstance(exc_info.value.invalid_tables, list), "invalid_tables should be a list"
