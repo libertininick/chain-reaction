@@ -1,8 +1,8 @@
 """Tests for SQL utility functions.
 
-This module tests the `parse_sql` function which parses SQL queries using SQLglot,
-returning an Expression on success or raising SQLSyntaxError for empty queries,
-whitespace-only queries, and invalid SQL syntax.
+This module tests the SQL parsing and validation functions including:
+- `parse_sql`: Parses SQL queries and validates syntax
+- `validate_sql_tables`: Validates table references against allowed tables
 """
 
 from __future__ import annotations

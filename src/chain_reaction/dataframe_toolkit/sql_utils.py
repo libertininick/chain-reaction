@@ -138,7 +138,7 @@ def parse_sql(
     return expression
 
 
-def validate_sql_tables(query: str | exp.Expression, valid_tables: set[str]) -> None:
+def validate_sql_tables(query: str | exp.Expression, valid_tables: set[str], *, dialect: str | None = None) -> None:
     """Validate that a SQL query only references allowed tables.
 
     Parses the query (if string) and extracts all table references using scope
@@ -154,6 +154,8 @@ def validate_sql_tables(query: str | exp.Expression, valid_tables: set[str]) -> 
             sqlglot Expression (e.g., from parse_sql()).
         valid_tables (set[str]): Set of allowed table names. Matching is
             case-insensitive.
+        dialect (str | None): Optional SQL dialect to use for parsing if
+            `query` is a string. Defaults to None.
 
     Raises:
         SQLTableError: If no valid tables are referenced, or if unknown tables
@@ -170,7 +172,7 @@ def validate_sql_tables(query: str | exp.Expression, valid_tables: set[str]) -> 
     """
     # Parse the query if it's a string
     if isinstance(query, str):
-        expression = parse_sql(query)
+        expression = parse_sql(query, dialect=dialect)
         query_str = query
     else:
         expression = query
@@ -181,7 +183,7 @@ def validate_sql_tables(query: str | exp.Expression, valid_tables: set[str]) -> 
 
     if not referenced_table_names:
         raise SQLTableError(
-            message="Query does not reference any tables.",
+            message="Query does not reference any tables. At least one table from valid_tables must be referenced.",
             query=query_str,
             invalid_tables=[],
         )
@@ -224,7 +226,8 @@ def _extract_table_names(expression: exp.Expression) -> list[str]:
 
     Returns:
         list[str]: List of lowercase table names referenced in the query.
-            Returns empty list if no tables are found.
+            May contain duplicates if the same table is referenced multiple times
+            (e.g., in self-joins). Returns empty list if no tables are found.
     """
     root = build_scope(expression)
     if root is None:
