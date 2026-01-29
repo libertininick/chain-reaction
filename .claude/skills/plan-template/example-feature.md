@@ -1,5 +1,9 @@
 # Example Plan: Text Sanitization Utility
 
+This example demonstrates a **simple feature** (single module, 3 functions). For larger features, scale by adding more phases - see [Scaling for Complex Features](#scaling-for-complex-features) at the end.
+
+---
+
 ## Feature Overview
 Add a text sanitization utility module to clean and normalize user input before processing in LangChain agents. This feature will provide three functions for common text cleaning operations.
 
@@ -220,3 +224,40 @@ Each function goes through validation before moving to the next:
 - **Final validation:** All tests pass, code formatted, integration works
 
 This iterative approach ensures each piece is solid before building the next.
+
+---
+
+## Scaling for Complex Features
+
+This template scales naturally for features of any complexity. Here's how to adapt it:
+
+### Simple Features (1-5 functions, single module)
+Use the pattern shown above: one phase per function with write → test → validate cycles.
+
+### Medium Features (multiple modules, classes, or APIs)
+Organize by **component** rather than function:
+- **Phase 1:** Core data models/types
+- **Phase 2:** Primary business logic module
+- **Phase 3:** Secondary module (depends on Phase 2)
+- **Phase 4:** API layer or integration
+- **Phase 5:** End-to-end validation
+
+Each phase follows the same write → test → validate pattern, but at the module or component level.
+
+### Complex Features (multi-module systems, external integrations)
+Add additional structure:
+- **Explicit dependencies** between phases
+- **Architecture Analysis** section documenting current state and proposed changes
+- **Design Decisions** section for key technical choices with rationale
+- **File Inventory** listing all files to create/modify/delete
+- **Integration phases** between major components
+- **Performance and security considerations**
+
+See `example-refactor.md` for a comprehensive template structure suitable for complex features.
+
+### Key Principles (Any Complexity)
+1. **One phase = one complete, testable component** (function, class, module, or integration)
+2. **Write → Test → Validate** cycle for each phase
+3. **Dependencies must be explicit** - Phase N shouldn't start until its dependencies complete
+4. **Final phase is always E2E validation** - verify all components work together
+5. **Acceptance criteria are specific and measurable** - no vague "works correctly" statements
