@@ -233,6 +233,10 @@ def _extract_table_names(expression: exp.Expression) -> list[str]:
     if root is None:
         return []  # pragma: no cover
 
+    # Find real database tables via scope traversal
+    # Each scope's selected_sources distinguishes real database tables from CTEs/subqueries at a semantic level
+    # Handles name collisions between real and derived tables correctly, keeping all real tables
+    # even if there is also a derived table with the same name
     tables: list[exp.Table] = [
         source
         for scope in root.traverse()
