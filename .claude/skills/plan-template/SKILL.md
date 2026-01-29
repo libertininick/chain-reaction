@@ -75,6 +75,12 @@ version: <int>                     # increment on updates
 ## Overview
 [2-3 sentence summary of what this feature does and why it's needed]
 
+## Phases
+
+- [ ] [Phase 1: Phase Name](#phase-1-phase-name)
+- [ ] [Phase 2: Phase Name](#phase-2-phase-name)
+- [ ] [Phase N: End-to-End Validation](#phase-n-end-to-end-validation)
+
 ## Requirements
 
 ### Functional Requirements

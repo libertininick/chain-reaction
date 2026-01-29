@@ -31,6 +31,14 @@ Refactor the existing SQL generation logic scattered across multiple files into 
 - Using SQLGlot for SQL parsing and generation (see frameworks.md)
 - All existing tests must continue to pass
 
+## Phases
+
+- [ ] [Phase 1: ClauseBuilder Module](#phase-1-clausebuilder-module)
+- [ ] [Phase 2: QueryBuilder Module](#phase-2-querybuilder-module)
+- [ ] [Phase 3: QueryExecutor Module](#phase-3-queryexecutor-module)
+- [ ] [Phase 4: Toolkit Refactoring](#phase-4-toolkit-refactoring)
+- [ ] [Phase 5: Final Quality Assurance](#phase-5-final-quality-assurance)
+
 ## Architecture Analysis
 
 ### Current State

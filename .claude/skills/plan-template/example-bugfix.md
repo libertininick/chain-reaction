@@ -14,6 +14,14 @@ The `validate_column_types()` function in `src/chain_reaction/dataframe_toolkit/
 - Add comprehensive tests for edge cases involving nullable types
 - Maintain backward compatibility with existing validation behavior
 
+## Phases
+
+- [ ] [Phase 1: Identify Impacted Code](#phase-1-identify-impacted-code)
+- [ ] [Phase 2: Reproduce Bug with Test](#phase-2-reproduce-bug-with-test)
+- [ ] [Phase 3: Fix the Bug](#phase-3-fix-the-bug)
+- [ ] [Phase 4: Add Tests for Edge Cases](#phase-4-add-tests-for-edge-cases-optional-but-recommended)
+- [ ] [Phase 5: Final Validation and Documentation](#phase-5-final-validation-and-documentation)
+
 ## Bug Fix Strategy
 
 This bug fix follows **Test-Driven Development (TDD)** principles:
