@@ -16,15 +16,15 @@ This command orchestrates implementation of phases from an approved plan documen
 
 **Examples:**
 ```
-/implement Phase 1 from .claude/agent-outputs/plans/plan-api-refactor-2024-01-22.md
-/implement Phase 3 and 4 from .claude/agent-outputs/plans/plan-api-refactor-2024-01-22.md
-/implement .claude/agent-outputs/plans/plan-api-refactor-2024-01-22.md
+/implement Phase 1 from .claude/agent-outputs/plans/2024-01-22T143052Z-api-refactor-plan.md
+/implement Phase 3 and 4 from .claude/agent-outputs/plans/2024-01-22T143052Z-api-refactor-plan.md
+/implement .claude/agent-outputs/plans/2024-01-22T143052Z-api-refactor-plan.md
 ```
 
 ## Prerequisites
 
 1. Create a plan first using `/plan <feature-description>`
-2. Have the plan approved and saved to `.claude/agent-outputs/plans/plan-<feature>-<date>.md`
+2. Have the plan approved and saved to `.claude/agent-outputs/plans/<YYYY-MM-DDTHHmmssZ>-<scope>-plan.md`
 
 ## Execution Flow
 

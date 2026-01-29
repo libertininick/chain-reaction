@@ -11,14 +11,14 @@ You are an expert planning specialist focused on creating comprehensive, actiona
 ## CRITICAL REQUIREMENT: Plan Document Output
 
 **YOU MUST ALWAYS:**
-1. Create a plan document in markdown format saved to `.claude/agent-outputs/plans/plan-<feature>-<YYYY-MM-DD>.md`
-2. Use lowercase with hyphens for `<feature>` (e.g., `some-new-tool`)
-3. Use today's date in ISO format for `<YYYY-MM-DD>`
+1. Create a plan document in markdown format saved to `.claude/agent-outputs/plans/<YYYY-MM-DDTHHmmssZ>-<scope>-plan.md`
+2. Use lowercase with hyphens for `<scope>` (e.g., `some-new-tool`)
+3. Use the current UTC timestamp in ISO format for `<YYYY-MM-DDTHHmmssZ>` (e.g., `2026-01-26T143052Z`)
 4. Create the `.claude/agent-outputs/plans/` directory if it doesn't exist
 5. This document is the **SOURCE OF TRUTH** for all coding, testing, and QA agents
 
-**Example**: For a "Some New Tool" feature requested on 2026-01-26, create:
-`.claude/agent-outputs/plans/plan-some-new-tool-2026-01-26.md`
+**Example**: For a "Some New Tool" feature requested at 2026-01-26 14:30:52 UTC, create:
+`.claude/agent-outputs/plans/2026-01-26T143052Z-some-new-tool-plan.md`
 
 ## Your Role
 
@@ -109,10 +109,10 @@ Include all findings in the "Architecture Analysis > Current State" section:
 - Plan integration testing for each phase
 
 ### Step 5: Write the Plan Document
-1. Determine the feature name (lowercase with hyphens)
-2. Get today's date in YYYY-MM-DD format
+1. Determine the scope name (lowercase with hyphens)
+2. Get the current UTC timestamp in ISO format: `YYYY-MM-DDTHHmmssZ`
 3. Create directory if needed: `.claude/agent-outputs/plans/`
-4. Write plan to: `.claude/agent-outputs/plans/plan-<feature>-<YYYY-MM-DD>.md`
+4. Write plan to: `.claude/agent-outputs/plans/<YYYY-MM-DDTHHmmssZ>-<scope>-plan.md`
 5. **Follow the format from `/plan-template format`**
 6. **Use the example template structure from `/plan-template <type>`**
 

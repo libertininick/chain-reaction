@@ -1,7 +1,7 @@
 ---
-feature: sql-generation-refactor
-created: 2026-01-26
-updated: 2026-01-26
+scope: sql-generation-refactor
+created: 2026-01-26T143052Z
+updated: 2026-01-26T143052Z
 version: 2
 ---
 

@@ -79,8 +79,8 @@ When provided, the reviewer will:
 
 **Examples:**
 ```
-/review --staged --plan .claude/agent-outputs/plans/plan-api-refactor-2024-01-22.md --phase 2
-/review src/foo.py --plan .claude/agent-outputs/plans/plan-new-feature.md
+/review --staged --plan .claude/agent-outputs/plans/2024-01-22T143052Z-api-refactor-plan.md --phase 2
+/review src/foo.py --plan .claude/agent-outputs/plans/2024-01-22T143052Z-new-feature-plan.md
 ```
 
 ## What Gets Reviewed

@@ -60,10 +60,10 @@ This skill provides everything needed to write implementation plans: templates, 
 
 ```yaml
 ---
-feature: <feature-name>      # lowercase with hyphens
-created: <YYYY-MM-DD>        # creation date
-updated: <YYYY-MM-DD>        # last update date
-version: <int>               # increment on updates
+scope: <scope-name>                # lowercase with hyphens
+created: <YYYY-MM-DDTHHmmssZ>      # creation timestamp (UTC)
+updated: <YYYY-MM-DDTHHmmssZ>      # last update timestamp (UTC)
+version: <int>                     # increment on updates
 ---
 ```
 

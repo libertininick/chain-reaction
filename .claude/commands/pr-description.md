@@ -22,8 +22,8 @@ The generator will:
 **Examples:**
 ```
 /pr-description
-/pr-description --plan .claude/agent-outputs/plans/plan-api-refactor-2024-01-22.md
-/pr-description --plan .claude/agent-outputs/plans/plan-api-refactor-2024-01-22.md --phases 1,2
+/pr-description --plan .claude/agent-outputs/plans/2024-01-22T143052Z-api-refactor-plan.md
+/pr-description --plan .claude/agent-outputs/plans/2024-01-22T143052Z-api-refactor-plan.md --phases 1,2
 ```
 
 ## Execution Flow
