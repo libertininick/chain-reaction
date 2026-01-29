@@ -9,7 +9,7 @@ This command invokes the **python-code-reviewer agent** to conduct a thorough co
 The reviewer will:
 1. **Analyze the specified code** - Read and understand the implementation
 2. **Check against conventions** - Verify compliance with [development-conventions](../development-conventions/)
-3. **Generate review document** - Write findings to `.claude/agent-outputs/reviews/review-<scope>-<YYYY-MM-DD>.md`
+3. **Generate review document** - Write findings to `.claude/agent-outputs/reviews/<YYYY-MM-DDTHHmmssZ>-<scope>-review.md`
 
 ## Usage
 
@@ -100,14 +100,16 @@ The reviewer checks against ALL sections of [development-conventions](../develop
 
 Review documents are saved to:
 ```
-.claude/agent-outputs/reviews/review-<scope>-<YYYY-MM-DD>.md
+.claude/agent-outputs/reviews/<YYYY-MM-DDTHHmmssZ>-<scope>-review.md
 ```
 
-Where `<scope>` is derived from:
-- File name (single file): `review-parser-2024-01-22.md`
-- Directory/module (multiple files): `review-tools-2024-01-22.md`
-- Plan phase: `review-phase-2-api-refactor-2024-01-22.md`
-- Commit: `review-commit-abc123f-2024-01-22.md`
+Where:
+- Timestamp is UTC in ISO format (e.g., `2024-01-22T143052Z`)
+- `<scope>` is derived from:
+  - File name (single file): `2024-01-22T143052Z-parser-review.md`
+  - Directory/module (multiple files): `2024-01-22T143052Z-tools-review.md`
+  - Plan phase: `2024-01-22T143052Z-phase-2-api-refactor-review.md`
+  - Commit: `2024-01-22T143052Z-commit-abc123f-review.md`
 
 ## When to Use This Command
 
