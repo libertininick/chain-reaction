@@ -80,8 +80,10 @@ Generate the PR description following the format from the template skill. Refere
 
 The PR description is written to:
 ```
-.claude/agent-outputs/pr-descriptions/pr-<branch-name>-<YYYY-MM-DD>.md
+.claude/agent-outputs/pr-descriptions/<YYYY-MM-DDTHHmmssZ>-<branch-name>-pr.md
 ```
+
+Where timestamp is UTC in ISO format (e.g., `2024-01-22T143052Z-feature-auth-pr.md`).
 
 The description is also displayed in the terminal for easy copying.
 
