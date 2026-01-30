@@ -8,6 +8,18 @@ user-invocable: false
 
 Apply these naming patterns when writing Python code in this repository.
 
+## Quick Reference
+
+| Element | Case | Pattern | Example |
+|---------|------|---------|---------|
+| Function | `snake_case` | `<verb>_<noun>` | `fetch_user`, `validate_input` |
+| Async function | `snake_case` | `async_<verb>_<noun>` | `async_fetch_user` |
+| Variable | `snake_case` | descriptive | `user_count`, `is_valid` |
+| Class | `PascalCase` | noun | `SearchIndex`, `UserSession` |
+| Constant | `SCREAMING_SNAKE_CASE` | + `Final` | `MAX_RETRIES: Final = 3` |
+| Private | `_snake_case` | `_` prefix | `_cache`, `_validate` |
+| Type alias | `PascalCase` | noun | `JsonValue`, `Embedding` |
+
 ## Functions and Methods
 
 **Pattern**: `<verb>_<noun>` in `snake_case`
@@ -145,15 +157,3 @@ UserId = int
 # INCORRECT
 json_value = dict[str, Any] | list[Any] | str | int | float | bool | None  # Wrong case
 ```
-
-## Quick Reference
-
-| Element | Case | Pattern | Example |
-|---------|------|---------|---------|
-| Function | `snake_case` | `<verb>_<noun>` | `fetch_user`, `validate_input` |
-| Async function | `snake_case` | `async_<verb>_<noun>` | `async_fetch_user` |
-| Variable | `snake_case` | descriptive | `user_count`, `is_valid` |
-| Class | `PascalCase` | noun | `SearchIndex`, `UserSession` |
-| Constant | `SCREAMING_SNAKE_CASE` | + `Final` | `MAX_RETRIES: Final = 3` |
-| Private | `_snake_case` | `_` prefix | `_cache`, `_validate` |
-| Type alias | `PascalCase` | noun | `JsonValue`, `Embedding` |
