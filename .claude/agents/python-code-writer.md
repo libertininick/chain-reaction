@@ -48,6 +48,7 @@ Development conventions are provided through **skills** that are automatically l
 | `code-organization` | Creating new modules or affecting file structure |
 | `naming-conventions` | Naming new functions, classes, or variables |
 | `function-design` | Writing functions with parameters, returns, or complex logic |
+| `pythonic-conventions` | Writing loops, building collections, handling resources |
 | `type-hints` | Adding type hints, using generics, or protocols |
 | `data-structures` | Using Pydantic models or dataclasses |
 | `class-design` | Designing classes, using composition, or inheritance |
@@ -55,10 +56,10 @@ Development conventions are provided through **skills** that are automatically l
 
 ### Typical Task Scenarios
 
-- **New function**: `naming-conventions` + `function-design` + `type-hints` + `docstring-conventions`
-- **New module**: `code-organization` + `naming-conventions`
+- **New function**: `naming-conventions` + `function-design` + `pythonic-conventions` + `type-hints` + `docstring-conventions`
+- **New module**: `code-organization` + `naming-conventions` + `pythonic-conventions`
 - **New data model**: `data-structures` + `type-hints` + `docstring-conventions`
-- **New class**: `class-design` + `naming-conventions` + `type-hints` + `docstring-conventions`
+- **New class**: `class-design` + `naming-conventions` + `pythonic-conventions` + `type-hints` + `docstring-conventions`
 
 **You MUST apply the relevant skills when writing code.**
 
