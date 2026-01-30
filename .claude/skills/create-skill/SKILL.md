@@ -139,7 +139,6 @@ When applicable, show how to verify compliance:
 | `$ARGUMENTS` | All arguments passed to skill |
 | `$ARGUMENTS[N]` or `$N` | Specific argument by index (0-based) |
 | `${CLAUDE_SESSION_ID}` | Current session ID |
-| `` !`command` `` | Shell command output (runs before skill loads) |
 
 Example:
 
