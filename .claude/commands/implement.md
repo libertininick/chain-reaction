@@ -37,14 +37,14 @@ For each specified phase:
 
 2. **Implement Source Code**
    - Dispatch to `python-code-writer` agent
-   - Agent follows [development-conventions](../development-conventions/) and [frameworks.md](../frameworks.md)
+   - Agent applies relevant development convention skills (`frameworks`, `naming-conventions`, etc.)
 
 3. **Implement Tests**
    - Dispatch to `python-test-writer` agent
-   - Agent follows [testing.md](../development-conventions/testing.md)
+   - Agent applies `testing` skill for test conventions
 
 4. **Validate**
-   - Run validation commands per [development-conventions](../development-conventions/README.md#validation-commands)
+   - Run validation commands per [CLAUDE.md](../CLAUDE.md)
 
 ## After Implementation
 

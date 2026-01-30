@@ -84,11 +84,12 @@ Args: [template-type]
 - [ ] **Grep for relevant imports** to find reusable utilities
 - [ ] **Glob to find files in relevant modules** (e.g., `src/**/<module>*.py`)
 - [ ] **Read 2-3 related existing files** to understand patterns
-- [ ] **Read project conventions**:
-  - [ ] `development-conventions/README.md` - guiding principles
-  - [ ] Relevant guides from `development-conventions/`
-  - [ ] `frameworks.md` - approved frameworks
-  - [ ] `CLAUDE.md` - project-specific guidance
+- [ ] **Apply relevant skills**:
+  - [ ] `frameworks` - Check approved frameworks
+  - [ ] `code-organization` - For module structure
+  - [ ] `naming-conventions` - For naming patterns
+  - [ ] `testing` - For test planning
+- [ ] **Read CLAUDE.md** - Project-specific guidance
 - [ ] **Grep for TODO/FIXME comments** related to this feature
 - [ ] **Read existing tests** to understand test patterns
 
@@ -129,29 +130,29 @@ Include all findings in the "Architecture Analysis > Current State" section:
 
 ---
 
-## Guide Selection for Development Conventions
+## Skill Selection for Development Conventions
 
-**IMPORTANT**: Only read the guides you need for the specific planning task.
+**IMPORTANT**: Only invoke skills you need for the specific planning task.
 
-The development conventions are in `.claude/development-conventions/`:
+Development conventions are provided through skills:
 
-| Guide | Read When Planning... |
-|-------|----------------------|
-| [README.md](../development-conventions/README.md) | **Always** - Guiding principles and anti-patterns |
-| [organization.md](../development-conventions/organization.md) | Features that add/modify modules |
-| [naming.md](../development-conventions/naming.md) | Features requiring new functions, classes |
-| [patterns.md](../development-conventions/patterns.md) | Features involving error handling, composition |
-| [functions.md](../development-conventions/functions.md) | Features with multiple functions |
-| [data-structures.md](../development-conventions/data-structures.md) | Features with Pydantic models |
-| [typing.md](../development-conventions/typing.md) | Features with complex types |
-| [testing.md](../development-conventions/testing.md) | All features (for test planning) |
-| [documentation.md](../development-conventions/documentation.md) | Features requiring docs |
+| Skill | Invoke When Planning... |
+|-------|------------------------|
+| `frameworks` | Features that use external libraries |
+| `code-organization` | Features that add/modify modules |
+| `naming-conventions` | Features requiring new functions, classes |
+| `class-design` | Features involving class hierarchies, composition |
+| `function-design` | Features with multiple functions |
+| `data-structures` | Features with Pydantic models |
+| `type-hints` | Features with complex types |
+| `testing` | All features (for test planning) |
+| `docstring-conventions` | Features requiring documentation |
 
 **Typical scenarios:**
-- **New module/feature**: README.md + organization.md + naming.md + testing.md
-- **Bug fix**: README.md + testing.md
-- **Refactoring**: README.md + organization.md + patterns.md + testing.md
-- **Data model changes**: README.md + data-structures.md + typing.md + testing.md
+- **New module/feature**: `code-organization` + `naming-conventions` + `testing`
+- **Bug fix**: `testing`
+- **Refactoring**: `code-organization` + `class-design` + `testing`
+- **Data model changes**: `data-structures` + `type-hints` + `testing`
 
 ---
 

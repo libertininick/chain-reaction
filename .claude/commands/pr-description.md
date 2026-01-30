@@ -28,7 +28,7 @@ Generate a pull request description from current branch changes: $ARGUMENTS
 ### 1. Load Template
 
 Read the PR description template skill to understand the required format:
-- `.claude/skills/pr-description-template/skill.md` - Format specification and guidelines
+- `.claude/skills/pr-description-template/SKILL.md` - Format specification and guidelines
 
 ### 2. Gather Branch Information
 
@@ -65,7 +65,7 @@ If `--plan` is specified:
 
 ### 5. Check Development Conventions
 
-Review changes against [development-conventions](../development-conventions/):
+Apply relevant development convention skills to review changes:
 - Note any intentional deviations that should be documented
 - These MUST be called out in "Key Design Decisions"
 

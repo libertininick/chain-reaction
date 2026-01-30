@@ -14,21 +14,33 @@ mcp-servers/          # FastMCP server implementations
 ## Quick Reference
 
 - Install/sync dependencies: `uv sync`
-- For validation commands (lint, format, type check, tests), see [development-conventions](development-conventions/README.md#validation-commands).
+- Format code: `ruff format`
+- Lint code: `ruff check`
+- Type check: `ty check`
+- Run tests: `uv run pytest`
 
-## Source of Truth Documents
+## Development Convention Skills
 
-| Document | Purpose |
-|----------|---------|
-| [development-conventions](development-conventions/) | **All code standards**: organization, naming, types, docstrings, testing, error handling, patterns |
-| [frameworks.md](frameworks.md) | Approved frameworks, documentation links, when to fetch docs |
+Development conventions are provided through **skills** that are automatically loaded when relevant.
+
+| Skill | Purpose |
+|-------|---------|
+| `frameworks` | Approved frameworks and Context7 IDs for documentation |
+| `code-organization` | Module structure, imports, file layouts |
+| `naming-conventions` | Function, class, variable naming patterns |
+| `function-design` | Function signatures, parameters, return types |
+| `class-design` | Class design, composition, inheritance |
+| `data-structures` | Pydantic models vs dataclasses |
+| `type-hints` | Type annotations, generics, protocols |
+| `docstring-conventions` | Google-style docstrings |
+| `testing` | Pytest conventions, fixtures, parametrization |
 
 ## Claude-Specific Rules
 
 **IMPORTANT: YOU MUST follow these rules:**
 
-1. **Use designated frameworks ONLY** - See [frameworks.md](frameworks.md). NEVER substitute alternatives.
-2. **Follow all conventions** - See [development-conventions](development-conventions/) for the complete reference.
+1. **Use designated frameworks ONLY** - Use the `frameworks` skill to check approved libraries. NEVER substitute alternatives.
+2. **Apply relevant skills** - Skills provide all coding standards for this repository.
 3. **Fetch docs when uncertain** - Use Context7 MCP to search library/API documentation. NEVER assume API details.
 4. **Use sub-agents for specialized tasks:**
    - `planner` - Creating implementation plans (use `/plan` command)

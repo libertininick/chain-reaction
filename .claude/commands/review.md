@@ -8,7 +8,7 @@ This command invokes the **python-code-reviewer agent** to conduct a thorough co
 
 The reviewer will:
 1. **Analyze the specified code** - Read and understand the implementation
-2. **Check against conventions** - Verify compliance with [development-conventions](../development-conventions/)
+2. **Check against conventions** - Apply relevant development convention skills
 3. **Generate review document** - Write findings to `.claude/agent-outputs/reviews/<YYYY-MM-DDTHHmmssZ>-<scope>-review.md`
 
 ## Usage
@@ -85,7 +85,7 @@ When provided, the reviewer will:
 
 ## What Gets Reviewed
 
-The reviewer checks against ALL sections of [development-conventions](../development-conventions/):
+The reviewer applies development convention skills to check:
 
 | Category | What's Checked |
 |----------|----------------|
@@ -94,7 +94,7 @@ The reviewer checks against ALL sections of [development-conventions](../develop
 | **Python Best Practices** | Type hints, Pythonic patterns, PEP 8 |
 | **Design Principles** | Composition over inheritance, DRY, single responsibility |
 | **Testing** | Testability, edge case handling, coverage gaps |
-| **Framework Compliance** | Only approved frameworks per [frameworks.md](../frameworks.md) |
+| **Framework Compliance** | Only approved frameworks per `frameworks` skill |
 
 ## Output
 
