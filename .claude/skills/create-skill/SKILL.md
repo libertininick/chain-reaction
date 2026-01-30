@@ -6,9 +6,14 @@ argument-hint: <skill-name> [source-file]
 
 # Create a Claude Code Skill
 
-Create skills that extend Claude's capabilities with actionable, prescriptive instructions.
+Create [skills](https://code.claude.com/docs/en/skills) that extend Claude's capabilities with actionable, prescriptive instructions.
 
-**Documentation**: https://code.claude.com/docs/en/skills
+## Quick Start
+
+1. Create directory: `mkdir -p .claude/skills/$ARGUMENTS`
+2. Create `SKILL.md` with frontmatter and instructions
+3. Test with `/skill-name` or ask Claude something that triggers auto-load
+4. Verify with: "What skills are available?"
 
 ## Skill Location
 
@@ -175,10 +180,4 @@ Before finalizing a skill, verify:
 - [ ] Under **500 lines** (move details to supporting files)
 - [ ] Correct `user-invocable` / `disable-model-invocation` settings
 - [ ] Includes **validation commands** if applicable
-
-## Quick Start
-
-1. Create directory: `mkdir -p .claude/skills/$ARGUMENTS`
-2. Create `SKILL.md` with frontmatter and instructions
-3. Test with `/skill-name` or ask Claude something that triggers auto-load
-4. Verify with: "What skills are available?"
+- [ ] Includes Quick Reference / Quick Start at top if applicable
