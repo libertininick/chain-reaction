@@ -24,7 +24,8 @@ Apply these organization patterns when writing Python code in this repository.
 
 ## Module Structure
 
-**Pattern**: Public interface at top, private helpers below
+**Pattern**: Public interface at top, private helpers below. Within each section,
+group related classes and functions together and order them by logical flow. 
 
 ```python
 # src/package/module/file.py

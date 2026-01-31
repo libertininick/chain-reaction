@@ -32,6 +32,7 @@ Development conventions are provided through **skills** that are automatically l
 | `class-design` | Class design, composition, inheritance |
 | `data-structures` | Pydantic models vs dataclasses |
 | `type-hints` | Type annotations, generics, protocols |
+| `pythonic-conventions` | Comprehensions, built-ins, context managers, unpacking |
 | `docstring-conventions` | Google-style docstrings |
 | `testing` | Pytest conventions, fixtures, parametrization |
 

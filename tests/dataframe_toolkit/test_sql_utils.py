@@ -13,6 +13,7 @@ from pytest_check import check
 
 from chain_reaction.dataframe_toolkit.exceptions import (
     SQLBlacklistedCommandError,
+    SQLColumnError,
     SQLSyntaxError,
     SQLTableError,
     SQLValidationError,
@@ -21,6 +22,7 @@ from chain_reaction.dataframe_toolkit.sql_utils import (
     DESTRUCTIVE_COMMANDS,
     _get_sql_command_type,
     parse_sql,
+    validate_sql_columns,
     validate_sql_tables,
 )
 
@@ -1340,3 +1342,274 @@ class TestValidateSQLTables:
 
         with check:
             assert isinstance(exc_info.value.invalid_tables, list), "invalid_tables should be a list"
+
+
+class TestValidateSQLColumnsValidCases:
+    """Tests for validate_sql_columns with valid queries.
+
+    These tests verify that validate_sql_columns correctly accepts queries
+    with valid column references and does not raise errors.
+    """
+
+    def test_validate_sql_columns_single_table_valid_columns_succeeds(self) -> None:
+        """Query with valid columns from single table should not raise."""
+        validate_sql_columns("SELECT id, name FROM users", {"users": {"id", "name", "email"}})
+
+    def test_validate_sql_columns_table_qualified_columns_succeeds(self) -> None:
+        """Query with table-qualified columns should not raise."""
+        validate_sql_columns("SELECT users.id, users.name FROM users", {"users": {"id", "name", "email"}})
+
+    def test_validate_sql_columns_table_alias_succeeds(self) -> None:
+        """Query with table aliases should validate base table columns."""
+        validate_sql_columns("SELECT u.id, u.name FROM users u", {"users": {"id", "name", "email"}})
+
+    def test_validate_sql_columns_join_multiple_tables_succeeds(self) -> None:
+        """JOIN with columns from multiple base tables should not raise."""
+        query = "SELECT u.id, u.name, o.order_date, o.total FROM users u JOIN orders o ON u.id = o.user_id"
+        table_columns = {"users": {"id", "name", "email"}, "orders": {"id", "user_id", "order_date", "total"}}
+        validate_sql_columns(query, table_columns)
+
+    def test_validate_sql_columns_invalid_table_skipped(self) -> None:
+        """Query with table not in provided schema should be skipped."""
+        query = "SELECT id, name FROM nonexistent_table"
+        table_columns = {"users": {"id", "name", "email"}}
+        validate_sql_columns(query, table_columns)
+
+    @pytest.mark.parametrize(
+        ("query", "table_columns"),
+        [
+            ("SELECT COUNT(id) FROM users", {"users": {"id", "name"}}),
+            ("SELECT SUM(total) FROM orders", {"orders": {"id", "total", "user_id"}}),
+            ("SELECT AVG(price), MAX(price), MIN(price) FROM products", {"products": {"id", "name", "price"}}),
+        ],
+        ids=["count_column", "sum_column", "multiple_aggregates"],
+    )
+    def test_validate_sql_columns_aggregate_functions_succeeds(
+        self, query: str, table_columns: dict[str, set[str]]
+    ) -> None:
+        """Aggregate functions referencing valid columns should not raise."""
+        validate_sql_columns(query, table_columns)
+
+    def test_validate_sql_columns_cte_columns_skipped_base_table_skipped(self) -> None:
+        """CTE columns should be skipped; base table columns skipped."""
+        query = (
+            "WITH active_users AS (SELECT id, name FROM users WHERE active = true) SELECT id, name FROM active_users"
+        )
+        validate_sql_columns(query, {"users": {"id", "name", "email", "active"}})
+
+    def test_validate_sql_columns_subquery_alias_columns_skipped(self) -> None:
+        """Columns from subquery aliases should be skipped."""
+        query = "SELECT sub.id, sub.name FROM (SELECT id, name FROM users WHERE active = true) AS sub"
+        validate_sql_columns(query, {"users": {"id", "name", "email", "active"}})
+
+    def test_validate_sql_columns_self_join_different_aliases_succeeds(self) -> None:
+        """Self-join with same table aliased differently should not raise."""
+        query = (
+            "SELECT e.id, e.name, m.name AS manager_name FROM employees e LEFT JOIN employees m ON e.manager_id = m.id"
+        )
+        validate_sql_columns(query, {"employees": {"id", "name", "manager_id"}})
+
+    def test_validate_sql_columns_pre_parsed_expression_succeeds(self) -> None:
+        """Pre-parsed Expression input should be accepted."""
+        expression = parse_sql("SELECT id, name FROM users")
+        validate_sql_columns(expression, {"users": {"id", "name", "email"}})
+
+
+class TestValidateSQLColumnsInvalidCases:
+    """Tests for validate_sql_columns with invalid queries.
+
+    These tests verify that validate_sql_columns raises SQLColumnError
+    for queries with invalid column references.
+    """
+
+    def test_validate_sql_columns_invalid_column_raises_error(self) -> None:
+        """Query with invalid column should raise SQLColumnError."""
+        with pytest.raises(SQLColumnError) as exc_info:
+            validate_sql_columns("SELECT id, nonexistent_col FROM users", {"users": {"id", "name", "email"}})
+
+        with check:
+            assert "users" in exc_info.value.invalid_columns
+        with check:
+            assert "nonexistent_col" in exc_info.value.invalid_columns.get("users", [])
+
+    def test_validate_sql_columns_multiple_invalid_columns_different_tables_raises_error(self) -> None:
+        """Query with multiple invalid columns across tables should list all."""
+        query = "SELECT u.id, u.bad_col, o.order_date, o.fake_col FROM users u JOIN orders o ON u.id = o.user_id"
+        table_columns = {"users": {"id", "name", "email"}, "orders": {"id", "user_id", "order_date", "total"}}
+
+        with pytest.raises(SQLColumnError) as exc_info:
+            validate_sql_columns(query, table_columns)
+
+        with check:
+            assert "bad_col" in exc_info.value.invalid_columns.get("users", [])
+        with check:
+            assert "fake_col" in exc_info.value.invalid_columns.get("orders", [])
+
+    def test_validate_sql_columns_table_alias_invalid_column_shows_base_table(self) -> None:
+        """Table alias with invalid column should report base table name."""
+        with pytest.raises(SQLColumnError) as exc_info:
+            validate_sql_columns("SELECT u.id, u.fake_column FROM users u", {"users": {"id", "name", "email"}})
+
+        with check:
+            assert "users" in exc_info.value.invalid_columns
+        with check:
+            assert "fake_column" in exc_info.value.invalid_columns.get("users", [])
+
+    def test_validate_sql_columns_invalid_column_in_aggregate_raises_error(self) -> None:
+        """Invalid column inside aggregate function should raise SQLColumnError."""
+        with pytest.raises(SQLColumnError) as exc_info:
+            validate_sql_columns("SELECT COUNT(nonexistent) FROM users", {"users": {"id", "name", "email"}})
+
+        with check:
+            assert "nonexistent" in exc_info.value.invalid_columns.get("users", [])
+
+
+class TestValidateSQLColumnsErrorDetails:
+    """Tests for SQLColumnError error message formatting.
+
+    These tests verify that SQLColumnError provides detailed and useful
+    error information including table context and available columns.
+    """
+
+    def test_validate_sql_columns_error_includes_table_name(self) -> None:
+        """Error should include which table the invalid column was from."""
+        with pytest.raises(SQLColumnError) as exc_info:
+            validate_sql_columns("SELECT bad_column FROM users", {"users": {"id", "name"}})
+
+        with check:
+            assert "users" in exc_info.value.format_details()
+
+    def test_validate_sql_columns_error_includes_available_columns(self) -> None:
+        """Error format_details should include available columns for the table."""
+        with pytest.raises(SQLColumnError) as exc_info:
+            validate_sql_columns("SELECT bad_column FROM users", {"users": {"id", "name", "email"}})
+
+        error_details = exc_info.value.format_details()
+        with check:
+            assert "id" in error_details
+        with check:
+            assert "name" in error_details
+        with check:
+            assert "email" in error_details
+
+    def test_validate_sql_columns_multiple_invalid_columns_listed_in_error(self) -> None:
+        """Multiple invalid columns should produce multiple entries."""
+        with pytest.raises(SQLColumnError) as exc_info:
+            validate_sql_columns("SELECT id, col_a, col_b FROM users", {"users": {"id", "name"}})
+
+        invalid_cols = exc_info.value.invalid_columns.get("users", [])
+        with check:
+            assert "col_a" in invalid_cols
+        with check:
+            assert "col_b" in invalid_cols
+
+    def test_validate_sql_columns_error_contains_query(self) -> None:
+        """SQLColumnError should contain the original query string."""
+        query = "SELECT bad_col FROM users"
+        with pytest.raises(SQLColumnError) as exc_info:
+            validate_sql_columns(query, {"users": {"id", "name"}})
+
+        with check:
+            assert exc_info.value.query == query
+
+    def test_validate_sql_columns_error_contains_table_columns_schema(self) -> None:
+        """SQLColumnError should contain the table_columns schema."""
+        table_columns = {"users": {"id", "name"}}
+        with pytest.raises(SQLColumnError) as exc_info:
+            validate_sql_columns("SELECT bad_col FROM users", table_columns)
+
+        with check:
+            assert exc_info.value.table_columns == table_columns
+
+
+class TestValidateSQLColumnsCaseInsensitivity:
+    """Tests for case-insensitive matching in validate_sql_columns.
+
+    These tests verify that table and column names are matched
+    case-insensitively.
+    """
+
+    def test_validate_sql_columns_column_names_case_insensitive_succeeds(self) -> None:
+        """Column names should be matched case-insensitively."""
+        validate_sql_columns("SELECT ID, NAME FROM users", {"users": {"id", "name", "email"}})
+
+    def test_validate_sql_columns_table_names_case_insensitive_succeeds(self) -> None:
+        """Table names should be matched case-insensitively."""
+        validate_sql_columns("SELECT id, name FROM USERS", {"users": {"id", "name", "email"}})
+
+    def test_validate_sql_columns_mixed_case_matching_succeeds(self) -> None:
+        """Mixed case in both query and schema should match."""
+        validate_sql_columns("SELECT Id, NaMe FROM Users", {"USERS": {"ID", "NAME", "EMAIL"}})
+
+
+class TestValidateSQLColumnsEdgeCases:
+    """Tests for edge cases in validate_sql_columns.
+
+    These tests cover edge cases like SELECT *, various SQL clauses,
+    and ambiguous column references.
+    """
+
+    def test_validate_sql_columns_star_select_succeeds(self) -> None:
+        """SELECT * should not raise errors since no specific columns are referenced."""
+        validate_sql_columns("SELECT * FROM users", {"users": {"id", "name"}})
+
+    def test_validate_sql_columns_where_clause_columns_succeeds(self) -> None:
+        """Columns in WHERE clause should be validated."""
+        with pytest.raises(SQLColumnError) as exc_info:
+            validate_sql_columns("SELECT id FROM users WHERE bad_filter = 1", {"users": {"id", "name", "email"}})
+
+        with check:
+            assert "bad_filter" in exc_info.value.invalid_columns.get("users", [])
+
+    def test_validate_sql_columns_order_by_columns_succeeds(self) -> None:
+        """Columns in ORDER BY clause should be validated."""
+        with pytest.raises(SQLColumnError) as exc_info:
+            validate_sql_columns("SELECT id FROM users ORDER BY fake_column", {"users": {"id", "name"}})
+
+        with check:
+            assert "fake_column" in exc_info.value.invalid_columns.get("users", [])
+
+    def test_validate_sql_columns_group_by_columns_succeeds(self) -> None:
+        """Columns in GROUP BY clause should be validated."""
+        with pytest.raises(SQLColumnError) as exc_info:
+            validate_sql_columns(
+                "SELECT category, COUNT(*) FROM products GROUP BY fake_category",
+                {"products": {"id", "name", "category"}},
+            )
+
+        with check:
+            assert "fake_category" in exc_info.value.invalid_columns.get("products", [])
+
+    def test_validate_sql_columns_join_condition_columns_succeeds(self) -> None:
+        """Columns in JOIN ON conditions should be validated."""
+        query = "SELECT u.id FROM users u JOIN orders o ON u.fake_join_col = o.user_id"
+        table_columns = {"users": {"id", "name"}, "orders": {"id", "user_id", "total"}}
+
+        with pytest.raises(SQLColumnError) as exc_info:
+            validate_sql_columns(query, table_columns)
+
+        with check:
+            assert "fake_join_col" in exc_info.value.invalid_columns.get("users", [])
+
+    def test_validate_sql_columns_dialect_parameter_accepted(self) -> None:
+        """Dialect parameter should be accepted for parsing."""
+        validate_sql_columns("SELECT id, name FROM users", {"users": {"id", "name"}}, dialect="duckdb")
+
+    def test_validate_sql_columns_empty_schema_for_unknown_table_skips_validation(self) -> None:
+        """Columns for tables not in schema should be skipped."""
+        query = "SELECT u.id, ext.data FROM users u JOIN external ext ON u.id = ext.user_id"
+        validate_sql_columns(query, {"users": {"id", "name"}})
+
+    def test_validate_sql_columns_no_scope_returns_without_error(self) -> None:
+        """Query without scope should not raise."""
+        validate_sql_columns("SELECT 1", {"users": {"id", "name"}})
+
+    def test_validate_sql_columns_unqualified_column_multiple_tables_skipped(self) -> None:
+        """Unqualified column with multiple tables should be skipped."""
+        query = "SELECT id FROM users u JOIN orders o ON u.id = o.user_id"
+        validate_sql_columns(query, {"users": {"id", "name"}, "orders": {"id", "user_id"}})
+
+    def test_validate_sql_columns_inherits_from_sql_validation_error(self) -> None:
+        """SQLColumnError should be catchable as SQLValidationError."""
+        with pytest.raises(SQLValidationError):
+            validate_sql_columns("SELECT bad_col FROM users", {"users": {"id", "name"}})

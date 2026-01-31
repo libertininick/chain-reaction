@@ -48,6 +48,7 @@ Development conventions are provided through **skills** that are automatically l
 | `code-organization` | Creating new modules or affecting file structure |
 | `naming-conventions` | Naming new functions, classes, or variables |
 | `function-design` | Writing functions with parameters, returns, or complex logic |
+| `pythonic-conventions` | Writing loops, building collections, handling resources |
 | `type-hints` | Adding type hints, using generics, or protocols |
 | `data-structures` | Using Pydantic models or dataclasses |
 | `class-design` | Designing classes, using composition, or inheritance |
@@ -55,10 +56,10 @@ Development conventions are provided through **skills** that are automatically l
 
 ### Typical Task Scenarios
 
-- **New function**: `naming-conventions` + `function-design` + `type-hints` + `docstring-conventions`
-- **New module**: `code-organization` + `naming-conventions`
+- **New function**: `naming-conventions` + `function-design` + `pythonic-conventions` + `type-hints` + `docstring-conventions`
+- **New module**: `code-organization` + `naming-conventions` + `pythonic-conventions`
 - **New data model**: `data-structures` + `type-hints` + `docstring-conventions`
-- **New class**: `class-design` + `naming-conventions` + `type-hints` + `docstring-conventions`
+- **New class**: `class-design` + `naming-conventions` + `pythonic-conventions` + `type-hints` + `docstring-conventions`
 
 **You MUST apply the relevant skills when writing code.**
 
@@ -87,11 +88,11 @@ Use `mcp__context7__query-docs` with the Context7 ID from the `frameworks` skill
 Before marking work complete, verify:
 
 - [ ] Code formatted with `ruff format`
-- [ ] Type checking passes (`ty check`)
-- [ ] Docstrings validated (`pydoclint`)
+- [ ] Follows docstring conventions (per `docstring-conventions` skill)
 - [ ] All functions/classes have type hints (per `type-hints` skill)
 - [ ] Uses only approved frameworks (per `frameworks` skill)
 - [ ] Follows naming conventions (per `naming-conventions` skill)
+- [ ] Code follows pythonic conventions (per `pythonic conventions` skill)
 - [ ] Error messages are actionable
 - [ ] No commented-out code
 

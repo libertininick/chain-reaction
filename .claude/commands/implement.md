@@ -38,10 +38,12 @@ For each specified phase:
 2. **Implement Source Code**
    - Dispatch to `python-code-writer` agent
    - Agent applies relevant development convention skills (`frameworks`, `naming-conventions`, etc.)
+   - Agent checks that docstrings, type hints, and coding conventions are properly followed
 
 3. **Implement Tests**
    - Dispatch to `python-test-writer` agent
    - Agent applies `testing` skill for test conventions
+   - Agent checks that docstrings, type hints, and testing conventions are properly followed
 
 4. **Validate**
    - Run validation commands per [CLAUDE.md](../CLAUDE.md)

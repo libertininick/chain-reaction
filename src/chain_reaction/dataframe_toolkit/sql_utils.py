@@ -10,16 +10,17 @@ from typing import Final
 
 import sqlglot
 from sqlglot import exp
-from sqlglot.optimizer.scope import build_scope
+from sqlglot.optimizer.scope import Scope, build_scope, find_all_in_scope
 
 from chain_reaction.dataframe_toolkit.exceptions import (
     ParseErrorDict,
     SQLBlacklistedCommandError,
+    SQLColumnError,
     SQLSyntaxError,
     SQLTableError,
 )
 
-__all__ = ["DESTRUCTIVE_COMMANDS", "parse_sql", "validate_sql_tables"]
+__all__ = ["DESTRUCTIVE_COMMANDS", "parse_sql", "validate_sql_columns", "validate_sql_tables"]
 
 # Common destructive SQL commands that modify or delete data/schema.
 # Use with parse_sql's blacklist parameter to block these operations.
@@ -33,21 +34,8 @@ DESTRUCTIVE_COMMANDS: Final[frozenset[str]] = frozenset({
     "CREATE",
 })
 
-# Mapping of sqlglot expression types to SQL command type strings for blacklist checking.
-# Set operations (Union, Intersect, Except) are considered SELECT queries.
-_EXPRESSION_TYPE_MAP: dict[type[exp.Expression], str] = {
-    exp.Select: "SELECT",
-    exp.Delete: "DELETE",
-    exp.Insert: "INSERT",
-    exp.Update: "UPDATE",
-    exp.Drop: "DROP",
-    exp.Create: "CREATE",
-    exp.TruncateTable: "TRUNCATE",
-    exp.Alter: "ALTER",
-    exp.Union: "SELECT",
-    exp.Intersect: "SELECT",
-    exp.Except: "SELECT",
-}
+
+# --- Public Interface ---
 
 
 def parse_sql(
@@ -55,9 +43,8 @@ def parse_sql(
 ) -> sqlglot.Expression:
     """Parses the query using SQLglot to detect syntax errors and returns the parsed expression.
 
-    Parses the query using SQLglot to detect syntax errors. If the query is
-    syntactically valid, returns normally. If the query has syntax errors,
-    raises SQLSyntaxError with details about the parse errors. Optionally
+    If the query is syntactically valid, returns normally. If the query has syntax
+    errors, raises SQLSyntaxError with details about the parse errors. Optionally
     validates the command type against a blacklist of disallowed commands.
 
     Args:
@@ -96,15 +83,12 @@ def parse_sql(
         ...     print(f"Blocked: {e.command_type}")
         Blocked: DELETE
     """
-    # Validate non-empty query
     if not query or not query.strip():
         raise SQLSyntaxError("SQL query cannot be empty or whitespace-only", query=query, errors=[])
 
     try:
         expression = sqlglot.parse_one(query, dialect=dialect)
     except sqlglot.errors.ParseError as e:
-        # Extract structured error details from SQLglot's ParseError
-        # Only include the keys defined in ParseErrorDict
         errors: list[ParseErrorDict] = [
             ParseErrorDict(
                 description=error_dict.get("description", ""),
@@ -123,9 +107,7 @@ def parse_sql(
             errors=errors,
         ) from e
 
-    # Check if the query's command type is blacklisted (if provided)
     if blacklist and (command_type := _get_sql_command_type(expression)) is not None:
-        # Normalize to uppercase for case-insensitive comparison
         normalized_blacklist = {cmd.upper() for cmd in blacklist}
         if command_type.upper() in normalized_blacklist:
             raise SQLBlacklistedCommandError(
@@ -139,7 +121,7 @@ def parse_sql(
 
 
 def validate_sql_tables(query: str | exp.Expression, valid_tables: set[str], *, dialect: str | None = None) -> None:
-    """Validate that a SQL query only references allowed tables.
+    """Validate that a SQL query only references allowed tables (`valid_tables`).
 
     Parses the query (if string) and extracts all table references using scope
     analysis to correctly distinguish actual database tables from CTEs. Validates
@@ -170,7 +152,6 @@ def validate_sql_tables(query: str | exp.Expression, valid_tables: set[str], *, 
         ...     print(f"Invalid tables: {e.invalid_tables}")
         Invalid tables: ['unknown_table']
     """
-    # Parse the query if it's a string
     if isinstance(query, str):
         expression = parse_sql(query, dialect=dialect)
         query_str = query
@@ -178,7 +159,6 @@ def validate_sql_tables(query: str | exp.Expression, valid_tables: set[str], *, 
         expression = query
         query_str = expression.sql()
 
-    # Extract table names using scope traversal (correctly handles CTEs)
     referenced_table_names = _extract_table_names(expression)
 
     if not referenced_table_names:
@@ -188,10 +168,7 @@ def validate_sql_tables(query: str | exp.Expression, valid_tables: set[str], *, 
             invalid_tables=[],
         )
 
-    # Normalize valid_tables to lowercase for case-insensitive matching
     normalized_valid_tables = {t.lower() for t in valid_tables}
-
-    # Find invalid table references
     invalid_tables = sorted(set(referenced_table_names) - normalized_valid_tables)
 
     if invalid_tables:
@@ -200,6 +177,101 @@ def validate_sql_tables(query: str | exp.Expression, valid_tables: set[str], *, 
             query=query_str,
             invalid_tables=invalid_tables,
         )
+
+
+def validate_sql_columns(
+    query: str | exp.Expression,
+    table_columns: dict[str, set[str]],
+    *,
+    dialect: str | None = None,
+) -> None:
+    """Validate that a SQL query only references valid columns for base tables.
+
+    Parses the query (if string) and extracts column references, validating them
+    against the provided schema (`table_columns`). Only validates columns on base
+    (real) tables; columns from derived tables (CTEs, subqueries) or tables not
+    in the schema are intentionally skipped.
+
+    Note:
+        When passing a string query, SQLSyntaxError may be raised by the
+        underlying parse_sql() call if the SQL syntax is invalid.
+
+    Args:
+        query (str | exp.Expression): The SQL query string or a pre-parsed
+            sqlglot Expression (e.g., from parse_sql()).
+        table_columns (dict[str, set[str]]): Mapping of table names to their
+            valid column names. Matching is case-insensitive for both table
+            names and column names.
+        dialect (str | None): Optional SQL dialect to use for parsing if
+            `query` is a string. Defaults to None.
+
+    Raises:
+        SQLColumnError: If invalid columns are referenced on base tables. The
+            exception includes the invalid columns grouped by table and the
+            available columns for each table.
+
+    Examples:
+        Valid columns on base tables:
+        >>> validate_sql_columns(
+        ...     "SELECT id, name FROM users",
+        ...     {"users": {"id", "name", "email"}},
+        ... )
+
+        Invalid column referenced:
+        >>> try:
+        ...     validate_sql_columns(
+        ...         "SELECT id, foo FROM users",
+        ...         {"users": {"id", "name"}},
+        ...     )
+        ... except SQLColumnError as e:
+        ...     print(e.format_details())
+        Column "foo" not found in table "users". Available columns: id, name
+
+        Table not in schema is skipped:
+        >>> validate_sql_columns(
+        ...     "SELECT id, bar FROM external_table",
+        ...     {"users": {"id", "name"}},
+        ... )
+    """
+    if isinstance(query, str):
+        expression = parse_sql(query, dialect=dialect)
+        query_str = query
+    else:
+        expression = query
+        query_str = expression.sql()
+
+    normalized_schema: dict[str, set[str]] = {
+        table_name.lower(): {col.lower() for col in columns} for table_name, columns in table_columns.items()
+    }
+
+    invalid_columns = _collect_invalid_columns(expression, normalized_schema)
+
+    if invalid_columns:
+        raise SQLColumnError(
+            message=f"Invalid column references: {_build_column_error_message(invalid_columns, table_columns)}",
+            query=query_str,
+            invalid_columns=invalid_columns,
+            table_columns=table_columns,
+        )
+
+
+# --- Private Helpers ---
+
+# Mapping of sqlglot expression types to SQL command type strings for blacklist checking.
+# Set operations (Union, Intersect, Except) are considered SELECT queries.
+_EXPRESSION_TYPE_MAP: dict[type[exp.Expression], str] = {
+    exp.Select: "SELECT",
+    exp.Delete: "DELETE",
+    exp.Insert: "INSERT",
+    exp.Update: "UPDATE",
+    exp.Drop: "DROP",
+    exp.Create: "CREATE",
+    exp.TruncateTable: "TRUNCATE",
+    exp.Alter: "ALTER",
+    exp.Union: "SELECT",
+    exp.Intersect: "SELECT",
+    exp.Except: "SELECT",
+}
 
 
 def _get_sql_command_type(expression: exp.Expression) -> str | None:
@@ -233,10 +305,6 @@ def _extract_table_names(expression: exp.Expression) -> list[str]:
     if root is None:
         return []  # pragma: no cover
 
-    # Find real database tables via scope traversal
-    # Each scope's selected_sources distinguishes real database tables from CTEs/subqueries at a semantic level
-    # Handles name collisions between real and derived tables correctly, keeping all real tables
-    # even if there is also a derived table with the same name
     tables: list[exp.Table] = [
         source
         for scope in root.traverse()
@@ -245,3 +313,139 @@ def _extract_table_names(expression: exp.Expression) -> list[str]:
     ]
 
     return [table.name.lower() for table in tables]
+
+
+def _collect_invalid_columns(
+    expression: exp.Expression,
+    normalized_schema: dict[str, set[str]],
+) -> dict[str, list[str]]:
+    """Collect invalid column references from a SQL expression.
+
+    Traverses all scopes in the expression and validates column references
+    against the provided schema.
+
+    Args:
+        expression (exp.Expression): The parsed SQL expression.
+        normalized_schema (dict[str, set[str]]): Lowercase schema mapping table names to column sets.
+
+    Returns:
+        dict[str, list[str]]: Mapping of table names to lists of invalid columns.
+    """
+    root = build_scope(expression)
+    if root is None:
+        return {}
+
+    invalid_columns: dict[str, list[str]] = {}
+
+    for scope in root.traverse():
+        alias_to_table = _build_alias_to_table_map(scope)
+        for column in find_all_in_scope(scope.expression, exp.Column):
+            _validate_column_in_scope(column, alias_to_table, normalized_schema, invalid_columns)
+
+    return invalid_columns
+
+
+def _build_alias_to_table_map(scope: Scope) -> dict[str, str]:
+    """Build a mapping from table aliases to base table names for a scope.
+
+    Args:
+        scope (Scope): A sqlglot scope object with selected_sources attribute.
+
+    Returns:
+        dict[str, str]: Mapping from lowercase alias to lowercase base table name.
+            Only includes sources that are actual database tables, not CTEs or subqueries.
+    """
+    return {
+        alias.lower(): source.name.lower()
+        for alias, (_node, source) in scope.selected_sources.items()
+        if isinstance(source, exp.Table)
+    }
+
+
+def _resolve_column_to_base_table(
+    column: exp.Column,
+    alias_to_table: dict[str, str],
+) -> str | None:
+    """Resolve a column reference to its base table name.
+
+    Args:
+        column (exp.Column): The column expression to resolve.
+        alias_to_table (dict[str, str]): Mapping from alias to base table name.
+
+    Returns:
+        str | None: The lowercase base table name, or None if the column cannot
+            be resolved to a base table (e.g., references a CTE or is ambiguous).
+    """
+    table_alias = column.table.lower() if column.table else ""
+
+    if table_alias:
+        return alias_to_table.get(table_alias)
+
+    # Unqualified column - only resolve if there's exactly one base table
+    base_tables = list(alias_to_table.values())
+    return base_tables[0] if len(base_tables) == 1 else None
+
+
+def _validate_column_in_scope(
+    column: exp.Column,
+    alias_to_table: dict[str, str],
+    normalized_schema: dict[str, set[str]],
+    invalid_columns: dict[str, list[str]],
+) -> None:
+    """Validate a single column reference against the schema.
+
+    Args:
+        column (exp.Column): The column expression to validate.
+        alias_to_table (dict[str, str]): Mapping from alias to base table name.
+        normalized_schema (dict[str, set[str]]): Lowercase schema mapping table names to column sets.
+        invalid_columns (dict[str, list[str]]): Mutable mapping to collect invalid columns.
+    """
+    col_name = column.name.lower()
+    base_table = _resolve_column_to_base_table(column, alias_to_table)
+
+    # Skip if column doesn't resolve to a base table in our schema
+    if base_table is None or base_table not in normalized_schema:
+        return
+
+    # Record invalid column if it doesn't exist in the base table's schema
+    if col_name not in normalized_schema[base_table]:
+        if base_table not in invalid_columns:
+            invalid_columns[base_table] = []
+        if col_name not in invalid_columns[base_table]:
+            invalid_columns[base_table].append(col_name)
+
+
+def _build_column_error_message(
+    invalid_columns: dict[str, list[str]],
+    table_columns: dict[str, set[str]],
+) -> str:
+    """Build a user-friendly error message for invalid column references.
+
+    Args:
+        invalid_columns (dict[str, list[str]]): Mapping of table names to lists of invalid column names.
+        table_columns (dict[str, set[str]]): Original schema for looking up original-case table names.
+
+    Returns:
+        str: Semicolon-separated error message listing all invalid columns.
+    """
+    return "; ".join(
+        f'Column "{col}" not found in table "{_find_original_table_name(table_name, table_columns)}"'
+        for table_name, cols in sorted(invalid_columns.items())
+        for col in sorted(cols)
+    )
+
+
+def _find_original_table_name(table_name: str, table_columns: dict[str, set[str]]) -> str:
+    """Find the original-case table name from the schema.
+
+    Args:
+        table_name (str): Lowercase table name to look up.
+        table_columns (dict[str, set[str]]): Original schema with potentially mixed-case table names.
+
+    Returns:
+        str: The original-case table name from the schema, or the input if not found.
+    """
+    return next(
+        (orig_name for orig_name in table_columns if orig_name.lower() == table_name),
+        table_name,
+    )

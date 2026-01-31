@@ -46,6 +46,7 @@ Invoke skills based on what you're reviewing:
 | Naming patterns | `naming-conventions` |
 | Type hints, generics | `type-hints` |
 | Function signatures | `function-design` |
+| Loops, comprehensions, builtins | `pythonic-conventions` |
 | Pydantic/dataclasses | `data-structures` |
 | Classes, inheritance | `class-design` |
 | Docstrings | `docstring-conventions` |
@@ -101,6 +102,11 @@ Use the format from `review-template` skill. Key points:
 - `# type: ignore` without explanation
 - Commented-out code
 - `TODO` without owner or issue link
+- Manual loops that should be comprehensions (per `pythonic-conventions`)
+- Missing use of `enumerate()`, `zip()`, `any()`, `all()` (per `pythonic-conventions`)
+- Functions that mutate input parameters and return `None` (per `function-design`: pure when possible)
+- Trivial helper functions used only once - inline the logic instead
+- Functions that both perform actions AND return values without clear naming (per `function-design`: command-query separation)
 
 **Question but don't auto-flag:**
 - Design choices (ask why, don't assume wrong)
