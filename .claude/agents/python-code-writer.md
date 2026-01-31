@@ -88,11 +88,11 @@ Use `mcp__context7__query-docs` with the Context7 ID from the `frameworks` skill
 Before marking work complete, verify:
 
 - [ ] Code formatted with `ruff format`
-- [ ] Type checking passes (`ty check`)
-- [ ] Docstrings validated (`pydoclint`)
+- [ ] Follows docstring conventions (per `docstring-conventions` skill)
 - [ ] All functions/classes have type hints (per `type-hints` skill)
 - [ ] Uses only approved frameworks (per `frameworks` skill)
 - [ ] Follows naming conventions (per `naming-conventions` skill)
+- [ ] Code follows pythonic conventions (per `pythonic conventions` skill)
 - [ ] Error messages are actionable
 - [ ] No commented-out code
 
