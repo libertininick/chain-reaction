@@ -159,19 +159,34 @@ class SQLColumnError(SQLValidationError):
     """Raised when a SQL query references invalid columns.
 
     This exception is raised when the SQL query references column names
-    that do not exist in the specified tables.
+    that do not exist in the specified tables. Provides detailed feedback
+    including which table has the invalid column and available columns.
 
     Attributes:
-        invalid_columns (dict[str, list[str]]): Mapping of table names to lists of invalid column names.
+        invalid_columns (dict[str, list[str]]): Mapping of table names to lists of
+            invalid column names.
+        table_columns (dict[str, set[str]]): The schema used for validation, mapping
+            table names to their valid column sets.
+
+    Examples:
+        >>> err = SQLColumnError(
+        ...     message="Invalid column references",
+        ...     invalid_columns={"users": ["col_z"]},
+        ...     table_columns={"users": {"id", "name", "email"}},
+        ... )
+        >>> print(err.format_details())
+        Column "col_z" not found in table "users". Available columns: email, id, name
     """
 
     invalid_columns: dict[str, list[str]]
+    table_columns: dict[str, set[str]]
 
     def __init__(
         self,
         message: str,
         query: str | None = None,
         invalid_columns: dict[str, list[str]] | None = None,
+        table_columns: dict[str, set[str]] | None = None,
     ) -> None:
         """Initialize SQLColumnError.
 
@@ -180,16 +195,46 @@ class SQLColumnError(SQLValidationError):
             query (str | None): The SQL query with invalid column references.
             invalid_columns (dict[str, list[str]] | None): Mapping of table names to
                 lists of invalid column names referenced for that table.
+            table_columns (dict[str, set[str]] | None): The schema used for validation,
+                mapping table names to their valid column sets. Used to generate
+                detailed error messages with available columns.
         """
         super().__init__(message, query=query)
         self.invalid_columns = invalid_columns or {}
+        self.table_columns = table_columns or {}
+
+    def format_details(self) -> str:
+        """Format detailed error messages showing invalid columns and available columns.
+
+        Returns:
+            str: Multi-line string with one line per invalid column, showing
+                the table name and available columns for that table.
+
+        Examples:
+            >>> err = SQLColumnError(
+            ...     message="Invalid columns",
+            ...     invalid_columns={"users": ["foo", "bar"]},
+            ...     table_columns={"users": {"id", "name"}},
+            ... )
+            >>> print(err.format_details())
+            Column "bar" not found in table "users". Available columns: id, name
+            Column "foo" not found in table "users". Available columns: id, name
+        """
+        lines = []
+        for table_name, columns in sorted(self.invalid_columns.items()):
+            available = self.table_columns.get(table_name, set())
+            available_str = ", ".join(sorted(available)) if available else "(none)"
+            for col in sorted(columns):
+                lines.append(f'Column "{col}" not found in table "{table_name}". Available columns: {available_str}')
+        return "\n".join(lines)
 
     def __repr__(self) -> str:
         """Return detailed representation for debugging."""
         return (
             f"{self.__class__.__name__}("
             f"message={str(self)!r}, query={self.query!r}, "
-            f"invalid_columns={self.invalid_columns!r})"
+            f"invalid_columns={self.invalid_columns!r}, "
+            f"table_columns={self.table_columns!r})"
         )
 
 
