@@ -97,9 +97,10 @@ Use specialized agents for specific tasks. Each agent has defined responsibiliti
 
 | Agent | When to Use | Model |
 |-------|-------------|-------|
-| `code-review-orchestrator` | Coordinating code reviews. Invoke via `/review` command. Delegates to specialized reviewers. | Haiku |
-| `code-style-reviewer` | Style, conventions, organization (invoked by orchestrator) | Sonnet |
-| `code-substance-reviewer` | Correctness, design, maintainability (invoked by orchestrator) | Opus |
+| `code-style-reviewer` | Style, conventions, organization (invoked by `/review` command) | Sonnet |
+| `code-substance-reviewer` | Correctness, design, maintainability (invoked by `/review` command) | Opus |
+
+The `/review` command orchestrates these agents sequentially (style first, then substance), then aggregates findings into a unified report.
 
 ### Agent Workflow
 
@@ -108,9 +109,9 @@ Use specialized agents for specific tasks. Each agent has defined responsibiliti
     ↓
 /implement → python-code-writer + python-test-writer
     ↓
-/review → code-review-orchestrator
-              ├── code-style-reviewer (parallel)
-              └── code-substance-reviewer (parallel)
+/review → code-style-reviewer (first)
+        → code-substance-reviewer (second)
+        → aggregates into unified report
     ↓
 /pr-description → generates PR summary
 ```
@@ -155,7 +156,7 @@ Provide format specifications for agent outputs.
 | Skill | Purpose | Used By |
 |-------|---------|---------|
 | `plan-template` | Implementation plan format and examples | `planner` |
-| `review-template` | Code review format and severity guidance | `code-review-orchestrator` |
+| `review-template` | Code review format and severity guidance | `/review` command |
 | `pr-description-template` | PR description format and examples | `/pr-description` command |
 
 ### Utility Skills

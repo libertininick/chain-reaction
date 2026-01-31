@@ -1,18 +1,43 @@
 # Code Review
 
-Review code using the code-review-orchestrator agent: $ARGUMENTS
+Conduct a code review: $ARGUMENTS
 
-## What This Does
+## Review Process
 
-This command invokes the **code-review-orchestrator agent** to conduct a thorough code review using specialized subagents.
+This command orchestrates a two-phase review using specialized agents, then aggregates results into a unified report.
 
-The orchestrator will:
-1. **Fork parallel reviews** - Launch style and substance reviewers simultaneously
-2. **Await results** - Wait for both specialized reviewers to complete
-3. **Merge findings** - Combine results into a unified report with overlapping concerns highlighted
-4. **Generate review document** - Write to `.claude/agent-outputs/reviews/<YYYY-MM-DDTHHmmssZ>-<scope>-review.md`
+### Phase 1: Style Review
 
-### Specialized Reviewers
+Launch the `code-style-reviewer` agent with:
+- The code diff or files to review
+- Implementation plan context (if `--plan` provided)
+
+Wait for completion before proceeding.
+
+### Phase 2: Substance Review
+
+After style review completes, launch the `code-substance-reviewer` agent with:
+- The same code diff or files
+- Implementation plan context (if `--plan` provided)
+
+Wait for completion.
+
+### Phase 3: Aggregate and Write Report
+
+After both reviews complete:
+
+1. **Collect findings** from both reviewers
+2. **Identify overlapping concerns** - issues flagged by both reviewers indicate higher priority
+3. **Determine verdict**:
+   - APPROVE: No critical issues from either reviewer
+   - NEEDS CHANGES: Critical issues found OR many significant improvements needed
+   - REJECT: Fundamental design problems requiring rearchitecture
+4. **Invoke `review-template` skill** for output format
+5. **Write unified report** to `.claude/agent-outputs/reviews/<YYYY-MM-DDTHHmmssZ>-<scope>-review.md`
+
+**IMPORTANT**: Run reviewers sequentially, NOT in parallel.
+
+## Specialized Reviewers
 
 | Reviewer | Model | Focus |
 |----------|-------|-------|
@@ -80,7 +105,7 @@ Add implementation context from a plan document:
 /review <target> --plan <plan-path> [--phase <N>]
 ```
 
-When provided, the reviewer will:
+When provided, the reviewers will:
 - Understand the **intended design** from the plan
 - Verify the implementation **matches the plan's requirements**
 - Check that **acceptance criteria** are addressed
@@ -140,13 +165,25 @@ Where:
 
 The merged report contains:
 
-1. **Verdict** - APPROVE, NEEDS CHANGES, or REJECT
-2. **Most Important Finding** - Single highest-impact issue
-3. **Style Findings** - All style reviewer results, grouped by severity
-4. **Substance Findings** - All substance reviewer results, grouped by severity
+1. **Summary** - Scope, verdict, key finding
+2. **Critical Issues** - Must fix before merge (from either reviewer)
+3. **Improvements** - Should address, grouped by category
+4. **Nitpicks** - Minor items, one line each
 5. **Overlapping Concerns** - Issues flagged by both reviewers (elevated priority)
 
-Empty sections are omitted. Nitpicks are kept to one line each.
+Empty sections are omitted. Use `review-template` skill for exact format.
+
+## Scope Determination
+
+Derive `<scope>` for output filename from:
+
+| Review Target | Scope |
+|---------------|-------|
+| Single file `foo.py` | `foo` |
+| Multiple files in `tools/` | `tools` |
+| Commit `abc123f` | `commit-abc123f` |
+| Staged changes | `staged` |
+| Plan phase 2 | `phase-2-<plan-name>` |
 
 ## When to Use This Command
 
@@ -158,10 +195,9 @@ Empty sections are omitted. Nitpicks are kept to one line each.
 ## Important Notes
 
 - The reviewers **do NOT modify any code** - they only generate review documents
-- The orchestrator uses haiku for coordination; style uses sonnet; substance uses opus
+- Reviews run sequentially (style first, then substance) to ensure stability
 - Overlapping findings from both reviewers indicate higher priority issues
 - For test writing based on review findings, use `python-test-writer` agent
 - For implementing review suggestions, use `python-code-writer` agent
 
 ---
-
