@@ -497,7 +497,7 @@ else:
 value = d.get(key, default)
 ```
 
-### `dict.setdefault()` for Lazy Initialization
+### `defaultdict` for Lazy Initialization
 
 ```python
 # INCORRECT - check then set
@@ -505,8 +505,14 @@ if key not in d:
     d[key] = []
 d[key].append(item)
 
-# CORRECT - setdefault
+# INCORRECT - setdefault (prefer defaultdict for clarity)
 d.setdefault(key, []).append(item)
+
+# CORRECT - defaultdict
+from collections import defaultdict
+
+d = defaultdict(list)
+d[key].append(item)
 ```
 
 ---
