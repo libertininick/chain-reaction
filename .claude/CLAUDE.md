@@ -48,7 +48,7 @@ Development conventions are provided through **skills** that are automatically l
    - `planner` - Creating implementation plans (use `/plan` command)
    - `python-code-writer` - Writing clean, maintainable, testable code
    - `python-test-writer` - Creating/updating pytest tests
-   - `python-code-reviewer` - Code review after significant changes
+   - `code-review-orchestrator` - Code review via parallel style + substance reviewers (use `/review` command)
 5. **NEVER hallucinate** - Only use verified packages. Ask if uncertain about paths, modules, or APIs.
 6. **NEVER delete code** unless explicitly instructed or specified in `TASK.md`.
 7. **NEVER commit changes** unless explicitly instructed or specified in `TASK.md`.
