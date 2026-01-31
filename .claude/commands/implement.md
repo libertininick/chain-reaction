@@ -50,6 +50,6 @@ For each specified phase:
 
 ## After Implementation
 
-- **Code Review**: Use `python-code-reviewer` agent
+- **Code Review**: Run `/review --staged --plan <plan-path> --phase <N>`
 - **Next Phase**: Run `/implement Phase <N+1> from <same-plan>`
 - **Integration**: Verify the implementation integrates with existing code
