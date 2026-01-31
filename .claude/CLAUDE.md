@@ -35,6 +35,7 @@ Development conventions are provided through **skills** that are automatically l
 | `pythonic-conventions` | Comprehensions, built-ins, context managers, unpacking |
 | `docstring-conventions` | Google-style docstrings |
 | `testing` | Pytest conventions, fixtures, parametrization |
+| `complexity-refactoring` | Extracting helper functions or when complexity limit (C901) is exceeded |
 
 ## Claude-Specific Rules
 

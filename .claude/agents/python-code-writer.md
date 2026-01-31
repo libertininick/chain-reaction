@@ -53,6 +53,7 @@ Development conventions are provided through **skills** that are automatically l
 | `data-structures` | Using Pydantic models or dataclasses |
 | `class-design` | Designing classes, using composition, or inheritance |
 | `docstring-conventions` | Writing docstrings for public APIs |
+| `complexity-refactoring` | Extracting helper functions or when complexity limit (C901) is exceeded |
 
 ### Typical Task Scenarios
 
@@ -60,6 +61,7 @@ Development conventions are provided through **skills** that are automatically l
 - **New module**: `code-organization` + `naming-conventions` + `pythonic-conventions`
 - **New data model**: `data-structures` + `type-hints` + `docstring-conventions`
 - **New class**: `class-design` + `naming-conventions` + `pythonic-conventions` + `type-hints` + `docstring-conventions`
+- **Refactoring / C901 fix**: `refactoring` + `function-design` + `pythonic-conventions`
 
 **You MUST apply the relevant skills when writing code.**
 
@@ -93,6 +95,7 @@ Before marking work complete, verify:
 - [ ] Uses only approved frameworks (per `frameworks` skill)
 - [ ] Follows naming conventions (per `naming-conventions` skill)
 - [ ] Code follows pythonic conventions (per `pythonic conventions` skill)
+- [ ] Functions under complexity limit (`ruff check --select C901`); if exceeded, apply `complexity-refactoring` skill
 - [ ] Error messages are actionable
 - [ ] No commented-out code
 
