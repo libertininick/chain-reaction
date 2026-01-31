@@ -8,7 +8,7 @@ tools:
     - Write
     - Task
     - Skill
-model: haiku
+model: sonnet
 color: white
 ---
 
