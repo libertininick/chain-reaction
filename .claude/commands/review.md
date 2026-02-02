@@ -33,7 +33,14 @@ After both reviews complete:
    - NEEDS CHANGES: Critical issues found OR many significant improvements needed
    - REJECT: Fundamental design problems requiring rearchitecture
 4. **Invoke `review-template` skill** for output format
-5. **Write unified report** to `.claude/agent-outputs/reviews/<YYYY-MM-DDTHHmmssZ>-<scope>-review.md`
+5. **Use `write-markdown-output` skill** to write the unified report:
+
+```bash
+uv run python .claude/skills/write-markdown-output/scripts/write_markdown_output.py \
+    -s "<scope>-review" \
+    -c "<aggregated-review-content>" \
+    -o ".claude/agent-outputs/reviews"
+```
 
 **IMPORTANT**: Run reviewers sequentially, NOT in parallel.
 
@@ -147,14 +154,12 @@ Plus correctness analysis: requirements match, logic correctness, edge cases, er
 
 ## Output
 
-Review documents are saved to:
+Review documents are written using the `write-markdown-output` skill to:
 ```
-.claude/agent-outputs/reviews/<YYYY-MM-DDTHHmmssZ>-<scope>-review.md
+.claude/agent-outputs/reviews/<timestamp>-<scope>-review.md
 ```
 
-Where:
-- Timestamp is UTC in ISO format (e.g., `2024-01-22T143052Z`)
-- `<scope>` is derived from:
+Where `<scope>` is derived from:
   - File name (single file): `2024-01-22T143052Z-parser-review.md`
   - Directory/module (multiple files): `2024-01-22T143052Z-tools-review.md`
   - Plan phase: `2024-01-22T143052Z-phase-2-api-refactor-review.md`

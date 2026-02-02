@@ -178,13 +178,14 @@ Provide format specifications for agent outputs.
 | Skill | Purpose | When to Use |
 |-------|---------|-------------|
 | `run-python-safely` | Execute Python code safely via AST analysis before running | **MANDATORY** when agents execute Python code they've generated (exceptions: `uv run pytest`, standard CLI tools) |
+| `write-markdown-output` | Write timestamped markdown files to agent output directories | When agents write plans, reviews, or PR descriptions |
 | `create-skill` | Create new Claude Code skills | When converting conventions or workflows into skills |
 
 ---
 
 ## Agent Output Locations
 
-Agents save their outputs to structured directories:
+Agents save their outputs to structured directories using the `write-markdown-output` skill:
 
 ```
 .claude/agent-outputs/
@@ -197,6 +198,14 @@ Agents save their outputs to structured directories:
 ```
 
 Timestamp format: `YYYY-MM-DDTHHmmssZ` (UTC ISO format)
+
+**Usage**: Agents use the skill to write output files:
+```bash
+uv run python .claude/skills/write-markdown-output/scripts/write_markdown_output.py \
+    -s "<scope>" \
+    -c "<content>" \
+    -o ".claude/agent-outputs/<type>"
+```
 
 ---
 

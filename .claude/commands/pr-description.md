@@ -76,14 +76,23 @@ Generate the PR description following the format from the template skill. Refere
 - `.claude/skills/pr-description-template/example-bugfix.md` - For bug fixes
 - `.claude/skills/pr-description-template/example-refactor.md` - For refactoring
 
+### 7. Write Output
+
+Use the `write-markdown-output` skill to write the PR description:
+
+```bash
+uv run python .claude/skills/write-markdown-output/scripts/write_markdown_output.py \
+    -s "<branch-name>-pr" \
+    -c "<pr-description-content>" \
+    -o ".claude/agent-outputs/pr-descriptions"
+```
+
 ## Output
 
-The PR description is written to:
+The PR description is written using the `write-markdown-output` skill to:
 ```
-.claude/agent-outputs/pr-descriptions/<YYYY-MM-DDTHHmmssZ>-<branch-name>-pr.md
+.claude/agent-outputs/pr-descriptions/<timestamp>-<branch-name>-pr.md
 ```
-
-Where timestamp is UTC in ISO format (e.g., `2024-01-22T143052Z-feature-auth-pr.md`).
 
 The description is also displayed in the terminal for easy copying.
 
