@@ -15,6 +15,7 @@ Pytest conventions for writing maintainable, behavior-focused tests.
 | Test file naming | `test_<module>.py` |
 | Test function naming | `test_<function>_<scenario>_<expected>` |
 | Test structure | Arrange-Act-Assert with comments |
+| Multiple assertions | Use `pytest-check` for soft assertions |
 | Fixtures | Local unless shared across multiple test files |
 | Multiple inputs | Use `@pytest.mark.parametrize` |
 | Related tests | Group in test classes |
@@ -26,6 +27,7 @@ Pytest conventions for writing maintainable, behavior-focused tests.
 | Coverage-driven tests | Test meaningful behavior, not lines |
 | Implementation testing | Test observable behavior; tests should survive refactoring |
 | Order-dependent tests | Tests must be independent; never rely on execution order |
+| Multiple bare asserts | Use `pytest-check` so all assertions run even if early ones fail |
 | Single-use fixtures | Define test data inline for clarity |
 | Fixture duplication | Extend or generalize existing fixtures |
 
@@ -94,6 +96,73 @@ def test_search_sorting() -> None:
     scores = [r.score for r in results]
     assert scores == sorted(scores, reverse=True)
 ```
+
+## Multiple Assertions with pytest-check
+
+Use `pytest-check` for soft assertions when verifying multiple properties. This ensures all assertions run even if earlier ones fail, giving complete feedback in a single test run.
+
+```python
+from pytest_check import check
+
+
+# CORRECT - pytest-check for multiple related assertions
+def test_user_profile_contains_required_fields() -> None:
+    """User profile should contain all required fields with correct types."""
+    # Arrange
+    user_data = {"name": "Alice", "email": "alice@example.com", "age": 30}
+
+    # Act
+    profile = UserProfile.from_dict(user_data)
+
+    # Assert - all checks run even if some fail
+    with check:
+        assert profile.name == "Alice"
+    with check:
+        assert profile.email == "alice@example.com"
+    with check:
+        assert profile.age == 30
+    with check:
+        assert profile.is_active is True
+
+
+# CORRECT - pytest-check with descriptive messages
+def test_search_result_structure() -> None:
+    """Search results should have correct structure and values."""
+    # Arrange
+    index = SearchIndex()
+    index.add_documents(sample_documents)
+
+    # Act
+    results = index.search("python", limit=5)
+
+    # Assert
+    with check:
+        assert len(results) <= 5, "Should respect limit"
+    with check:
+        assert all(r.score >= 0 for r in results), "Scores should be non-negative"
+    with check:
+        assert results == sorted(results, key=lambda r: r.score, reverse=True), (
+            "Results should be sorted by score descending"
+        )
+
+
+# INCORRECT - multiple bare asserts stop at first failure
+def test_user_profile_fields() -> None:
+    profile = UserProfile.from_dict(user_data)
+    assert profile.name == "Alice"      # If this fails...
+    assert profile.email == "alice@example.com"  # ...this never runs
+    assert profile.age == 30            # ...nor this
+```
+
+**When to use pytest-check:**
+- Testing multiple independent properties of an object
+- Validating structure with several fields
+- Any test where seeing all failures at once aids debugging
+
+**When regular assert is fine:**
+- Single assertion per test
+- Assertions that logically depend on each other (if A fails, B is meaningless)
+- Guard assertions in Arrange phase (prefer `pytest.raises` or skip these)
 
 ## Fixtures
 
@@ -164,6 +233,9 @@ def test_tokenize_spaces():
 Group related tests in classes with shared fixtures:
 
 ```python
+from pytest_check import check
+
+
 class TestDataProcessor:
     """Test suite for DataProcessor class."""
 
@@ -184,15 +256,21 @@ class TestDataProcessor:
         self, processor: DataProcessor, sample_data: list[dict[str, Any]]
     ) -> None:
         """Test successful data loading with valid input."""
+        # Arrange/Act
         processor.load_data(sample_data)
 
-        assert processor.record_count == 2
-        assert processor.is_loaded
+        # Assert - use pytest-check for multiple assertions
+        with check:
+            assert processor.record_count == 2
+        with check:
+            assert processor.is_loaded
 
     def test_load_data_exceeds_max_size(self, processor: DataProcessor) -> None:
         """Test that loading data exceeding max_size raises ValueError."""
+        # Arrange
         large_data = [{"id": i} for i in range(2000)]
 
+        # Act/Assert
         with pytest.raises(ValueError, match="exceeds maximum size"):
             processor.load_data(large_data)
 ```
