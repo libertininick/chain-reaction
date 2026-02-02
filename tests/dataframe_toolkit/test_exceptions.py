@@ -410,6 +410,153 @@ class TestSQLBlacklistedCommandError:
             assert "blacklist=" in repr_str, "Repr should include blacklist key"
 
 
+class TestSQLColumnErrorAmbiguous:
+    """Tests for SQLColumnError ambiguous column handling."""
+
+    def test_sql_column_error_stores_ambiguous_columns(self) -> None:
+        """Verify SQLColumnError stores the ambiguous_columns dict correctly.
+
+        The mapping of column names to table lists should be accessible
+        via ambiguous_columns for detailed error reporting.
+        """
+        query = "SELECT id FROM users, orders"
+        ambiguous_columns = {"id": ["users", "orders"]}
+        message = "Ambiguous column references"
+
+        error = SQLColumnError(message, query=query, ambiguous_columns=ambiguous_columns)
+
+        with check:
+            assert error.ambiguous_columns == ambiguous_columns, "Ambiguous columns should be stored"
+        with check:
+            assert error.query == query, "Query should be inherited from base class"
+
+    def test_sql_column_error_with_none_ambiguous_columns(self) -> None:
+        """Verify SQLColumnError defaults to empty dict when ambiguous_columns is None."""
+        error = SQLColumnError("Column error", query="SELECT col FROM tbl")
+
+        with check:
+            assert error.ambiguous_columns == {}, "Ambiguous columns should default to empty dict"
+
+    def test_sql_column_error_format_details_ambiguous(self) -> None:
+        """Verify format_details handles ambiguous columns correctly."""
+        error = SQLColumnError(
+            message="Ambiguous column references",
+            ambiguous_columns={"id": ["users", "orders"]},
+            table_columns={"users": {"id", "name"}, "orders": {"id", "total"}},
+        )
+
+        details = error.format_details()
+
+        with check:
+            assert 'Column "id" is ambiguous' in details, "Should mention column is ambiguous"
+        with check:
+            assert "orders" in details and "users" in details, "Should list tables"
+        with check:
+            assert "orders.id" in details or "users.id" in details, "Should show qualification options"
+
+    def test_sql_column_error_format_details_both_invalid_and_ambiguous(self) -> None:
+        """Verify format_details handles both invalid and ambiguous columns."""
+        error = SQLColumnError(
+            message="Column errors",
+            invalid_columns={"users": ["foo"]},
+            ambiguous_columns={"id": ["users", "orders"]},
+            table_columns={"users": {"id", "name"}, "orders": {"id", "total"}},
+        )
+
+        details = error.format_details()
+
+        with check:
+            assert 'Column "foo" not found' in details, "Should mention invalid column"
+        with check:
+            assert 'Column "id" is ambiguous' in details, "Should mention ambiguous column"
+
+    def test_sql_column_error_repr_includes_ambiguous_columns(self) -> None:
+        """Verify repr includes ambiguous_columns."""
+        error = SQLColumnError(
+            message="Ambiguous",
+            ambiguous_columns={"id": ["users", "orders"]},
+        )
+
+        repr_str = repr(error)
+
+        with check:
+            assert "ambiguous_columns=" in repr_str, "Repr should include ambiguous_columns"
+
+
+class TestSQLColumnErrorNotFound:
+    """Tests for SQLColumnError not-found column handling (multi-table queries)."""
+
+    def test_sql_column_error_stores_not_found_columns(self) -> None:
+        """Verify SQLColumnError stores the not_found_columns dict correctly.
+
+        The mapping of column names to table lists (tables that were searched)
+        should be accessible via not_found_columns for detailed error reporting.
+        """
+        query = "SELECT nonexistent FROM users, orders"
+        not_found_columns = {"nonexistent": ["users", "orders"]}
+        message = "Column not found in any table"
+
+        error = SQLColumnError(message, query=query, not_found_columns=not_found_columns)
+
+        with check:
+            assert error.not_found_columns == not_found_columns, "Not found columns should be stored"
+        with check:
+            assert error.query == query, "Query should be inherited from base class"
+
+    def test_sql_column_error_with_none_not_found_columns(self) -> None:
+        """Verify SQLColumnError defaults to empty dict when not_found_columns is None."""
+        error = SQLColumnError("Column error", query="SELECT col FROM tbl")
+
+        with check:
+            assert error.not_found_columns == {}, "Not found columns should default to empty dict"
+
+    def test_sql_column_error_format_details_not_found(self) -> None:
+        """Verify format_details handles not-found columns correctly."""
+        error = SQLColumnError(
+            message="Column not found",
+            not_found_columns={"nonexistent": ["users", "orders"]},
+            table_columns={"users": {"id", "name"}, "orders": {"id", "total"}},
+        )
+
+        details = error.format_details()
+
+        with check:
+            assert 'Column "nonexistent" not found in any table' in details, "Should mention column not found"
+        with check:
+            assert "orders" in details and "users" in details, "Should list searched tables"
+
+    def test_sql_column_error_format_details_all_error_types(self) -> None:
+        """Verify format_details handles invalid, ambiguous, and not-found columns."""
+        error = SQLColumnError(
+            message="Column errors",
+            invalid_columns={"users": ["foo"]},
+            ambiguous_columns={"id": ["users", "orders"]},
+            not_found_columns={"nonexistent": ["users", "orders"]},
+            table_columns={"users": {"id", "name"}, "orders": {"id", "total"}},
+        )
+
+        details = error.format_details()
+
+        with check:
+            assert 'Column "foo" not found' in details, "Should mention invalid column"
+        with check:
+            assert 'Column "id" is ambiguous' in details, "Should mention ambiguous column"
+        with check:
+            assert 'Column "nonexistent" not found in any table' in details, "Should mention not found column"
+
+    def test_sql_column_error_repr_includes_not_found_columns(self) -> None:
+        """Verify repr includes not_found_columns."""
+        error = SQLColumnError(
+            message="Not found",
+            not_found_columns={"nonexistent": ["users", "orders"]},
+        )
+
+        repr_str = repr(error)
+
+        with check:
+            assert "not_found_columns=" in repr_str, "Repr should include not_found_columns"
+
+
 class TestAllExceptionsStoreQuery:
     """Tests verifying all exception types store the query attribute."""
 
@@ -499,7 +646,7 @@ class TestExceptionsCatchableByBaseClass:
         SQLSyntaxError, SQLTableError, and SQLColumnError are siblings in the
         hierarchy (all inherit from SQLValidationError), so one should not
         catch another.
-        """
+        """  # noqa DOC501 # We are testing exception handling here.
         # SQLTableError should not be caught by SQLSyntaxError handler
         with pytest.raises(SQLTableError):
             try:
@@ -530,26 +677,25 @@ class TestExceptionsCatchableByBaseClass:
     def _simulate_exceptions(error_type: str) -> None:
         """Simulate different SQL validation errors.
 
+        Raises a SQLValidationError subclass (SQLSyntaxError, SQLTableError,
+        SQLColumnError, or SQLBlacklistedCommandError) based on error_type.
+
         Args:
-            error_type (str): The type of error to simulate.
+            error_type (str): The type of error to simulate. One of "syntax", "table",
+                "column", or "blacklist".
 
         Raises:
-            SQLSyntaxError: When error_type is "syntax".
-            SQLTableError: When error_type is "table".
-            SQLColumnError: When error_type is "column".
-            SQLBlacklistedCommandError: When error_type is "blacklist".
             ValueError: If an unknown error_type is provided.
         """
         query = "SELECT * FROM users"
-        if error_type == "syntax":
-            raise SQLSyntaxError("Syntax error", query=query, errors=[{"description": "Invalid token", "line": 1}])
-        elif error_type == "table":
-            raise SQLTableError("Table not found", query=query, invalid_tables=["users"])
-        elif error_type == "column":
-            raise SQLColumnError("Column not found", query=query, invalid_columns={"users": ["id"]})
-        elif error_type == "blacklist":
-            raise SQLBlacklistedCommandError(
+        error_map: dict[str, SQLValidationError] = {
+            "syntax": SQLSyntaxError("Syntax error", query=query, errors=[{"description": "Invalid token", "line": 1}]),
+            "table": SQLTableError("Table not found", query=query, invalid_tables=["users"]),
+            "column": SQLColumnError("Column not found", query=query, invalid_columns={"users": ["id"]}),
+            "blacklist": SQLBlacklistedCommandError(
                 "Blacklisted command", query=query, command_type="DELETE", blacklist={"DELETE", "DROP"}
-            )
-        else:
+            ),
+        }
+        if error_type not in error_map:
             raise ValueError(f"Unknown error_type: {error_type}")
+        raise error_map[error_type]
