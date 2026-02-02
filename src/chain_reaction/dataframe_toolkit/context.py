@@ -97,7 +97,11 @@ class DataFrameContext:
         return dataframe_id in self._dataframes
 
     def __repr__(self) -> str:
-        """Return repr(self)."""
+        """Return repr(self).
+
+        Returns:
+            str: String representation of the DataFrameContext.
+        """
         dataframe_ids = ", ".join(f"'{dataframe_id}'" for dataframe_id in self._dataframes)
         return f"DataFrameContext(dataframes=[{dataframe_ids}])"
 

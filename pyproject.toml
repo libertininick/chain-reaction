@@ -42,6 +42,7 @@ build-backend = "uv_build"
 # pydoclint configuration
 [tool.pydoclint]
 style = "google"
+skip-checking-short-docstrings = false
 allow-init-docstring = true
 exclude = '\.venv/|\\.git|\\.tox|tests/data'
 
