@@ -16,14 +16,28 @@ mcp-servers/          # FastMCP server implementations
 | Task | Command |
 |------|---------|
 | Install/sync dependencies | `uv sync` |
-| Format code | `ruff format` |
-| Lint code | `ruff check` |
-| Type check | `ty check` |
+| Format code | `uv run ruff format` |
+| Lint code | `uv run ruff check` |
+| Docstring check | `uv tool run pydoclint --style=google --allow-init-docstring=True` |
+| Type check | `uv run ty check` |
 | Run all tests | `uv run pytest` |
 | Run specific test file | `uv run pytest tests/path/test_file.py` |
 | Run specific test | `uv run pytest tests/path/test_file.py::test_name` |
 
 ## Claude-Specific Rules
+
+> **CRITICAL: PYTHON EXECUTION RULE**
+>
+> When running Python code via Bash (e.g., `python -c "..."` or `python script.py`), you **MUST** use the `run-python-safely` skill FIRST. Do NOT run Python directly.
+>
+> **Correct workflow:**
+> 1. Invoke `Skill(skill="run-python-safely")`
+> 2. Use the command from the skill: `uv run python .claude/skills/run-python-safely/scripts/run_python_safely.py -c "your code"`
+>
+> **Exceptions (skip the skill for these):**
+> - `uv run pytest` - running tests
+> - `ruff`, `ty check`, `mypy` - linting/type checking
+> - Other standard CLI tools
 
 **IMPORTANT: YOU MUST follow these rules:**
 
@@ -155,15 +169,16 @@ Provide format specifications for agent outputs.
 
 | Skill | Purpose | Used By |
 |-------|---------|---------|
-| `plan-template` | Implementation plan format and examples | `planner` |
+| `plan-template` | Implementation plan format and examples | `/plan` command |
 | `review-template` | Code review format and severity guidance | `/review` command |
 | `pr-description-template` | PR description format and examples | `/pr-description` command |
 
 ### Utility Skills
 
-| Skill | Purpose |
-|-------|---------|
-| `create-skill` | Create new Claude Code skills |
+| Skill | Purpose | When to Use |
+|-------|---------|-------------|
+| `run-python-safely` | Execute Python code safely via AST analysis before running | **MANDATORY** when agents execute Python code they've generated (exceptions: `uv run pytest`, standard CLI tools) |
+| `create-skill` | Create new Claude Code skills | When converting conventions or workflows into skills |
 
 ---
 
@@ -235,9 +250,11 @@ mcp__context7__query-docs(libraryId="/langchain-ai/langgraph", query="how to cre
 Run these before completing work:
 
 ```bash
-ruff format .              # Format code
-ruff check .               # Lint code
-ty check                   # Type check
-uv run pytest              # Run tests
-ruff check --select C901   # Check function complexity
+uv run ruff format .                                              # Format code
+uv run ruff check .                                               # Lint code
+uv run ruff check --select C901                                   # Check function complexity
+uv tool run pydoclint --style=google --allow-init-docstring=True  # Docstring check
+uv run ty check                                                   # Type check
+uv run pytest                                                     # Run tests
+uv run pytest --cov                                               # Run tests with coverage
 ```
