@@ -17,8 +17,9 @@ class ToolCallError(BaseModel):
 
     Attributes:
         error_type (str): Category of error (e.g., "DataFrameNotFound", "SQLValidationError").
-            Must be at least 1 character.
-        message (str): Human-readable error description. Must be at least 1 character.
+            Must be at least 1 character to ensure meaningful classification.
+        message (str): Human-readable error description. Must be at least 1 character
+            to ensure errors always have meaningful content for LLM interpretation.
         details (dict[str, JsonValue]): Additional context-specific information (JSON-serializable).
 
     Examples:
