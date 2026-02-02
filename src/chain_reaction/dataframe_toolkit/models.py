@@ -10,7 +10,22 @@ from chain_reaction.dataframe_toolkit.polars_utils import get_series_description
 
 
 class ColumnSummary(BaseModel):
-    """A summary of a single column in a DataFrame."""
+    """A summary of a single column in a DataFrame.
+
+    Attributes:
+        description (str): A textual description of the column for analysis context.
+        dtype (str): The data type of the column.
+        count (int): The number of non-null entries in the column.
+        null_count (int): The number of null entries in the column.
+        unique_count (int): The number of unique entries in the column.
+        min (float | str): The minimum value in the column.
+        max (float | str): The maximum value in the column.
+        mean (float | str | None): The mean value in the column.
+        std (float | str | None): The standard deviation of the values in the column.
+        p25 (float | str | None): The 25th percentile of the values in the column.
+        p50 (float | str | None): The 50th percentile (median) of the values in the column.
+        p75 (float | str | None): The 75th percentile of the values in the column.
+    """
 
     description: str = Field(description="A textual description of the column for analysis context.")
     dtype: str = Field(description="The data type of the column.")
@@ -56,7 +71,18 @@ class ColumnSummary(BaseModel):
 
 
 class DataFrameReference(BaseModel):
-    """A reference to a Polars DataFrame in a dataframe registry."""
+    """A reference to a Polars DataFrame in a dataframe registry.
+
+    Attributes:
+        id (DataFrameId): Unique identifier to reference the DataFrame in the registry and SQL queries.
+        name (str): The name of the DataFrame.
+        description (str): A textual description of the DataFrame for analysis context.
+        num_rows (int): The number of rows in the DataFrame.
+        num_columns (int): The number of columns in the DataFrame.
+        column_names (list[str]): The names of the columns in the DataFrame.
+        column_summaries (dict[str, ColumnSummary]): A summary of each column in the DataFrame.
+        parent_ids (list[DataFrameId]): The identifiers of the immediate parent DataFrames, if any.
+    """
 
     id: DataFrameId = Field(
         description="Unique identifier to reference the DataFrame in the dataframe registry and SQL queries.",
