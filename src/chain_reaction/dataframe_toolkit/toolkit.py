@@ -5,10 +5,11 @@ from __future__ import annotations
 from collections.abc import Mapping
 
 import polars as pl
+from langchain_core.tools import BaseTool, tool
 
 from chain_reaction.dataframe_toolkit.context import DataFrameContext
 from chain_reaction.dataframe_toolkit.identifier import DataFrameId
-from chain_reaction.dataframe_toolkit.models import DataFrameReference
+from chain_reaction.dataframe_toolkit.models import DataFrameReference, ToolCallError
 
 
 class DataFrameToolkit:
@@ -68,6 +69,56 @@ class DataFrameToolkit:
         """Initialize the toolkit with an empty DataFrame registry."""
         self._context = DataFrameContext()
         self._references: dict[DataFrameId, DataFrameReference] = {}
+
+    # -------------------------------------------------------------------------
+    # Tool Access (Main API)
+    # -------------------------------------------------------------------------
+
+    def get_tools(self) -> list[BaseTool]:
+        """Return all LangChain tools for this toolkit.
+
+        Combines tools from all categories (core, statistical, plotting, etc.)
+        into a single list for convenient agent configuration.
+
+        Returns:
+            list[BaseTool]: All available tools for this toolkit instance.
+
+        Examples:
+            >>> import polars as pl
+            >>> toolkit = DataFrameToolkit()
+            >>> _ = toolkit.register_dataframe("test", pl.DataFrame({"a": [1, 2, 3]}))
+            >>> tools = toolkit.get_tools()
+            >>> len(tools) >= 1
+            True
+        """
+        return [
+            *self.get_core_tools(),
+        ]
+
+    def get_core_tools(self) -> list[BaseTool]:
+        """Return core DataFrame management tools.
+
+        Core tools provide essential DataFrame operations like ID lookup,
+        schema inspection, and SQL querying.
+
+        Returns:
+            list[BaseTool]: Core tools for DataFrame management.
+
+        Examples:
+            >>> import polars as pl
+            >>> toolkit = DataFrameToolkit()
+            >>> _ = toolkit.register_dataframe("test", pl.DataFrame({"a": [1, 2, 3]}))
+            >>> core_tools = toolkit.get_core_tools()
+            >>> len(core_tools) >= 1
+            True
+        """
+        return [
+            tool(self.get_dataframe_id),
+        ]
+
+    # -------------------------------------------------------------------------
+    # Public Methods
+    # -------------------------------------------------------------------------
 
     @property
     def references(self) -> tuple[DataFrameReference, ...]:
@@ -225,7 +276,42 @@ class DataFrameToolkit:
         self._context.unregister(reference.id)
         del self._references[reference.id]
 
-    # Private helpers
+    def get_dataframe_id(self, name: str) -> DataFrameId | ToolCallError:
+        """Get the DataFrameId for a DataFrame by its name.
+
+        Use this tool when you need the unique identifier for a DataFrame
+        to use in SQL queries. DataFrame names are human-readable labels
+        while IDs are the actual table names in SQL.
+
+        Args:
+            name (str): The human-readable name of the DataFrame.
+
+        Returns:
+            DataFrameId | ToolCallError: DataFrameId if found, or ToolCallError if
+                name not registered.
+
+        Examples:
+            >>> import polars as pl
+            >>> toolkit = DataFrameToolkit()
+            >>> _ = toolkit.register_dataframe("sales", pl.DataFrame({"a": [1]}))
+            >>> toolkit.get_dataframe_id("sales")
+            DataFrameId('df_00000001')
+            >>> toolkit.get_dataframe_id("nonexistent")  # doctest: +ELLIPSIS
+            ToolCallError(error_type='DataFrameNotFound', ...)
+        """
+        try:
+            reference = self._get_reference_by_name(name)
+            return reference.id
+        except KeyError:
+            return ToolCallError(
+                error_type="DataFrameNotFound",
+                message=f"DataFrame '{name}' is not registered",
+                details={"available_names": [ref.name for ref in self._references.values()]},
+            )
+
+    # -------------------------------------------------------------------------
+    # Private Helpers
+    # -------------------------------------------------------------------------
 
     def _get_reference_by_name(self, name: str) -> DataFrameReference:
         """Resolve a user-friendly name to its DataFrameReference.

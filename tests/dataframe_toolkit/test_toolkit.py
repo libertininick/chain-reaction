@@ -302,3 +302,143 @@ class TestUnregisterDataFrame:
         # Act/Assert
         with pytest.raises(KeyError, match="DataFrame 'nonexistent' is not registered"):
             toolkit.unregister_dataframe("nonexistent")
+
+
+class TestGetDataFrameId:
+    """Tests for DataFrameToolkit.get_dataframe_id method."""
+
+    def test_get_id_success(self) -> None:
+        """Given registered name, When called, Then returns DataFrameId."""
+        # Arrange
+        toolkit = DataFrameToolkit()
+        df = pl.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
+        reference = toolkit.register_dataframe("my_data", df)
+
+        # Act
+        result = toolkit.get_dataframe_id("my_data")
+
+        # Assert
+        with check:
+            assert isinstance(result, str)
+        with check:
+            assert result.startswith("df_")
+        with check:
+            assert result == reference.id
+
+    def test_get_id_not_found(self) -> None:
+        """Given unknown name, When called, Then returns ToolCallError."""
+        # Arrange
+        toolkit = DataFrameToolkit()
+
+        # Act
+        result = toolkit.get_dataframe_id("nonexistent")
+
+        # Assert
+        with check:
+            assert isinstance(result, ToolCallError)
+        with check:
+            assert result.error_type == "DataFrameNotFound"
+        with check:
+            assert "nonexistent" in result.message
+
+    def test_get_id_error_has_available_names(self) -> None:
+        """Given unknown name with other DataFrames registered, When called, Then error has available names."""
+        # Arrange
+        toolkit = DataFrameToolkit()
+        toolkit.register_dataframe("users", pl.DataFrame({"id": [1, 2]}))
+        toolkit.register_dataframe("orders", pl.DataFrame({"id": [10, 20]}))
+
+        # Act
+        result = toolkit.get_dataframe_id("unknown_table")
+
+        # Assert
+        with check:
+            assert isinstance(result, ToolCallError)
+        with check:
+            assert "available_names" in result.details
+        available_names = result.details["available_names"]
+        assert isinstance(available_names, list)
+        with check:
+            assert set(available_names) == {"users", "orders"}
+
+
+class TestGetTools:
+    """Tests for DataFrameToolkit.get_tools and get_core_tools methods."""
+
+    def test_get_tools_returns_list(self) -> None:
+        """Given toolkit, When get_tools called, Then returns list of StructuredTool."""
+        # Arrange
+        toolkit = DataFrameToolkit()
+        toolkit.register_dataframe("test", pl.DataFrame({"a": [1, 2, 3]}))
+
+        # Act
+        tools = toolkit.get_tools()
+
+        # Assert
+        with check:
+            assert isinstance(tools, list)
+        with check:
+            assert len(tools) >= 1
+
+    def test_get_core_tools_returns_list(self) -> None:
+        """Given toolkit, When get_core_tools called, Then returns list of StructuredTool."""
+        # Arrange
+        toolkit = DataFrameToolkit()
+        toolkit.register_dataframe("test", pl.DataFrame({"a": [1, 2, 3]}))
+
+        # Act
+        tools = toolkit.get_core_tools()
+
+        # Assert
+        with check:
+            assert isinstance(tools, list)
+        with check:
+            assert len(tools) >= 1
+
+    def test_get_tools_contains_core_tools(self) -> None:
+        """Given toolkit, When get_tools called, Then contains all core tools."""
+        # Arrange
+        toolkit = DataFrameToolkit()
+        toolkit.register_dataframe("test", pl.DataFrame({"a": [1, 2, 3]}))
+
+        # Act
+        all_tools = toolkit.get_tools()
+        core_tools = toolkit.get_core_tools()
+
+        # Assert - all core tools should be in get_tools()
+        all_tool_names = {t.name for t in all_tools}
+        core_tool_names = {t.name for t in core_tools}
+        with check:
+            assert core_tool_names.issubset(all_tool_names)
+
+    def test_tool_schema_excludes_self(self) -> None:
+        """Given toolkit, When tool created, Then schema does not include 'self' parameter."""
+        # Arrange
+        toolkit = DataFrameToolkit()
+        toolkit.register_dataframe("test", pl.DataFrame({"a": [1, 2, 3]}))
+
+        # Act
+        tools = toolkit.get_core_tools()
+        get_id_tool = next(t for t in tools if t.name == "get_dataframe_id")
+        schema = get_id_tool.args_schema.model_json_schema()
+
+        # Assert - 'self' should not be in the properties
+        with check:
+            assert "self" not in schema.get("properties", {})
+        with check:
+            assert "name" in schema.get("properties", {})
+
+    def test_tool_invoke_works(self) -> None:
+        """Given toolkit with registered DataFrame, When tool invoked, Then returns correct ID."""
+        # Arrange
+        toolkit = DataFrameToolkit()
+        reference = toolkit.register_dataframe("sales", pl.DataFrame({"a": [1, 2, 3]}))
+
+        # Act
+        tools = toolkit.get_core_tools()
+        get_id_tool = next(t for t in tools if t.name == "get_dataframe_id")
+        result = get_id_tool.invoke({"name": "sales"})
+
+        # Assert
+        with check:
+            assert result == reference.id
