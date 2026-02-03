@@ -419,25 +419,25 @@ class TestGetTools:
 
         # Act
         tools = toolkit.get_core_tools()
-        get_id_tool = next(t for t in tools if t.name == "get_dataframe_id")
-        schema = get_id_tool.args_schema.model_json_schema()
+        tool_get_dataframe_id = next(t for t in tools if t.name == "get_dataframe_id")
+        tool_schema = tool_get_dataframe_id.args_schema.model_json_schema()
 
         # Assert - 'self' should not be in the properties
         with check:
-            assert "self" not in schema.get("properties", {})
+            assert "self" not in tool_schema.get("properties", {})
         with check:
-            assert "name" in schema.get("properties", {})
+            assert "name" in tool_schema.get("properties", {})
 
     def test_tool_invoke_works(self) -> None:
-        """Given toolkit with registered DataFrame, When tool invoked, Then returns correct ID."""
+        """Given toolkit with registered DataFrame, When get_dataframe_id tool invoked, Then returns correct ID."""
         # Arrange
         toolkit = DataFrameToolkit()
         reference = toolkit.register_dataframe("sales", pl.DataFrame({"a": [1, 2, 3]}))
 
         # Act
         tools = toolkit.get_core_tools()
-        get_id_tool = next(t for t in tools if t.name == "get_dataframe_id")
-        result = get_id_tool.invoke({"name": "sales"})
+        tool_get_dataframe_id = next(t for t in tools if t.name == "get_dataframe_id")
+        result = tool_get_dataframe_id.invoke({"name": "sales"})
 
         # Assert
         with check:
