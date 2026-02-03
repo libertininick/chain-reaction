@@ -196,6 +196,35 @@ class TestRegisterDataFrame:
         with pytest.raises(ValueError, match="DataFrame 'duplicate_name' is already registered"):
             toolkit.register_dataframe("duplicate_name", df2)
 
+    def test_register_name_matching_id_pattern_rejected(self) -> None:
+        """Given name matching ID pattern, When registered, Then ValueError raised."""
+        # Arrange
+        toolkit = DataFrameToolkit()
+        df = pl.DataFrame({"a": [1, 2, 3]})
+
+        # Act/Assert
+        with pytest.raises(ValueError, match="cannot match ID pattern"):
+            toolkit.register_dataframe("df_1a2b3c4d", df)
+
+    def test_register_name_similar_to_id_but_not_matching_allowed(self) -> None:
+        """Given name similar to but not matching ID pattern, When registered, Then succeeds."""
+        # Arrange
+        toolkit = DataFrameToolkit()
+        df = pl.DataFrame({"a": [1, 2, 3]})
+
+        # Act - these should NOT match the pattern df_[0-9a-f]{8}
+        ref1 = toolkit.register_dataframe("df_sales", df)  # Not 8 hex chars
+        ref2 = toolkit.register_dataframe("df_12345678901", pl.DataFrame({"b": [1]}))  # Too long
+        ref3 = toolkit.register_dataframe("dataframe_1a2b3c4d", pl.DataFrame({"c": [1]}))  # Wrong prefix
+
+        # Assert
+        with check:
+            assert ref1.name == "df_sales"
+        with check:
+            assert ref2.name == "df_12345678901"
+        with check:
+            assert ref3.name == "dataframe_1a2b3c4d"
+
 
 class TestRegisterDataFrames:
     """Tests for DataFrameToolkit.register_dataframes method."""
@@ -272,6 +301,23 @@ class TestRegisterDataFrames:
             assert "brand_new" not in registered_names
         with check:
             assert len(toolkit.references) == 1  # Only the original
+
+    def test_register_dataframes_name_matching_id_pattern_rejected(self) -> None:
+        """Given name matching ID pattern in batch, When registered, Then ValueError before any registration."""
+        # Arrange
+        toolkit = DataFrameToolkit()
+        dfs = {
+            "valid_name": pl.DataFrame({"a": [1, 2]}),
+            "df_abcd1234": pl.DataFrame({"b": [3, 4]}),  # Matches ID pattern
+        }
+
+        # Act/Assert
+        with pytest.raises(ValueError, match="cannot match ID pattern"):
+            toolkit.register_dataframes(dfs)
+
+        # Verify atomicity: no DataFrames registered
+        with check:
+            assert len(toolkit.references) == 0
 
 
 class TestUnregisterDataFrame:
@@ -360,6 +406,164 @@ class TestGetDataFrameId:
         assert isinstance(available_names, list)
         with check:
             assert set(available_names) == {"users", "orders"}
+
+    def test_get_id_with_id_input_returns_invalid_argument_error(self) -> None:
+        """Given ID instead of name, When called, Then returns InvalidArgument error with guidance."""
+        # Arrange
+        toolkit = DataFrameToolkit()
+        toolkit.register_dataframe("sales", pl.DataFrame({"amount": [100, 200]}))
+
+        # Act
+        result = toolkit.get_dataframe_id("df_1a2b3c4d")  # This is an ID, not a name
+
+        # Assert
+        with check:
+            assert isinstance(result, ToolCallError)
+        with check:
+            assert result.error_type == "InvalidArgument"
+        with check:
+            assert "already an ID" in result.message
+        with check:
+            assert "Use the name" in result.message
+        with check:
+            assert "available_names" in result.details
+
+    def test_get_id_with_actual_registered_id_returns_invalid_argument_error(self) -> None:
+        """Given actual registered ID, When called, Then returns InvalidArgument error (not the ID)."""
+        # Arrange
+        toolkit = DataFrameToolkit()
+        ref = toolkit.register_dataframe("sales", pl.DataFrame({"amount": [100, 200]}))
+        actual_id = ref.id  # e.g., "df_a1b2c3d4"
+
+        # Act
+        result = toolkit.get_dataframe_id(actual_id)
+
+        # Assert - should return error, not the ID itself
+        with check:
+            assert isinstance(result, ToolCallError)
+        with check:
+            assert result.error_type == "InvalidArgument"
+        with check:
+            assert "already an ID" in result.message
+
+
+class TestGetDataFrameReference:
+    """Tests for DataFrameToolkit.get_dataframe_reference method."""
+
+    def test_get_reference_by_name_returns_dataframe_reference(self) -> None:
+        """Given registered name, When called, Then returns DataFrameReference."""
+        # Arrange
+        toolkit = DataFrameToolkit()
+        df = pl.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
+        expected_reference = toolkit.register_dataframe(
+            "my_data",
+            df,
+            description="Test data",
+        )
+
+        # Act
+        result = toolkit.get_dataframe_reference("my_data")
+
+        # Assert
+        with check:
+            assert isinstance(result, DataFrameReference)
+        with check:
+            assert result == expected_reference
+        with check:
+            assert result.name == "my_data"
+        with check:
+            assert result.description == "Test data"
+
+    def test_get_reference_by_id_returns_dataframe_reference(self) -> None:
+        """Given registered ID, When called, Then returns DataFrameReference."""
+        # Arrange
+        toolkit = DataFrameToolkit()
+        df = pl.DataFrame({"x": [10, 20], "y": ["foo", "bar"]})
+        expected_reference = toolkit.register_dataframe("lookup_by_id", df)
+        dataframe_id = expected_reference.id
+
+        # Act
+        result = toolkit.get_dataframe_reference(dataframe_id)
+
+        # Assert
+        with check:
+            assert isinstance(result, DataFrameReference)
+        with check:
+            assert result == expected_reference
+        with check:
+            assert result.id == dataframe_id
+        with check:
+            assert result.name == "lookup_by_id"
+
+    def test_get_reference_not_found_returns_tool_call_error(self) -> None:
+        """Given unknown identifier, When called, Then returns ToolCallError."""
+        # Arrange
+        toolkit = DataFrameToolkit()
+
+        # Act
+        result = toolkit.get_dataframe_reference("nonexistent")
+
+        # Assert
+        with check:
+            assert isinstance(result, ToolCallError)
+        with check:
+            assert result.error_type == "DataFrameNotFound"
+        with check:
+            assert "nonexistent" in result.message
+        with check:
+            assert "not found by name or ID" in result.message
+
+    def test_get_reference_error_has_both_names_and_ids(self) -> None:
+        """Given unknown identifier with registered DataFrames, When called, Then error has available names AND IDs."""
+        # Arrange
+        toolkit = DataFrameToolkit()
+        ref_users = toolkit.register_dataframe("users", pl.DataFrame({"id": [1, 2]}))
+        ref_orders = toolkit.register_dataframe("orders", pl.DataFrame({"id": [10, 20]}))
+
+        # Act
+        result = toolkit.get_dataframe_reference("unknown_table")
+
+        # Assert
+        with check:
+            assert isinstance(result, ToolCallError)
+        with check:
+            assert "available_names" in result.details
+        with check:
+            assert "available_ids" in result.details
+
+        # Verify available_names contains expected values
+        available_names = result.details["available_names"]
+        assert isinstance(available_names, list)
+        with check:
+            assert set(available_names) == {"users", "orders"}
+
+        # Verify available_ids contains expected values
+        available_ids = result.details["available_ids"]
+        assert isinstance(available_ids, list)
+        with check:
+            assert set(available_ids) == {ref_users.id, ref_orders.id}
+
+    def test_get_reference_tool_invoke_returns_dataframe_reference(self) -> None:
+        """Given toolkit with registered DataFrame, When tool invoked, Then returns DataFrameReference."""
+        # Arrange
+        toolkit = DataFrameToolkit()
+        expected_reference = toolkit.register_dataframe(
+            "sales",
+            pl.DataFrame({"amount": [100, 200, 300]}),
+        )
+
+        # Act
+        tools = toolkit.get_core_tools()
+        tool_get_reference = next(t for t in tools if t.name == "get_dataframe_reference")
+        result = tool_get_reference.invoke({"identifier": "sales"})
+
+        # Assert
+        with check:
+            assert isinstance(result, DataFrameReference)
+        with check:
+            assert result == expected_reference
+        with check:
+            assert result.name == "sales"
 
 
 class TestGetTools:

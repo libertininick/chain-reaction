@@ -8,7 +8,10 @@ import polars as pl
 from langchain_core.tools import BaseTool, tool
 
 from chain_reaction.dataframe_toolkit.context import DataFrameContext
-from chain_reaction.dataframe_toolkit.identifier import DataFrameId
+from chain_reaction.dataframe_toolkit.identifier import (
+    DATAFRAME_ID_PATTERN,
+    DataFrameId,
+)
 from chain_reaction.dataframe_toolkit.models import DataFrameReference, ToolCallError
 
 
@@ -114,6 +117,7 @@ class DataFrameToolkit:
         """
         return [
             tool(self.get_dataframe_id),
+            tool(self.get_dataframe_reference),
         ]
 
     # -------------------------------------------------------------------------
@@ -168,6 +172,10 @@ class DataFrameToolkit:
             >>> ref.name
             'user_scores'
         """
+        if DATAFRAME_ID_PATTERN.match(name):
+            msg = f"DataFrame name '{name}' cannot match ID pattern 'df_<8 hex chars>'"
+            raise ValueError(msg)
+
         if self._name_exists(name):
             msg = f"DataFrame '{name}' is already registered"
             raise ValueError(msg)
@@ -228,9 +236,12 @@ class DataFrameToolkit:
         descriptions = descriptions or {}
         column_descriptions = column_descriptions or {}
 
-        # Validate all names are available before modifying state (O(n*m) but n,m are tiny)
+        # Validate all names before modifying state
         existing_names = {ref.name for ref in self._references.values()}
         for name in dataframes:
+            if DATAFRAME_ID_PATTERN.match(name):
+                msg = f"DataFrame name '{name}' cannot match ID pattern 'df_<8 hex chars>'"
+                raise ValueError(msg)
             if name in existing_names:
                 msg = f"DataFrame '{name}' is already registered"
                 raise ValueError(msg)
@@ -288,17 +299,32 @@ class DataFrameToolkit:
 
         Returns:
             DataFrameId | ToolCallError: DataFrameId if found, or ToolCallError if
-                name not registered.
+                name not registered or if an ID was passed instead of a name.
 
         Examples:
             >>> import polars as pl
             >>> toolkit = DataFrameToolkit()
             >>> _ = toolkit.register_dataframe("sales", pl.DataFrame({"a": [1]}))
-            >>> toolkit.get_dataframe_id("sales")
-            DataFrameId('df_00000001')
+            >>> toolkit.get_dataframe_id("sales")  # doctest: +ELLIPSIS
+            'df_...'
             >>> toolkit.get_dataframe_id("nonexistent")  # doctest: +ELLIPSIS
             ToolCallError(error_type='DataFrameNotFound', ...)
+            >>> toolkit.get_dataframe_id("df_1a2b3c4d")  # doctest: +ELLIPSIS
+            ToolCallError(error_type='InvalidArgument', ...)
         """
+        # Guard: detect if an ID was passed instead of a name
+        if DATAFRAME_ID_PATTERN.match(name):
+            return ToolCallError(
+                error_type="InvalidArgument",
+                message=(
+                    f"'{name}' is already an ID, not a name. "
+                    "This tool converts names to IDs. "
+                    "Use the name to look up the ID, or use get_dataframe_reference "
+                    "if you need schema details from an ID."
+                ),
+                details={"available_names": [ref.name for ref in self._references.values()]},
+            )
+
         try:
             reference = self._get_reference_by_name(name)
             return reference.id
@@ -308,6 +334,48 @@ class DataFrameToolkit:
                 message=f"DataFrame '{name}' is not registered",
                 details={"available_names": [ref.name for ref in self._references.values()]},
             )
+
+    def get_dataframe_reference(self, identifier: str) -> DataFrameReference | ToolCallError:
+        """Get detailed information about a DataFrame by name or ID.
+
+        Use this tool to understand a DataFrame schema, column statistics,
+        and metadata before writing SQL queries. Returns comprehensive
+        information including column names, data types, and summaries.
+
+        Args:
+            identifier (str): Either the DataFrame name or its ID (df_xxxxxxxx).
+
+        Returns:
+            DataFrameReference | ToolCallError: DataFrameReference with full schema
+                info, or ToolCallError if not found.
+
+        Examples:
+            >>> import polars as pl
+            >>> toolkit = DataFrameToolkit()
+            >>> ref = toolkit.register_dataframe("sales", pl.DataFrame({"a": [1]}))
+            >>> toolkit.get_dataframe_reference("sales")  # doctest: +ELLIPSIS
+            DataFrameReference(...)
+            >>> toolkit.get_dataframe_reference(ref.id)  # doctest: +ELLIPSIS
+            DataFrameReference(...)
+        """
+        # Try lookup by ID first (O(1) since _references is keyed by ID)
+        if identifier in self._references:
+            return self._references[identifier]
+
+        # Try lookup by name (O(n) scan)
+        try:
+            return self._get_reference_by_name(identifier)
+        except KeyError:
+            pass
+
+        return ToolCallError(
+            error_type="DataFrameNotFound",
+            message=f"DataFrame '{identifier}' not found by name or ID",
+            details={
+                "available_names": [ref.name for ref in self._references.values()],
+                "available_ids": list(self._references.keys()),
+            },
+        )
 
     # -------------------------------------------------------------------------
     # Private Helpers
