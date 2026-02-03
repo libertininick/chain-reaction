@@ -37,7 +37,7 @@ For each specified phase:
 
 2. **Implement Source Code**
    - Dispatch to `python-code-writer` agent
-   - Agent applies relevant development convention skills (`frameworks`, `naming-conventions`, etc.)
+   - Agent applies relevant development convention skills (`frameworks`, `class-design`, `function-design`, `naming-conventions`, etc.)
    - Agent checks that docstrings, type hints, and coding conventions are properly followed
 
 3. **Implement Tests**
@@ -47,6 +47,16 @@ For each specified phase:
 
 4. **Validate**
    - Run validation commands per [CLAUDE.md](../CLAUDE.md)
+
+5. **Style Review & Fix**
+   - Dispatch to `code-style-reviewer` agent to review only files created or modified in this phase
+   - Agent applies style-focused skills (`code-organization`, `naming-conventions`, `docstring-conventions`, `type-hints`, etc.)
+   - Agent produces a findings report grouped by severity (Critical, Improvement, Nitpick)
+   - If findings exist:
+     - Dispatch to `python-code-writer` agent to address all Critical and Improvement issues
+     - Nitpicks are optional but encouraged
+     - Re-run validation commands after fixes
+   - If no findings: proceed to completion
 
 ## After Implementation
 
