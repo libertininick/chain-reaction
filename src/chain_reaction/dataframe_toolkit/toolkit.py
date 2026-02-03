@@ -12,7 +12,12 @@ from chain_reaction.dataframe_toolkit.identifier import (
     DATAFRAME_ID_PATTERN,
     DataFrameId,
 )
-from chain_reaction.dataframe_toolkit.models import DataFrameReference, ToolCallError
+from chain_reaction.dataframe_toolkit.models import (
+    DataFrameReference,
+    DataFrameToolkitState,
+    ToolCallError,
+)
+from chain_reaction.dataframe_toolkit.persistence import restore_from_state
 
 
 class DataFrameToolkit:
@@ -66,6 +71,10 @@ class DataFrameToolkit:
 
         Unregister a DataFrame:
         >>> toolkit.unregister_dataframe("products")
+
+        Restore from saved state:
+        >>> state = toolkit.export_state()
+        >>> new_toolkit = DataFrameToolkit.from_state(state, {"sales": df1})
     """
 
     def __init__(self) -> None:
@@ -376,6 +385,84 @@ class DataFrameToolkit:
                 "available_ids": list(self._references.keys()),
             },
         )
+
+    def export_state(self) -> DataFrameToolkitState:
+        """Export the current toolkit state for serialization.
+
+        Returns a DataFrameToolkitState containing all registered references.
+        The actual DataFrame data is NOT included - only metadata and provenance.
+
+        Returns:
+            DataFrameToolkitState: Serializable state containing all references.
+
+        Examples:
+            >>> import polars as pl
+            >>> toolkit = DataFrameToolkit()
+            >>> _ = toolkit.register_dataframe("sales", pl.DataFrame({"a": [1, 2, 3]}))
+            >>> state = toolkit.export_state()
+            >>> len(state.references)
+            1
+        """
+        return DataFrameToolkitState(references=list(self._references.values()))
+
+    # -------------------------------------------------------------------------
+    # Public Class Methods
+    # -------------------------------------------------------------------------
+
+    @classmethod
+    def from_state(
+        cls,
+        state: DataFrameToolkitState,
+        base_dataframes: Mapping[str, pl.DataFrame],
+    ) -> DataFrameToolkit:
+        """Create a toolkit from saved state and base dataframes.
+
+        This is the recommended way to restore a toolkit from serialized state.
+        Matches base dataframes to their state references by name or ID,
+        preserving original IDs for proper derivative reconstruction.
+
+        Provided base dataframes are validated against the expected schema
+        (column names, shape) and column statistics (dtype, count, null_count,
+        min, max, mean, etc.) from the saved state to ensure data consistency.
+
+        Args:
+            state (DataFrameToolkitState): Serialized state from export_state().
+            base_dataframes (Mapping[str, pl.DataFrame]): Mapping of identifier to
+                DataFrame for all base tables. Keys can be either names or IDs
+                (df_xxxxxxxx format). DataFrames must match the schema and
+                statistics from when the state was exported.
+
+        Returns:
+            DataFrameToolkit: Fully reconstructed toolkit with all base and
+                derivative dataframes.
+
+        Examples:
+            Restore by name (most common):
+
+            >>> import polars as pl
+            >>> toolkit = DataFrameToolkit()
+            >>> df = pl.DataFrame({"a": [1, 2, 3]})
+            >>> _ = toolkit.register_dataframe("sales", df)
+            >>> state = toolkit.export_state()
+            >>> new_toolkit = DataFrameToolkit.from_state(state, {"sales": df})
+            >>> len(new_toolkit.references)
+            1
+
+            Restore by ID:
+
+            >>> ref = toolkit.references[0]
+            >>> new_toolkit = DataFrameToolkit.from_state(state, {ref.id: df})
+            >>> len(new_toolkit.references)
+            1
+        """
+        toolkit = cls()
+        restore_from_state(
+            state=state,
+            base_dataframes=base_dataframes,
+            context=toolkit._context,
+            references=toolkit._references,
+        )
+        return toolkit
 
     # -------------------------------------------------------------------------
     # Private Helpers
