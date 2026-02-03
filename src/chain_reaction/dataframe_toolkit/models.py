@@ -115,6 +115,7 @@ class DataFrameReference(BaseModel):
         column_names (list[str]): The names of the columns in the DataFrame.
         column_summaries (dict[str, ColumnSummary]): A summary of each column in the DataFrame.
         parent_ids (list[DataFrameId]): The identifiers of the immediate parent DataFrames, if any.
+        source_query (str | None): The SQL query that generated this DataFrame, if any.
     """
 
     id: DataFrameId = Field(
@@ -131,15 +132,22 @@ class DataFrameReference(BaseModel):
         description="The identifiers of the immediate parent DataFrames of this DataFrame, if any.",
         default_factory=list,
     )
+    source_query: str | None = Field(
+        default=None,
+        description="The SQL query that generated this DataFrame, if any. None for user-provided base DataFrames.",
+        min_length=1,
+    )
 
     @classmethod
     def from_dataframe(
         cls,
         dataframe: pl.DataFrame,
         name: str,
+        *,
         description: str | None = None,
         column_descriptions: dict[str, str] | None = None,
         parent_ids: list[DataFrameId] | None = None,
+        source_query: str | None = None,
     ) -> DataFrameReference:
         """Create a DataFrameReference from a Polars DataFrame.
 
@@ -149,6 +157,7 @@ class DataFrameReference(BaseModel):
             description (str | None): An optional textual description of the DataFrame. Defaults to None.
             column_descriptions (dict[str, str] | None): Optional textual descriptions of the columns. Defaults to None.
             parent_ids (list[DataFrameId] | None): Identifiers of the parent DataFrames, if any. Defaults to None.
+            source_query (str | None): The SQL query that generated this DataFrame, if any. Defaults to None.
 
         Returns:
             DataFrameReference: The generated DataFrameReference.
@@ -168,4 +177,28 @@ class DataFrameReference(BaseModel):
             },
             description=description or "",
             parent_ids=parent_ids or [],
+            source_query=source_query,
         )
+
+
+class DataFrameToolkitState(BaseModel):
+    """Serializable state of a DataFrameToolkit for reconstruction.
+
+    Contains only the references (metadata), not the actual DataFrame data.
+    Base dataframes must be re-registered before reconstruction.
+
+    Attributes:
+        references (list[DataFrameReference]): All registered DataFrame references with provenance.
+
+    Examples:
+        Export and serialize toolkit state:
+
+        >>> state = DataFrameToolkitState(references=[])
+        >>> state.model_dump_json()
+        '{"references":[]}'
+    """
+
+    references: list[DataFrameReference] = Field(
+        default_factory=list,
+        description="All registered DataFrame references with provenance.",
+    )
