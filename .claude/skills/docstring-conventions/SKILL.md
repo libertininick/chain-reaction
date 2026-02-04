@@ -13,41 +13,11 @@ Apply Google-style docstrings when writing Python code in this repository.
 
 | Element | Format |
 |---------|---------------------|--------|
-| Public functions | Comprehensive (Args, Returns, Raises, Example) |
-| Public classes | Comprehensive (Attributes, Example) |
-| Public methods | Comprehensive (Args, Returns, Raises) |
+| Functions | Comprehensive (Args, Returns, Raises, Example) |
+| Classes | Comprehensive (Attributes, Example) |
+| Methods | Comprehensive (Args, Returns, Raises) |
 | Modules | Summary + extended description |
-| Private functions (`_name`) | One-liner OK |
-| Private methods (`_name`) | One-liner OK |
 
-### Private Helper Docstrings
-
-Private functions and methods require docstrings, but one-liners are acceptable:
-
-```python
-# CORRECT - one-liner for private helper
-def _normalize_vector(vec: list[float]) -> list[float]:
-    """Normalize vector to unit length."""
-    magnitude = sum(x**2 for x in vec) ** 0.5
-    return [x / magnitude for x in vec]
-
-# CORRECT - comprehensive if complex private function
-def _parse_nested_config(raw: dict[str, Any]) -> Config:
-    """Parse nested configuration with inheritance resolution.
-
-    Args:
-        raw (dict[str, Any]): Raw config dictionary with potential $ref keys.
-
-    Returns:
-        Config: Resolved configuration object.
-    """
-    ...
-
-# INCORRECT - no docstring on private function
-def _normalize_vector(vec: list[float]) -> list[float]:
-    magnitude = sum(x**2 for x in vec) ** 0.5
-    return [x / magnitude for x in vec]
-```
 
 ## Function Docstring Structure
 
@@ -166,7 +136,7 @@ from typing import Final
 
 | Use | For |
 |-----|-----|
-| Docstrings | Public API documentation - what and why |
+| Docstrings | Interface documentation - what and why |
 | Comments | Non-obvious implementation details - why this approach |
 
 ### When to Use Comments

@@ -66,8 +66,46 @@ Specialized sub-agents in `.claude/agents/`. See each file for details.
 
 ### Workflow
 
-```
-/plan → /implement → /review → /pr-description
+1. Plan your work: `/plan`
+
+2. Iteratively Implement
+
+    Repeat the `/implement` → `/review` → commit → `/update-plan` cycle:
+
+    ```
+    ┌───────────────────────────────────────────────────┐
+    │                                                   │
+    │   ┌──────────┐    ┌──────────┐    ┌──────────┐    │
+    │   │Implement │───▶│  Review  │───▶│  Commit  │    │
+    │   │  Phase   │    │  & Test  │    │  Changes │    │
+    │   └──────────┘    └──────────┘    └──────────┘    │
+    │        ▲                               │          │
+    │        │                               ▼          │
+    │        │         ┌──────────────────────────┐     │
+    │        │         │ Update Plan & Move to    │     │
+    │        └─────────│     Next Phase           │     │
+    │                  └──────────────────────────┘     │
+    │                                                   │
+    └───────────────────────────────────────────────────┘
+    ```
+
+---
+
+## Context Bundles
+
+Pre-composed skill content for agents. Bundles provide exactly the context each agent needs.
+
+| Agent | Full Bundle | Compact Bundle |
+|-------|-------------|----------------|
+| `planner` | `bundles/planner.md` | `bundles/planner-compact.md` |
+| `python-code-writer` | `bundles/python-code-writer.md` | `bundles/python-code-writer-compact.md` |
+| `python-test-writer` | `bundles/python-test-writer.md` | `bundles/python-test-writer-compact.md` |
+| `code-style-reviewer` | `bundles/code-style-reviewer.md` | `bundles/code-style-reviewer-compact.md` |
+| `code-substance-reviewer` | `bundles/code-substance-reviewer.md` | `bundles/code-substance-reviewer-compact.md` |
+
+**Regenerate bundles** after modifying skills:
+```bash
+uv run python .claude/scripts/generate_bundles.py
 ```
 
 ---
@@ -81,6 +119,8 @@ Skills provide coding standards and conventions. See `.claude/skills/manifest.js
 - **Assessment**: `maintainability`, `testability`
 - **Templates**: `plan-template`, `review-template`, `pr-description-template`
 - **Utilities**: `run-python-safely`, `write-markdown-output`, `create-skill`
+
+**Note**: Agents should load their context bundles (above) rather than invoking skills individually.
 
 ---
 

@@ -13,8 +13,9 @@ Create [skills](https://code.claude.com/docs/en/skills) that extend Claude's cap
 
 1. Create directory: `mkdir -p .claude/skills/$ARGUMENTS`
 2. Create `SKILL.md` with frontmatter and instructions
-3. Test with `/skill-name` or ask Claude something that triggers auto-load
-4. Verify with: "What skills are available?"
+3. Register the skill (see [Registration Checklist](#registration-checklist) below)
+4. Test with `/skill-name` or ask Claude something that triggers auto-load
+5. Verify with: "What skills are available?"
 
 ## Skill Location
 
@@ -170,7 +171,57 @@ my-skill/
     └── validate.sh    # Script Claude can execute
 ```
 
-## Checklist
+## Registration Checklist
+
+After creating the SKILL.md, register the skill in the system:
+
+### 1. Add to manifest.json
+
+Add an entry to `.claude/skills/manifest.json` in the `skills` array:
+
+```json
+{
+  "name": "my-skill",
+  "category": "conventions",
+  "description": "Short description for auto-loading decisions",
+  "user_invocable": true,
+  "version": "1.0.0"
+}
+```
+
+| Field | Description |
+|-------|-------------|
+| `name` | Must match directory name |
+| `category` | One of: `conventions`, `assessment`, `templates`, `utilities` |
+| `description` | Brief description (used by manifest consumers) |
+| `user_invocable` | `true` if callable via `/skill-name`, `false` for reference-only |
+| `version` | Semantic version, typically `1.0.0` for new skills |
+
+### 2. Update CLAUDE.md Skills Section
+
+Add the skill name to the appropriate category in `.claude/CLAUDE.md`:
+
+```markdown
+**Categories**:
+- **Conventions**: `frameworks`, ..., `my-new-skill`
+- **Assessment**: `maintainability`, `testability`
+- **Templates**: `plan-template`, ...
+- **Utilities**: `run-python-safely`, ...
+```
+
+### 3. Regenerate Bundles (if used by agents)
+
+If the skill is added to any agent's `depends_on` list in manifest.json, regenerate bundles:
+
+```bash
+uv run python .claude/scripts/generate_bundles.py
+```
+
+**Note**: Only add skills to agent `depends_on` lists if the agent needs that skill's context. Most new skills won't need this step.
+
+---
+
+## Content Checklist
 
 Before finalizing a skill, verify:
 
@@ -182,3 +233,9 @@ Before finalizing a skill, verify:
 - [ ] Correct `user-invocable` / `disable-model-invocation` settings
 - [ ] Includes **validation commands** if applicable
 - [ ] Includes Quick Reference / Quick Start at top if applicable
+
+## Registration Checklist
+
+- [ ] Added to `manifest.json` with correct category
+- [ ] Added to CLAUDE.md Skills section
+- [ ] Bundles regenerated (if skill added to agent `depends_on`)
