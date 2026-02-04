@@ -1,21 +1,15 @@
 ---
-name: create-skill
+name: skill-template
 version: 1.0.0
-description: Create a new Claude Code skill. Use when converting conventions, workflows, or knowledge into actionable skills.
-argument-hint: <skill-name> [source-file]
+description: Skill structure, frontmatter options, and writing guidelines. Reference for creating Claude Code skills.
+user-invocable: true
 ---
 
-# Create a Claude Code Skill
+# Skill Template Reference
 
-Create [skills](https://code.claude.com/docs/en/skills) that extend Claude's capabilities with actionable, prescriptive instructions.
+Reference documentation for creating [Claude Code skills](https://code.claude.com/docs/en/skills) with actionable, prescriptive instructions.
 
-## Quick Start
-
-1. Create directory: `mkdir -p .claude/skills/$ARGUMENTS`
-2. Create `SKILL.md` with frontmatter and instructions
-3. Register the skill (see [Registration Checklist](#registration-checklist) below)
-4. Test with `/skill-name` or ask Claude something that triggers auto-load
-5. Verify with: "What skills are available?"
+Use `/create-skill <name>` to create a new skill with guided workflow.
 
 ## Skill Location
 

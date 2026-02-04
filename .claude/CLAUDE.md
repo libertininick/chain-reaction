@@ -46,6 +46,7 @@ Reusable workflows in `.claude/commands/`. See each file for details.
 
 | Command | Purpose |
 |---------|---------|
+| `/create-skill` | Create a new Claude Code skill |
 | `/implement` | Execute plan phases |
 | `/plan` | Create implementation plan |
 | `/pr-description` | Generate PR description |
@@ -122,8 +123,8 @@ Skills provide coding standards and conventions. See `.claude/skills/manifest.js
 **Categories**:
 - **Conventions**: `class-design`, `code-organization`, `complexity-refactoring`, `data-structures`, `docstring-conventions`, `frameworks`, `function-design`, `naming-conventions`, `pythonic-conventions`, `testing`, `type-hints`
 - **Assessment**: `maintainability`, `testability`
-- **Templates**: `plan-template`, `pr-description-template`, `review-template`
-- **Utilities**: `create-skill`, `run-python-safely`, `write-markdown-output`
+- **Templates**: `plan-template`, `pr-description-template`, `review-template`, `skill-template`
+- **Utilities**: `run-python-safely`, `write-markdown-output`
 
 **Note**: Agents should load their context bundles (above) rather than invoking skills individually.
 

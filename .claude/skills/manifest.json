@@ -25,10 +25,10 @@
       "version": "1.0.0"
     },
     {
-      "name": "create-skill",
-      "category": "utilities",
-      "description": "Create new Claude Code skills",
-      "user_invocable": true,
+      "name": "skill-template",
+      "category": "templates",
+      "description": "Skill structure, frontmatter, and writing guidelines",
+      "user_invocable": false,
       "version": "1.0.0"
     },
     {
@@ -77,14 +77,14 @@
       "name": "plan-template",
       "category": "templates",
       "description": "Implementation plan format and examples",
-      "user_invocable": true,
+      "user_invocable": false,
       "version": "1.0.0"
     },
     {
       "name": "pr-description-template",
       "category": "templates",
       "description": "PR description format and examples",
-      "user_invocable": true,
+      "user_invocable": false,
       "version": "1.0.0"
     },
     {
@@ -98,7 +98,7 @@
       "name": "review-template",
       "category": "templates",
       "description": "Code review format and severity guidance",
-      "user_invocable": true,
+      "user_invocable": false,
       "version": "1.0.0"
     },
     {
@@ -133,7 +133,7 @@
       "name": "write-markdown-output",
       "category": "utilities",
       "description": "Write timestamped markdown files to agent output directories",
-      "user_invocable": true,
+      "user_invocable": false,
       "version": "1.0.0"
     }
   ],
@@ -265,6 +265,14 @@
       "name": "sync-context",
       "description": "Sync Claude context files with skills, agents, and commands on disk",
       "version": "1.0.0"
+    },
+    {
+      "name": "create-skill",
+      "description": "Create a new Claude Code skill",
+      "version": "1.0.0",
+      "depends_on_skills": [
+        "skill-template"
+      ]
     },
     {
       "name": "update-plan",
