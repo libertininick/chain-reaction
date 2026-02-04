@@ -5,11 +5,13 @@ Guidance for Claude Code when working in this repository.
 ## Project Structure
 
 ```
-src/chain_reaction/   # Library tools and classes
-agents/               # LangSmith Studio agent definitions
-notebooks/            # Learning notebooks by topic
-mcp-servers/          # FastMCP server implementations
+src/chain_reaction   # Library tools and classes
+agents               # LangSmith Studio agent definitions
+notebooks            # Learning notebooks by topic
+mcp-servers          # FastMCP server implementations
+tests                # Test suite
 ```
+
 
 ## Quick Reference
 
@@ -44,11 +46,12 @@ Reusable workflows in `.claude/commands/`. See each file for details.
 
 | Command | Purpose |
 |---------|---------|
-| `/plan` | Create implementation plan |
 | `/implement` | Execute plan phases |
+| `/plan` | Create implementation plan |
+| `/pr-description` | Generate PR description |
 | `/review` | Code review |
 | `/update-plan` | Sync plan with main |
-| `/pr-description` | Generate PR description |
+
 
 ---
 
@@ -58,11 +61,11 @@ Specialized sub-agents in `.claude/agents/`. See each file for details.
 
 | Agent | Scope | Model |
 |-------|-------|-------|
+| `code-style-reviewer` | Reviews style and conventions | Sonnet |
+| `code-substance-reviewer` | Reviews design and correctness | Opus |
 | `planner` | Creates implementation plans | Opus |
 | `python-code-writer` | Writes production code | Opus |
 | `python-test-writer` | Writes tests | Opus |
-| `code-style-reviewer` | Reviews style/conventions | Sonnet |
-| `code-substance-reviewer` | Reviews design/correctness | Opus |
 
 ### Workflow
 
@@ -97,16 +100,17 @@ Pre-composed skill content for agents. Bundles provide exactly the context each 
 
 | Agent | Full Bundle | Compact Bundle |
 |-------|-------------|----------------|
+| `code-style-reviewer` | `bundles/code-style-reviewer.md` | `bundles/code-style-reviewer-compact.md` |
+| `code-substance-reviewer` | `bundles/code-substance-reviewer.md` | `bundles/code-substance-reviewer-compact.md` |
 | `planner` | `bundles/planner.md` | `bundles/planner-compact.md` |
 | `python-code-writer` | `bundles/python-code-writer.md` | `bundles/python-code-writer-compact.md` |
 | `python-test-writer` | `bundles/python-test-writer.md` | `bundles/python-test-writer-compact.md` |
-| `code-style-reviewer` | `bundles/code-style-reviewer.md` | `bundles/code-style-reviewer-compact.md` |
-| `code-substance-reviewer` | `bundles/code-substance-reviewer.md` | `bundles/code-substance-reviewer-compact.md` |
 
 **Regenerate bundles** after modifying skills:
 ```bash
 uv run python .claude/scripts/generate_bundles.py
 ```
+
 
 ---
 
@@ -115,12 +119,13 @@ uv run python .claude/scripts/generate_bundles.py
 Skills provide coding standards and conventions. See `.claude/skills/manifest.json` for the complete catalog.
 
 **Categories**:
-- **Conventions**: `frameworks`, `naming-conventions`, `function-design`, `class-design`, `data-structures`, `type-hints`, `pythonic-conventions`, `docstring-conventions`, `code-organization`, `testing`, `complexity-refactoring`
+- **Conventions**: `class-design`, `code-organization`, `complexity-refactoring`, `data-structures`, `docstring-conventions`, `frameworks`, `function-design`, `naming-conventions`, `pythonic-conventions`, `testing`, `type-hints`
 - **Assessment**: `maintainability`, `testability`
-- **Templates**: `plan-template`, `review-template`, `pr-description-template`
-- **Utilities**: `run-python-safely`, `write-markdown-output`, `create-skill`
+- **Templates**: `plan-template`, `pr-description-template`, `review-template`
+- **Utilities**: `create-skill`, `run-python-safely`, `sync-context`, `write-markdown-output`
 
 **Note**: Agents should load their context bundles (above) rather than invoking skills individually.
+
 
 ---
 

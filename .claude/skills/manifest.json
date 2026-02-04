@@ -135,6 +135,13 @@
       "description": "Create new Claude Code skills",
       "user_invocable": true,
       "version": "1.0.0"
+    },
+    {
+      "name": "sync-context",
+      "category": "utilities",
+      "description": "Synchronize Claude context files with skills, agents, and commands on disk",
+      "user_invocable": true,
+      "version": "1.0.0"
     }
   ],
   "agents": [
