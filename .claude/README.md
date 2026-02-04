@@ -1,0 +1,380 @@
+# Claude Code Configuration
+
+> **For humans only.** This README explains the `.claude` directory structure for engineers adopting and customizing this setup. Agents should not use this file as context—they read `CLAUDE.md` instead.
+
+## Quick Start
+
+### The Workflow
+
+The core workflow is: **plan → implement → review → commit**
+
+```
+┌───────────────────────────────────────────────────────────────────┐
+│                                                                   │
+│   ┌────────┐                                                      │
+│   │  Plan  │  /plan <description>                                 │
+│   └───┬────┘                                                      │
+│       │                                                           │
+│       ▼                                                           │
+│   ┌───────────────────────────────────────────────────────────┐   │
+│   │              Iterate for each phase                       │   │
+│   │                                                           │   │
+│   │   ┌──────────┐    ┌──────────┐    ┌──────────┐            │   │
+│   │   │Implement │───▶│  Review  │───▶│  Commit  │            │   │
+│   │   │  Phase   │    │  & Test  │    │  Changes │            │   │
+│   │   └──────────┘    └──────────┘    └──────────┘            │   │
+│   │        ▲                               │                  │   │
+│   │        │                               ▼                  │   │
+│   │        │         ┌──────────────────────────┐             │   │
+│   │        └─────────│ Update Plan & Move to    │             │   │
+│   │                  │     Next Phase           │             │   │
+│   │                  └──────────────────────────┘             │   │
+│   │                                                           │   │
+│   └───────────────────────────────────────────────────────────┘   │
+│                                                                   │
+└───────────────────────────────────────────────────────────────────┘
+```
+
+**Example session:**
+
+```bash
+# 1. Plan your feature
+/plan Add user authentication with JWT
+
+# 2. Implement phase by phase
+/implement 1 from .claude/agent-outputs/plans/<plan-file>.md
+
+# 3. Review your changes
+/review
+
+# 4. Commit (manually or ask Claude)
+# Then update plan and continue to next phase
+/update-plan
+
+# 5. Repeat steps 2-4 for remaining phases
+```
+
+### Available Commands
+
+| Command | What It Does |
+|---------|--------------|
+| `/plan <description>` | Creates detailed implementation plan before coding |
+| `/implement <phase> from <plan>` | Executes a specific phase from a plan |
+| `/review` | Runs style + substance code review |
+| `/update-plan` | Syncs plan with main branch, marks phases complete |
+| `/pr-description` | Generates PR description from branch changes |
+| `/create-skill` | Scaffolds a new skill |
+| `/sync-context` | Regenerates CLAUDE.md from current skills/agents/commands |
+
+### Agents
+
+Agents are execution specialists invoked by commands:
+
+| Agent | Purpose | Model |
+|-------|---------|-------|
+| `planner` | Creates implementation plans | Opus |
+| `python-code-writer` | Writes production code | Opus |
+| `python-test-writer` | Writes tests | Opus |
+| `code-style-reviewer` | Reviews formatting & conventions | Sonnet |
+| `code-substance-reviewer` | Reviews design & correctness | Opus |
+
+You don't invoke agents directly—commands orchestrate them.
+
+---
+
+## Architecture Overview
+
+### Design Philosophy
+
+This configuration separates concerns into three distinct layers:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                        COMMANDS                              │
+│           Orchestration: workflows that use agents           │
+│         /plan  /implement  /review  /pr-description          │
+└─────────────────────────┬───────────────────────────────────┘
+                          │ invoke
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│                         AGENTS                               │
+│            Execution: specialists that do work               │
+│    planner  code-writer  test-writer  reviewers              │
+└─────────────────────────┬───────────────────────────────────┘
+                          │ load
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│                         SKILLS                               │
+│          Knowledge: conventions, templates, criteria         │
+│   class-design  testing  frameworks  plan-template  ...      │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Why this separation matters:**
+
+- **Skills** = Knowledge that multiple agents share (conventions, templates)
+- **Agents** = Focused specialists with specific responsibilities
+- **Commands** = User-facing workflows that compose agents
+
+### Single Source of Truth
+
+`manifest.json` defines all relationships:
+
+```json
+{
+  "skills": [{ "name": "class-design", "category": "conventions", ... }],
+  "agents": [{ "name": "planner", "depends_on": ["plan-template", ...] }],
+  "commands": [{ "name": "plan", "depends_on_agents": ["planner"] }]
+}
+```
+
+Changes to relationships happen in one place. The manifest drives:
+- Bundle generation (what skills each agent receives)
+- CLAUDE.md generation (via `/sync-context`)
+- Documentation of dependencies
+
+### Bundle Generation
+
+Agents need skill knowledge, but loading skills individually at runtime is inefficient. Instead:
+
+1. **manifest.json** declares which skills each agent depends on
+2. **generate_bundles.py** pre-composes skills into bundles
+3. **Agents** load a single bundle file with all their context
+
+```bash
+# Regenerate bundles after modifying skills
+uv run python .claude/scripts/generate_bundles.py
+```
+
+Two bundle variants are generated:
+- **Full bundle** (`planner.md`): Complete skill content including examples
+- **Compact bundle** (`planner-compact.md`): Quick Reference sections only
+
+### Layered Skills
+
+Complex skills split content across files:
+
+```
+skills/class-design/
+├── SKILL.md      # Main content + Quick Reference table
+├── rules.md      # Decision flow and rules
+└── examples.md   # Code examples
+```
+
+The frontmatter in `SKILL.md` declares layers:
+
+```yaml
+---
+name: class-design
+layers:
+  rules: rules.md
+  examples: examples.md
+---
+```
+
+Bundles include all layers. Compact bundles include only Quick Reference.
+
+### Git-Ignored Outputs
+
+Two directories regenerate as needed:
+
+```
+.claude/
+├── bundles/         # Generated by generate_bundles.py
+└── agent-outputs/   # Written by agents at runtime
+    ├── plans/
+    ├── reviews/
+    └── pr-descriptions/
+```
+
+Both are `.gitignore`d. Regenerate bundles after skill changes. Agent outputs are timestamped for history.
+
+---
+
+## Directory Structure
+
+```
+.claude/
+├── CLAUDE.md              # Agent instructions (auto-generated by /sync-context)
+├── README.md              # This file (humans only)
+├── settings.local.json    # Local settings
+│
+├── commands/              # User-invocable workflows
+│   ├── plan.md
+│   ├── implement.md
+│   ├── review.md
+│   └── ...
+│
+├── agents/                # Execution specialists
+│   ├── planner.md
+│   ├── python-code-writer.md
+│   └── ...
+│
+├── skills/                # Knowledge & conventions
+│   ├── manifest.json      # Single source of truth
+│   ├── class-design/
+│   │   ├── SKILL.md
+│   │   ├── rules.md
+│   │   └── examples.md
+│   ├── testing/
+│   │   └── SKILL.md
+│   └── ...
+│
+├── bundles/               # Pre-composed context (generated, gitignored)
+│   ├── planner.md
+│   ├── planner-compact.md
+│   └── ...
+│
+├── agent-outputs/         # Agent work products (generated, gitignored)
+│   ├── plans/
+│   ├── reviews/
+│   └── pr-descriptions/
+│
+└── scripts/               # Automation
+    ├── generate_bundles.py
+    └── sync_context.py
+```
+
+---
+
+## Customization Guide
+
+### Adding a New Skill
+
+1. **Create the skill directory and files:**
+   ```bash
+   /create-skill
+   # Follow prompts for name, category, description
+   ```
+
+2. **Edit the generated SKILL.md** with your conventions
+
+3. **Add to manifest.json** (if not auto-added):
+   ```json
+   {
+     "name": "your-skill",
+     "category": "conventions",
+     "description": "What this skill provides",
+     "user_invocable": false
+   }
+   ```
+
+4. **Add to agent dependencies** in manifest.json:
+   ```json
+   {
+     "name": "python-code-writer",
+     "depends_on": ["your-skill", ...]
+   }
+   ```
+
+5. **Regenerate bundles:**
+   ```bash
+   uv run python .claude/scripts/generate_bundles.py
+   ```
+
+6. **Update CLAUDE.md:**
+   ```bash
+   /sync-context
+   ```
+
+### Adding a New Agent
+
+1. **Create agent file** in `agents/`:
+   ```yaml
+   ---
+   name: your-agent
+   version: 1.0.0
+   description: What this agent does
+   model: sonnet  # or opus
+   bundle: bundles/your-agent.md
+   tools:
+     - Read
+     - Write
+     - Edit
+   ---
+
+   Instructions for the agent...
+   ```
+
+2. **Add to manifest.json:**
+   ```json
+   {
+     "name": "your-agent",
+     "description": "What this agent does",
+     "model": "sonnet",
+     "depends_on": ["skill1", "skill2"]
+   }
+   ```
+
+3. **Generate bundles and sync:**
+   ```bash
+   uv run python .claude/scripts/generate_bundles.py
+   /sync-context
+   ```
+
+### Adding a New Command
+
+1. **Create command file** in `commands/`:
+   ```yaml
+   ---
+   name: your-command
+   version: 1.0.0
+   description: What this command does
+   depends_on_agents:
+     - agent-it-uses
+   ---
+
+   # Command Title
+
+   Instructions for what this command does...
+   ```
+
+2. **Add to manifest.json:**
+   ```json
+   {
+     "name": "your-command",
+     "description": "What this command does",
+     "depends_on_agents": ["agent-it-uses"]
+   }
+   ```
+
+3. **Sync context:**
+   ```bash
+   /sync-context
+   ```
+
+### Modifying Conventions
+
+1. **Edit the skill's SKILL.md** (and rules.md/examples.md if layered)
+2. **Regenerate bundles** so agents get updated context
+3. **Test** by running a command that uses the affected agents
+
+---
+
+## Skill Categories
+
+| Category | Purpose | Examples |
+|----------|---------|----------|
+| **conventions** | How code should be written | `class-design`, `naming-conventions`, `testing` |
+| **assessment** | Criteria for code review | `maintainability`, `testability` |
+| **templates** | Output format specifications | `plan-template`, `review-template` |
+| **utilities** | Reusable operations | `run-python-safely`, `write-markdown-output` |
+
+---
+
+## Troubleshooting
+
+### Agent doesn't know about a skill
+- Check `manifest.json` that the agent's `depends_on` includes the skill
+- Regenerate bundles: `uv run python .claude/scripts/generate_bundles.py`
+
+### Command not appearing in /help
+- Ensure the command file has correct frontmatter
+- Run `/sync-context` to regenerate CLAUDE.md
+
+### Changes to skills not reflected
+- Regenerate bundles after any skill modification
+- Bundles are gitignored, so they won't auto-update
+
+### CLAUDE.md out of sync
+- Run `/sync-context` to regenerate from current disk state

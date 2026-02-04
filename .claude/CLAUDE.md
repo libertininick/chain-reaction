@@ -69,31 +69,6 @@ Specialized sub-agents in `.claude/agents/`. See each file for details.
 | `python-code-writer` | Writes production code | Opus |
 | `python-test-writer` | Writes tests | Opus |
 
-### Workflow
-
-1. Plan your work: `/plan`
-
-2. Iteratively Implement
-
-    Repeat the `/implement` → `/review` → commit → `/update-plan` cycle:
-
-    ```
-    ┌───────────────────────────────────────────────────┐
-    │                                                   │
-    │   ┌──────────┐    ┌──────────┐    ┌──────────┐    │
-    │   │Implement │───▶│  Review  │───▶│  Commit  │    │
-    │   │  Phase   │    │  & Test  │    │  Changes │    │
-    │   └──────────┘    └──────────┘    └──────────┘    │
-    │        ▲                               │          │
-    │        │                               ▼          │
-    │        │         ┌──────────────────────────┐     │
-    │        │         │ Update Plan & Move to    │     │
-    │        └─────────│     Next Phase           │     │
-    │                  └──────────────────────────┘     │
-    │                                                   │
-    └───────────────────────────────────────────────────┘
-    ```
-
 ---
 
 ## Context Bundles
