@@ -240,7 +240,7 @@ class TestValidateDataframeMatchesReference:
         """Given DataFrame matching reference, When validated, Then no exception raised."""
         # Arrange
         df = pl.DataFrame({"a": [1, 2, 3], "b": [4.0, 5.0, 6.0]})
-        reference = DataFrameReference.from_dataframe(df, name="test")
+        reference = DataFrameReference.from_dataframe("test", df)
 
         # Act/Assert - should not raise
         _validate_dataframe_matches_reference(df, reference)
@@ -249,7 +249,7 @@ class TestValidateDataframeMatchesReference:
         """Given DataFrame with different columns, When validated, Then raises ValueError."""
         # Arrange
         df_original = pl.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
-        reference = DataFrameReference.from_dataframe(df_original, name="test")
+        reference = DataFrameReference.from_dataframe("test", df_original)
         df_different = pl.DataFrame({"x": [1, 2, 3], "y": [4, 5, 6]})
 
         # Act/Assert
@@ -260,7 +260,7 @@ class TestValidateDataframeMatchesReference:
         """Given DataFrame with different shape, When validated, Then raises ValueError."""
         # Arrange
         df_original = pl.DataFrame({"a": [1, 2, 3]})
-        reference = DataFrameReference.from_dataframe(df_original, name="test")
+        reference = DataFrameReference.from_dataframe("test", df_original)
         df_different = pl.DataFrame({"a": [1, 2, 3, 4, 5]})
 
         # Act/Assert
@@ -273,7 +273,7 @@ class TestValidateDataframeMatchesReference:
         """Given DataFrame with different statistics, When validated, Then raises ValueError."""
         # Arrange
         df_original = pl.DataFrame({"a": [1, 2, 3]})
-        reference = DataFrameReference.from_dataframe(df_original, name="test")
+        reference = DataFrameReference.from_dataframe("test", df_original)
         # Same shape and columns but different values
         df_different = pl.DataFrame({"a": [100, 200, 300]})
 
@@ -386,8 +386,8 @@ class TestSortReferencesByDependencyOrder:
         # Arrange
         df1 = pl.DataFrame({"a": [1, 2, 3]})
         df2 = pl.DataFrame({"b": [4, 5, 6]})
-        ref1 = DataFrameReference.from_dataframe(df1, name="ref1")
-        ref2 = DataFrameReference.from_dataframe(df2, name="ref2")
+        ref1 = DataFrameReference.from_dataframe("ref1", df1)
+        ref2 = DataFrameReference.from_dataframe("ref2", df2)
         references = [ref1, ref2]
 
         # Act
@@ -406,7 +406,7 @@ class TestSortReferencesByDependencyOrder:
         df = pl.DataFrame({"a": [1, 2, 3]})
 
         # Create A (base)
-        ref_a = DataFrameReference.from_dataframe(df, name="A")
+        ref_a = DataFrameReference.from_dataframe("A", df)
 
         # Create B (depends on A) - we need to manually set the ID since from_dataframe generates a new one
         ref_b = DataFrameReference(
@@ -576,7 +576,7 @@ class TestRestoreFromState:
         """Given state with single base DataFrame, When restored, Then context has DataFrame."""
         # Arrange
         df = pl.DataFrame({"a": [1, 2, 3]})
-        ref = DataFrameReference.from_dataframe(df, name="test")
+        ref = DataFrameReference.from_dataframe("test", df)
         state = DataFrameToolkitState(references=[ref])
         context = DataFrameContext()
         references: dict[DataFrameId, DataFrameReference] = {}
@@ -597,8 +597,8 @@ class TestRestoreFromState:
         # Arrange
         df1 = pl.DataFrame({"a": [1, 2, 3]})
         df2 = pl.DataFrame({"b": [4, 5, 6]})
-        ref1 = DataFrameReference.from_dataframe(df1, name="first")
-        ref2 = DataFrameReference.from_dataframe(df2, name="second")
+        ref1 = DataFrameReference.from_dataframe("first", df1)
+        ref2 = DataFrameReference.from_dataframe("second", df2)
         state = DataFrameToolkitState(references=[ref1, ref2])
         context = DataFrameContext()
         references: dict[DataFrameId, DataFrameReference] = {}
@@ -622,7 +622,7 @@ class TestRestoreFromState:
         """Given state with derivative, When restored, Then derivative reconstructed."""
         # Arrange
         base_df = pl.DataFrame({"a": [1, 2, 3, 4, 5]})
-        base_ref = DataFrameReference.from_dataframe(base_df, name="base")
+        base_ref = DataFrameReference.from_dataframe("base", base_df)
 
         # Create derivative reference that filters to a < 3
         derived_df = pl.DataFrame({"a": [1, 2]})
@@ -667,8 +667,8 @@ class TestRestoreFromState:
         # Arrange
         df1 = pl.DataFrame({"a": [1, 2, 3]})
         df2 = pl.DataFrame({"b": [4, 5, 6]})
-        ref1 = DataFrameReference.from_dataframe(df1, name="first")
-        ref2 = DataFrameReference.from_dataframe(df2, name="second")
+        ref1 = DataFrameReference.from_dataframe("first", df1)
+        ref2 = DataFrameReference.from_dataframe("second", df2)
         state = DataFrameToolkitState(references=[ref1, ref2])
         context = DataFrameContext()
         references: dict[DataFrameId, DataFrameReference] = {}

@@ -141,8 +141,8 @@ class DataFrameReference(BaseModel):
     @classmethod
     def from_dataframe(
         cls,
-        dataframe: pl.DataFrame,
         name: str,
+        dataframe: pl.DataFrame,
         *,
         description: str | None = None,
         column_descriptions: dict[str, str] | None = None,
@@ -152,8 +152,8 @@ class DataFrameReference(BaseModel):
         """Create a DataFrameReference from a Polars DataFrame.
 
         Args:
-            dataframe (pl.DataFrame): Polars DataFrame.
             name (str): The name of the DataFrame.
+            dataframe (pl.DataFrame): Polars DataFrame.
             description (str | None): An optional textual description of the DataFrame. Defaults to None.
             column_descriptions (dict[str, str] | None): Optional textual descriptions of the columns. Defaults to None.
             parent_ids (list[DataFrameId] | None): Identifiers of the parent DataFrames, if any. Defaults to None.

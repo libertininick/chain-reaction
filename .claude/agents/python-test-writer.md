@@ -3,7 +3,7 @@ name: python-test-writer
 description: Creates comprehensive pytest test suites. Use when writing tests for new functions/classes, updating tests after logic changes, or creating edge case coverage.
 model: opus
 color: red
-allowedTools:
+tools:
   - Bash
   - Glob
   - Grep

@@ -3,7 +3,7 @@ name: python-code-writer
 description: Writes clean, maintainable, testable Python code following repository conventions. Use when implementing new features, functions, classes, or modules.
 model: opus
 color: blue
-allowedTools:
+tools:
   - Bash
   - Glob
   - Grep

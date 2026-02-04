@@ -190,8 +190,8 @@ class DataFrameToolkit:
             raise ValueError(msg)
 
         reference = DataFrameReference.from_dataframe(
+            name,
             dataframe,
-            name=name,
             description=description,
             column_descriptions=column_descriptions,
         )
@@ -258,8 +258,8 @@ class DataFrameToolkit:
         # Build all references first without modifying state (can fail without side effects)
         references = [
             DataFrameReference.from_dataframe(
+                name,
                 dataframe,
-                name=name,
                 description=descriptions.get(name),
                 column_descriptions=column_descriptions.get(name),
             )

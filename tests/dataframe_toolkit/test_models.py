@@ -144,7 +144,7 @@ class TestDataFrameReference:
         df = pl.DataFrame({"a": [1, 2, 3], "b": ["x", "y", "z"]})
 
         # Act
-        ref = DataFrameReference.from_dataframe(df, name="test_df")
+        ref = DataFrameReference.from_dataframe("test_df", df)
 
         # Assert
         with check:
@@ -170,8 +170,8 @@ class TestDataFrameReference:
 
         # Act
         ref = DataFrameReference.from_dataframe(
+            "derived_df",
             df,
-            name="derived_df",
             description="A derived DataFrame",
             column_descriptions={"col1": "Integer column", "col2": "Float column"},
             parent_ids=parent_ids,
@@ -198,8 +198,8 @@ class TestDataFrameReference:
         df = pl.DataFrame({"a": [1]})
 
         # Act
-        ref1 = DataFrameReference.from_dataframe(df, name="test")
-        ref2 = DataFrameReference.from_dataframe(df, name="test")
+        ref1 = DataFrameReference.from_dataframe("test", df)
+        ref2 = DataFrameReference.from_dataframe("test", df)
 
         # Assert
         with check:
@@ -220,7 +220,7 @@ class TestDataFrameReference:
 
         # Act/Assert
         with pytest.raises(KeyError, match="min"):
-            DataFrameReference.from_dataframe(df, name="empty_df")
+            DataFrameReference.from_dataframe("empty_df", df)
 
     def test_from_dataframe_with_null_values_creates_valid_reference(self) -> None:
         """Given DataFrame with nulls, When from_dataframe called, Then creates reference with null counts."""
@@ -228,7 +228,7 @@ class TestDataFrameReference:
         df = pl.DataFrame({"a": [1, None, 3], "b": [None, None, "z"]})
 
         # Act
-        ref = DataFrameReference.from_dataframe(df, name="null_df")
+        ref = DataFrameReference.from_dataframe("null_df", df)
 
         # Assert
         with check:
@@ -244,7 +244,7 @@ class TestDataFrameReference:
         df = pl.DataFrame({"only_col": [42]})
 
         # Act
-        ref = DataFrameReference.from_dataframe(df, name="single")
+        ref = DataFrameReference.from_dataframe("single", df)
 
         # Assert
         with check:
@@ -261,8 +261,8 @@ class TestDataFrameReference:
 
         # Act
         ref = DataFrameReference.from_dataframe(
+            "partial_desc",
             df,
-            name="partial_desc",
             column_descriptions={"a": "Column A description"},
         )
 
@@ -284,7 +284,7 @@ class TestDataFrameReference:
         df = pl.DataFrame({"a": [1]})
 
         # Act
-        ref = DataFrameReference.from_dataframe(df, name="test")
+        ref = DataFrameReference.from_dataframe("test", df)
 
         # Assert
         pattern = re.compile(r"^df_[0-9a-f]{8}$")
@@ -298,7 +298,7 @@ class TestDataFrameReference:
         name = "my-test_df.2024"
 
         # Act
-        ref = DataFrameReference.from_dataframe(df, name=name)
+        ref = DataFrameReference.from_dataframe(name, df)
 
         # Assert
         with check:
@@ -310,7 +310,7 @@ class TestDataFrameReference:
         df = pl.DataFrame({"a": [1]})
 
         # Act
-        ref = DataFrameReference.from_dataframe(df, name="test")
+        ref = DataFrameReference.from_dataframe("test", df)
 
         # Assert
         with check:
@@ -323,7 +323,7 @@ class TestDataFrameReference:
         desc = "This DataFrame contains sales data for Q4 2024."
 
         # Act
-        ref = DataFrameReference.from_dataframe(df, name="test", description=desc)
+        ref = DataFrameReference.from_dataframe("test", df, description=desc)
 
         # Assert
         with check:
@@ -335,7 +335,7 @@ class TestDataFrameReference:
         df = pl.DataFrame({"a": list(range(100))})
 
         # Act
-        ref = DataFrameReference.from_dataframe(df, name="test")
+        ref = DataFrameReference.from_dataframe("test", df)
 
         # Assert
         with check:
@@ -347,7 +347,7 @@ class TestDataFrameReference:
         df = pl.DataFrame({f"col_{i}": [1] for i in range(5)})
 
         # Act
-        ref = DataFrameReference.from_dataframe(df, name="test")
+        ref = DataFrameReference.from_dataframe("test", df)
 
         # Assert
         with check:
@@ -359,7 +359,7 @@ class TestDataFrameReference:
         df = pl.DataFrame({"z": [1], "a": [2], "m": [3]})
 
         # Act
-        ref = DataFrameReference.from_dataframe(df, name="test")
+        ref = DataFrameReference.from_dataframe("test", df)
 
         # Assert
         with check:
@@ -371,7 +371,7 @@ class TestDataFrameReference:
         df = pl.DataFrame({"int_col": [1, 2, 3], "str_col": ["a", "b", "c"], "float_col": [1.1, 2.2, 3.3]})
 
         # Act
-        ref = DataFrameReference.from_dataframe(df, name="test")
+        ref = DataFrameReference.from_dataframe("test", df)
 
         # Assert
         with check:
@@ -383,7 +383,7 @@ class TestDataFrameReference:
         df = pl.DataFrame({"a": [1]})
 
         # Act
-        ref = DataFrameReference.from_dataframe(df, name="test")
+        ref = DataFrameReference.from_dataframe("test", df)
 
         # Assert
         with check:
@@ -396,7 +396,7 @@ class TestDataFrameReference:
         parent_ids = ["df_11111111", "df_22222222", "df_33333333"]
 
         # Act
-        ref = DataFrameReference.from_dataframe(df, name="test", parent_ids=parent_ids)
+        ref = DataFrameReference.from_dataframe("test", df, parent_ids=parent_ids)
 
         # Assert
         with check:
@@ -412,7 +412,7 @@ class TestDataFrameReference:
         df = pl.DataFrame({"a": [1, 2, 3]})
 
         # Act
-        ref = DataFrameReference.from_dataframe(df, name="test")
+        ref = DataFrameReference.from_dataframe("test", df)
 
         # Assert
         with check:
@@ -425,7 +425,7 @@ class TestDataFrameReference:
         sql = "SELECT * FROM base_table WHERE value > 0"
 
         # Act
-        ref = DataFrameReference.from_dataframe(df, name="derived", source_query=sql)
+        ref = DataFrameReference.from_dataframe("derived", df, source_query=sql)
 
         # Assert
         with check:
@@ -438,7 +438,7 @@ class TestDataFrameReference:
         sql = "SELECT a FROM parent"
 
         # Act
-        ref = DataFrameReference.from_dataframe(df, name="derived", source_query=sql)
+        ref = DataFrameReference.from_dataframe("derived", df, source_query=sql)
         ref_dict = ref.model_dump()
 
         # Assert
@@ -454,7 +454,7 @@ class TestDataFrameReference:
         sql = "SELECT * FROM base"
 
         # Act
-        ref = DataFrameReference.from_dataframe(df, name="derived", source_query=sql)
+        ref = DataFrameReference.from_dataframe("derived", df, source_query=sql)
         json_str = ref.model_dump_json()
 
         # Assert
@@ -469,7 +469,7 @@ class TestDataFrameReference:
         df = pl.DataFrame({"a": [1, 2, 3]})
 
         # Act
-        ref = DataFrameReference.from_dataframe(df, name="base")
+        ref = DataFrameReference.from_dataframe("base", df)
         ref_dict = ref.model_dump()
 
         # Assert
@@ -486,7 +486,7 @@ class TestDataFrameReference:
         """Given DataFrameReference, When model_dump called, Then all fields present."""
         # Arrange
         df = pl.DataFrame({"a": [1, 2, 3]})
-        ref = DataFrameReference.from_dataframe(df, name="test")
+        ref = DataFrameReference.from_dataframe("test", df)
 
         # Act
         ref_dict = ref.model_dump()
@@ -511,7 +511,7 @@ class TestDataFrameReference:
         """Given DataFrameReference, When model_dump_json called, Then produces valid JSON string."""
         # Arrange
         df = pl.DataFrame({"a": [1, 2, 3], "b": ["x", "y", "z"]})
-        ref = DataFrameReference.from_dataframe(df, name="test", description="Test DataFrame")
+        ref = DataFrameReference.from_dataframe("test", df, description="Test DataFrame")
 
         # Act
         json_str = ref.model_dump_json()
@@ -532,7 +532,7 @@ class TestDataFrameReference:
         """Given DataFrameReference, When model_dump_json with indent, Then output is formatted."""
         # Arrange
         df = pl.DataFrame({"a": [1]})
-        ref = DataFrameReference.from_dataframe(df, name="test")
+        ref = DataFrameReference.from_dataframe("test", df)
 
         # Act
         compact = ref.model_dump_json()
@@ -549,8 +549,8 @@ class TestDataFrameReference:
         # Arrange
         df = pl.DataFrame({"a": [1, 2, 3], "b": [1.1, 2.2, 3.3]})
         original = DataFrameReference.from_dataframe(
+            "test_df",
             df,
-            name="test_df",
             description="A test DataFrame",
             parent_ids=["df_aaaaaaaa", "df_bbbbbbbb"],
             source_query="SELECT * FROM parent",
@@ -582,7 +582,7 @@ class TestDataFrameReference:
         """Given DataFrameReference, When model_dump called, Then column_summaries has correct structure."""
         # Arrange
         df = pl.DataFrame({"int_col": [1, 2, 3]})
-        ref = DataFrameReference.from_dataframe(df, name="test", column_descriptions={"int_col": "Integer values"})
+        ref = DataFrameReference.from_dataframe("test", df, column_descriptions={"int_col": "Integer values"})
 
         # Act
         ref_dict = ref.model_dump()
@@ -659,7 +659,7 @@ class TestDataFrameReference:
         df = pl.DataFrame({"column with spaces": [1], "column-with-dashes": [2], "123_numeric_start": [3]})
 
         # Act
-        ref = DataFrameReference.from_dataframe(df, name="special")
+        ref = DataFrameReference.from_dataframe("special", df)
 
         # Assert
         with check:
@@ -684,7 +684,7 @@ class TestDataFrameReference:
         })
 
         # Act
-        ref = DataFrameReference.from_dataframe(df, name="multi_dtype")
+        ref = DataFrameReference.from_dataframe("multi_dtype", df)
 
         # Assert
         with check:
@@ -709,7 +709,7 @@ class TestDataFrameReference:
 
         # Act/Assert
         with pytest.raises(KeyError, match="min"):
-            DataFrameReference.from_dataframe(df, name="with_nulls")
+            DataFrameReference.from_dataframe("with_nulls", df)
 
     def test_dataframe_with_partial_null_column_creates_valid_reference(self) -> None:
         """Given DataFrame with some nulls in column, When from_dataframe called, Then creates reference."""
@@ -717,7 +717,7 @@ class TestDataFrameReference:
         df = pl.DataFrame({"some_null": [1, None, 3], "no_null": [1, 2, 3]})
 
         # Act
-        ref = DataFrameReference.from_dataframe(df, name="with_some_nulls")
+        ref = DataFrameReference.from_dataframe("with_some_nulls", df)
 
         # Assert
         with check:
@@ -746,7 +746,7 @@ class TestDataFrameToolkitState:
         """Given references list, When instantiated, Then state contains all references."""
         # Arrange
         df = pl.DataFrame({"a": [1, 2, 3]})
-        ref = DataFrameReference.from_dataframe(df, name="test")
+        ref = DataFrameReference.from_dataframe("test", df)
 
         # Act
         state = DataFrameToolkitState(references=[ref])
@@ -761,7 +761,7 @@ class TestDataFrameToolkitState:
         """Given state with references, When serialized and deserialized, Then data preserved."""
         # Arrange
         df = pl.DataFrame({"a": [1, 2, 3]})
-        ref = DataFrameReference.from_dataframe(df, name="test", source_query="SELECT * FROM base")
+        ref = DataFrameReference.from_dataframe("test", df, source_query="SELECT * FROM base")
         state = DataFrameToolkitState(references=[ref])
 
         # Act
@@ -780,7 +780,7 @@ class TestDataFrameToolkitState:
         """Given state with references, When model_dump_json called, Then produces valid JSON string."""
         # Arrange
         df = pl.DataFrame({"a": [1, 2, 3]})
-        ref = DataFrameReference.from_dataframe(df, name="test")
+        ref = DataFrameReference.from_dataframe("test", df)
         state = DataFrameToolkitState(references=[ref])
 
         # Act
@@ -822,8 +822,8 @@ class TestDataFrameToolkitState:
         # Arrange
         df = pl.DataFrame({"a": [1, 2, 3], "b": ["x", "y", "z"]})
         ref = DataFrameReference.from_dataframe(
+            "test_df",
             df,
-            name="test_df",
             description="A test DataFrame",
             source_query="SELECT * FROM parent WHERE x > 0",
             parent_ids=["df_00000001", "df_00000002"],

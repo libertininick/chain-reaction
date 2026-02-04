@@ -558,8 +558,8 @@ class TestFromState:
 
         # Create derivative reference with source_query
         derived_ref = DataFrameReference.from_dataframe(
+            "derived",
             pl.DataFrame({"a": [1, 2]}),
-            name="derived",
             source_query=f"SELECT * FROM {base_ref.id} WHERE a < 3",  # noqa: S608
             parent_ids=[base_ref.id],
         )
@@ -689,11 +689,11 @@ class TestFromStateErrorHandling:
         """Given invalid SQL in source_query, When from_state called, Then clear error message."""
         # Arrange - create state with a derivative that has invalid SQL
         base_df = pl.DataFrame({"a": [1, 2, 3]})
-        base_ref = DataFrameReference.from_dataframe(base_df, name="base")
+        base_ref = DataFrameReference.from_dataframe("base", base_df)
 
         derived_ref = DataFrameReference.from_dataframe(
+            "derived",
             pl.DataFrame({"a": [1]}),
-            name="derived",
             source_query="SELECT * FROM nonexistent_table",  # Invalid SQL
             parent_ids=[base_ref.id],
         )
@@ -873,8 +873,8 @@ class TestConversationResumptionScenarios:
 
         # Register derivative with source_query
         derived_ref = DataFrameReference.from_dataframe(
+            "high_scorers",
             result_df,
-            name="high_scorers",
             description="Students with score >= 85",
             source_query=query,
             parent_ids=[base_ref.id],
@@ -919,7 +919,7 @@ class TestConversationResumptionScenarios:
         b_query = f"SELECT x, y FROM {a_ref.id} WHERE x <= 5"  # noqa: S608
         b_result = original_toolkit._context.execute_sql(b_query, eager=True)
         b_df = b_result if isinstance(b_result, pl.DataFrame) else b_result.collect()
-        b_ref = DataFrameReference.from_dataframe(b_df, name="B", source_query=b_query, parent_ids=[a_ref.id])
+        b_ref = DataFrameReference.from_dataframe("B", b_df, source_query=b_query, parent_ids=[a_ref.id])
         original_toolkit._context.register(b_ref.id, b_df)
         original_toolkit._references[b_ref.id] = b_ref
 
@@ -927,7 +927,7 @@ class TestConversationResumptionScenarios:
         c_query = f"SELECT x, y FROM {b_ref.id} WHERE x <= 2"  # noqa: S608
         c_result = original_toolkit._context.execute_sql(c_query, eager=True)
         c_df = c_result if isinstance(c_result, pl.DataFrame) else c_result.collect()
-        c_ref = DataFrameReference.from_dataframe(c_df, name="C", source_query=c_query, parent_ids=[b_ref.id])
+        c_ref = DataFrameReference.from_dataframe("C", c_df, source_query=c_query, parent_ids=[b_ref.id])
         original_toolkit._context.register(c_ref.id, c_df)
         original_toolkit._references[c_ref.id] = c_ref
 
@@ -977,8 +977,8 @@ class TestConversationResumptionScenarios:
         join_result = original_toolkit._context.execute_sql(join_query, eager=True)
         joined_df = join_result if isinstance(join_result, pl.DataFrame) else join_result.collect()
         joined_ref = DataFrameReference.from_dataframe(
+            "user_orders",
             joined_df,
-            name="user_orders",
             source_query=join_query,
             parent_ids=[users_ref.id, orders_ref.id],
         )
