@@ -4,81 +4,17 @@
 
 ## Quick Start
 
-### The Workflow
-
 The core workflow is: **plan → implement → review → commit**
 
-```
-┌───────────────────────────────────────────────────────────────────┐
-│                                                                   │
-│   ┌────────┐                                                      │
-│   │  Plan  │  /plan <description>                                 │
-│   └───┬────┘                                                      │
-│       │                                                           │
-│       ▼                                                           │
-│   ┌───────────────────────────────────────────────────────────┐   │
-│   │              Iterate for each phase                       │   │
-│   │                                                           │   │
-│   │   ┌──────────┐    ┌──────────┐    ┌──────────┐            │   │
-│   │   │Implement │───▶│  Review  │───▶│  Commit  │            │   │
-│   │   │  Phase   │    │  & Test  │    │  Changes │            │   │
-│   │   └──────────┘    └──────────┘    └──────────┘            │   │
-│   │        ▲                               │                  │   │
-│   │        │                               ▼                  │   │
-│   │        │         ┌──────────────────────────┐             │   │
-│   │        └─────────│ Update Plan & Move to    │             │   │
-│   │                  │     Next Phase           │             │   │
-│   │                  └──────────────────────────┘             │   │
-│   │                                                           │   │
-│   └───────────────────────────────────────────────────────────┘   │
-│                                                                   │
-└───────────────────────────────────────────────────────────────────┘
-```
-
-**Example session:**
-
 ```bash
-# 1. Plan your feature
-/plan Add user authentication with JWT
-
-# 2. Implement phase by phase
-/implement 1 from .claude/agent-outputs/plans/<plan-file>.md
-
-# 3. Review your changes
-/review
-
-# 4. Commit (manually or ask Claude)
-# Then update plan and continue to next phase
-/update-plan
-
-# 5. Repeat steps 2-4 for remaining phases
+/plan <description>           # Create implementation plan
+/implement Phase 1 from ...   # Execute a phase
+/review                       # Style + substance review
+git commit                    # Commit manually
+/update-plan                  # Mark phase complete, continue
 ```
 
-### Available Commands
-
-| Command | What It Does |
-|---------|--------------|
-| `/plan <description>` | Creates detailed implementation plan before coding |
-| `/implement <phase> from <plan>` | Executes a specific phase from a plan |
-| `/review` | Runs style + substance code review |
-| `/update-plan` | Syncs plan with main branch, marks phases complete |
-| `/pr-description` | Generates PR description from branch changes |
-| `/create-skill` | Scaffolds a new skill |
-| `/sync-context` | Regenerates CLAUDE.md from current skills/agents/commands |
-
-### Agents
-
-Agents are execution specialists invoked by commands:
-
-| Agent | Purpose | Model |
-|-------|---------|-------|
-| `planner` | Creates implementation plans | Opus |
-| `python-code-writer` | Writes production code | Opus |
-| `python-test-writer` | Writes tests | Opus |
-| `code-style-reviewer` | Reviews formatting & conventions | Sonnet |
-| `code-substance-reviewer` | Reviews design & correctness | Opus |
-
-You don't invoke agents directly—commands orchestrate them.
+For available commands, agents, and a detailed walkthrough, see the **[Agentic Coding Workflow Guide](usage-guides/agentic-coding-workflow-guide.md)**.
 
 ---
 
