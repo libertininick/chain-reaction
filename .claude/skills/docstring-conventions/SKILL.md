@@ -1,6 +1,7 @@
 ---
 name: docstring-conventions
-description: Google-style docstring conventions for Python code. Apply when writing functions, classes, or modules that need documentation.
+version: 1.0.0
+description: Google-style docstring conventions for Python code. Apply when writing or reviewing functions, classes, or modules that need documentation.
 user-invocable: false
 ---
 

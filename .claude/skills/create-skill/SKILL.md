@@ -1,5 +1,6 @@
 ---
 name: create-skill
+version: 1.0.0
 description: Create a new Claude Code skill. Use when converting conventions, workflows, or knowledge into actionable skills.
 argument-hint: <skill-name> [source-file]
 ---

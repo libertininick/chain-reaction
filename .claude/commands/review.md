@@ -1,3 +1,15 @@
+---
+name: review
+version: 1.0.0
+description: Code review using style and substance reviewers
+depends_on_agents:
+  - code-style-reviewer
+  - code-substance-reviewer
+depends_on_skills:
+  - review-template
+  - write-markdown-output
+---
+
 # Code Review
 
 Conduct a code review: $ARGUMENTS

@@ -1,3 +1,13 @@
+---
+name: implement
+version: 1.0.0
+description: Execute plan phases using specialized agents
+depends_on_agents:
+  - python-code-writer
+  - python-test-writer
+  - code-style-reviewer
+---
+
 # Implement Plan
 
 Implement one or more phases of plan: $ARGUMENTS

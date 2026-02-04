@@ -1,5 +1,6 @@
 ---
 name: type-hints
+version: 1.0.0
 description: Python type hint conventions for this codebase. Apply when writing or reviewing Python code that needs type annotations on functions, classes, or variables.
 user-invocable: false
 ---

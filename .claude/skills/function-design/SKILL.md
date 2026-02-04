@@ -1,5 +1,6 @@
 ---
 name: function-design
+version: 1.0.0
 description: Python function design conventions for this codebase. Apply when writing or reviewing functions including signatures, parameters, return types, and async patterns.
 user-invocable: false
 ---

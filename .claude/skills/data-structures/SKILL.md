@@ -1,6 +1,7 @@
 ---
 name: data-structures
-description: Python data structure conventions for this codebase. Apply when choosing between Pydantic models, dataclasses, and other data containers.
+version: 1.0.0
+description: Python data structure conventions for this codebase. Apply when choosing between Pydantic models, dataclasses, and other data containers or reviewing data structure design choices.
 user-invocable: false
 ---
 
