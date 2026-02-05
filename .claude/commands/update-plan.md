@@ -1,3 +1,11 @@
+---
+name: update-plan
+version: 1.0.0
+description: Sync plan with main and update completed phases
+depends_on_skills:
+  - plan-template
+---
+
 # Update Plan
 
 Update an existing implementation plan: $ARGUMENTS
