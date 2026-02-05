@@ -51,7 +51,7 @@ Reusable workflows in `.claude/commands/`. See each file for details.
 | `/implement` | Execute plan phases |
 | `/plan` | Create implementation plan |
 | `/pr-description` | Generate PR description |
-| `/review` | Code review |
+| `/review` | Code review (source + tests) |
 | `/sync-context` | Sync Claude context files with skills, agents, and commands on disk |
 | `/update-plan` | Sync plan with main |
 
@@ -70,6 +70,7 @@ Specialized sub-agents in `.claude/agents/`. See each file for details.
 | `planner` | Creates implementation plans | Opus |
 | `python-code-writer` | Writes production code | Opus |
 | `python-test-writer` | Writes tests | Opus |
+| `test-reviewer` | Reviews test quality and coverage | Sonnet |
 
 
 ---
@@ -86,6 +87,7 @@ Pre-composed skill content for agents. Bundles provide exactly the context each 
 | `planner` | `bundles/planner.md` | `bundles/planner-compact.md` |
 | `python-code-writer` | `bundles/python-code-writer.md` | `bundles/python-code-writer-compact.md` |
 | `python-test-writer` | `bundles/python-test-writer.md` | `bundles/python-test-writer-compact.md` |
+| `test-reviewer` | `bundles/test-reviewer.md` | `bundles/test-reviewer-compact.md` |
 
 **Regenerate bundles** after modifying skills:
 ```bash
@@ -100,8 +102,8 @@ uv run python .claude/scripts/generate_bundles.py
 Skills provide coding standards and conventions. See `.claude/skills/manifest.json` for the complete catalog.
 
 **Categories**:
-- **Conventions**: `class-design`, `code-organization`, `complexity-refactoring`, `data-structures`, `docstring-conventions`, `frameworks`, `function-design`, `naming-conventions`, `pythonic-conventions`, `testing`, `type-hints`
-- **Assessment**: `maintainability`, `testability`
+- **Conventions**: `class-design`, `code-organization`, `complexity-refactoring`, `data-structures`, `docstring-conventions`, `frameworks`, `function-design`, `naming-conventions`, `pythonic-conventions`, `test-writing`, `type-hints`
+- **Assessment**: `maintainability`, `test-quality`, `testability`
 - **Templates**: `plan-template`, `pr-description-template`, `review-template`, `skill-template`
 - **Utilities**: `run-python-safely`, `write-markdown-output`
 

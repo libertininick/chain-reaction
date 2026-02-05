@@ -116,7 +116,14 @@
       "version": "1.0.0"
     },
     {
-      "name": "testing",
+      "name": "test-quality",
+      "category": "assessment",
+      "description": "Test quality assessment for reviewing tests",
+      "user_invocable": false,
+      "version": "1.0.0"
+    },
+    {
+      "name": "test-writing",
       "category": "conventions",
       "description": "Pytest conventions, fixtures, parametrization",
       "user_invocable": false,
@@ -182,7 +189,7 @@
         "testability",
         "maintainability",
         "naming-conventions",
-        "testing"
+        "test-writing"
       ]
     },
     {
@@ -212,7 +219,7 @@
       "model": "opus",
       "version": "1.0.0",
       "depends_on": [
-        "testing",
+        "test-writing",
         "frameworks",
         "naming-conventions",
         "docstring-conventions",
@@ -235,6 +242,17 @@
         "type-hints",
         "maintainability",
         "testability"
+      ]
+    },
+    {
+      "name": "test-reviewer",
+      "description": "Reviews test quality and coverage",
+      "model": "sonnet",
+      "version": "1.0.0",
+      "depends_on": [
+        "test-quality",
+        "test-writing",
+        "review-template"
       ]
     }
   ],
@@ -276,11 +294,12 @@
     },
     {
       "name": "review",
-      "description": "Code review",
-      "version": "1.0.0",
+      "description": "Unified code review (source + tests)",
+      "version": "2.0.0",
       "depends_on_agents": [
         "code-style-reviewer",
-        "code-substance-reviewer"
+        "code-substance-reviewer",
+        "test-reviewer"
       ],
       "depends_on_skills": [
         "review-template",
