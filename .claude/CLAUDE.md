@@ -51,8 +51,7 @@ Reusable workflows in `.claude/commands/`. See each file for details.
 | `/implement` | Execute plan phases |
 | `/plan` | Create implementation plan |
 | `/pr-description` | Generate PR description |
-| `/review` | Code review |
-| `/review-tests` | Review test quality |
+| `/review` | Code review (source + tests) |
 | `/sync-context` | Sync Claude context files with skills, agents, and commands on disk |
 | `/update-plan` | Sync plan with main |
 
@@ -104,7 +103,7 @@ Skills provide coding standards and conventions. See `.claude/skills/manifest.js
 
 **Categories**:
 - **Conventions**: `class-design`, `code-organization`, `complexity-refactoring`, `data-structures`, `docstring-conventions`, `frameworks`, `function-design`, `naming-conventions`, `pythonic-conventions`, `test-writing`, `type-hints`
-- **Assessment**: `maintainability`, `testability`, `test-quality`
+- **Assessment**: `maintainability`, `test-quality`, `testability`
 - **Templates**: `plan-template`, `pr-description-template`, `review-template`, `skill-template`
 - **Utilities**: `run-python-safely`, `write-markdown-output`
 

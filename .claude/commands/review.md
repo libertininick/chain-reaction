@@ -1,10 +1,11 @@
 ---
 name: review
-version: 1.0.0
-description: Code review using style and substance reviewers
+version: 2.0.0
+description: Unified code review for source and test files
 depends_on_agents:
   - code-style-reviewer
   - code-substance-reviewer
+  - test-reviewer
 depends_on_skills:
   - review-template
   - write-markdown-output
@@ -16,32 +17,55 @@ Conduct a code review: $ARGUMENTS
 
 ## Review Process
 
-This command orchestrates a two-phase review using specialized agents, then aggregates results into a unified report.
+This command orchestrates a comprehensive review using specialized agents, then aggregates results into a unified report.
 
-### Phase 1: Style Review
+### Phase 1: Resolve and Classify Files
+
+Determine which files to review based on arguments, then classify them:
+
+**Test files** match any of:
+- Filename starts with `test_` (e.g., `test_parser.py`)
+- Filename ends with `_test.py` (e.g., `parser_test.py`)
+- Located in `tests/` directory
+
+**Source files** are all other `.py` files.
+
+### Phase 2: Run Tests (if test files in scope)
+
+If test files are being reviewed, execute `uv run pytest <test-files> -v` to verify tests pass before reviewing.
+
+### Phase 3: Style Review
 
 Launch the `code-style-reviewer` agent with:
-- The code diff or files to review
+- ALL files in scope (both source and test files)
 - Implementation plan context (if `--plan` provided)
 
 Wait for completion before proceeding.
 
-### Phase 2: Substance Review
+### Phase 4: Substance Review
 
-After style review completes, launch the `code-substance-reviewer` agent with:
-- The same code diff or files
+Launch the `code-substance-reviewer` agent with:
+- ALL files in scope (both source and test files)
 - Implementation plan context (if `--plan` provided)
+
+Wait for completion before proceeding.
+
+### Phase 5: Test Quality Review (if test files in scope)
+
+If test files are being reviewed, launch the `test-reviewer` agent with:
+- Only the test files
+- Results from test execution (Phase 2)
 
 Wait for completion.
 
-### Phase 3: Aggregate and Write Report
+### Phase 6: Aggregate and Write Report
 
-After both reviews complete:
+After all reviews complete:
 
-1. **Collect findings** from both reviewers
-2. **Identify overlapping concerns** - issues flagged by both reviewers indicate higher priority
+1. **Collect findings** from all reviewers that ran
+2. **Identify overlapping concerns** - issues flagged by multiple reviewers indicate higher priority
 3. **Determine verdict**:
-   - APPROVE: No critical issues from either reviewer
+   - APPROVE: No critical issues from any reviewer
    - NEEDS CHANGES: Critical issues found OR many significant improvements needed
    - REJECT: Fundamental design problems requiring rearchitecture
 4. **Invoke `review-template` skill** for output format
@@ -56,12 +80,24 @@ uv run python .claude/skills/write-markdown-output/scripts/write_markdown_output
 
 **IMPORTANT**: Run reviewers sequentially, NOT in parallel.
 
+## Filtering Flags
+
+| Flag | Files Reviewed | Reviewers Used |
+|------|----------------|----------------|
+| *(default)* | All files (auto-classified) | Style + Substance on all; Test-reviewer on test files |
+| `--src-only` | Source files only | Style + Substance |
+| `--tests-only` | Test files only | Style + Substance + Test-reviewer |
+
+When `--src-only` is specified, test files are excluded even if explicitly listed.
+When `--tests-only` is specified, source files are excluded even if explicitly listed.
+
 ## Specialized Reviewers
 
-| Reviewer | Model | Focus |
-|----------|-------|-------|
-| **code-style-reviewer** | Sonnet | Conventions, naming, docstrings, type hints, imports, organization, Pythonic patterns |
-| **code-substance-reviewer** | Opus | Correctness, edge cases, error handling, design quality, maintainability, testability |
+| Reviewer | Model | Focus | Runs On |
+|----------|-------|-------|---------|
+| **code-style-reviewer** | Sonnet | Conventions, naming, docstrings, type hints, imports, organization, Pythonic patterns | All files |
+| **code-substance-reviewer** | Opus | Correctness, edge cases, error handling, design quality, maintainability, testability | All files |
+| **test-reviewer** | Sonnet | Substantive assertions, test organization, edge case coverage, fixture usage, mock discipline | Test files only |
 
 ## Usage
 
@@ -74,6 +110,20 @@ uv run python .claude/skills/write-markdown-output/scripts/write_markdown_output
 ```
 /review src/chain_reaction/tools/parser.py
 /review src/chain_reaction/tools/parser.py tests/tools/test_parser.py
+/review tests/tools/test_parser.py
+```
+
+### Review with Filtering
+```
+/review <target> --src-only
+/review <target> --tests-only
+```
+
+**Examples:**
+```
+/review --staged --src-only         # Only source files from staged changes
+/review --staged --tests-only       # Only test files from staged changes
+/review src/ tests/ --src-only      # Only source files even though tests/ specified
 ```
 
 ### Review a Commit
@@ -87,6 +137,7 @@ Reviews all files changed in the specified commit.
 ```
 /review --commit abc123f
 /review --commit HEAD
+/review --commit HEAD --tests-only
 ```
 
 ### Review a Commit Range
@@ -100,6 +151,7 @@ Reviews all files changed between two commits.
 ```
 /review --commits main..HEAD
 /review --commits abc123f..def456a
+/review --commits main..HEAD --src-only
 ```
 
 ### Review Staged Changes
@@ -137,7 +189,7 @@ When provided, the reviewers will:
 
 ## What Gets Reviewed
 
-### Style Review (code-style-reviewer)
+### Style Review (code-style-reviewer) - All Files
 
 Rule-based checks using convention skills:
 
@@ -151,7 +203,7 @@ Rule-based checks using convention skills:
 | `function-design` | Signatures, parameters, return types |
 | `class-design` | Interfaces, attributes, method organization |
 
-### Substance Review (code-substance-reviewer)
+### Substance Review (code-substance-reviewer) - All Files
 
 Design and correctness analysis using:
 
@@ -163,6 +215,20 @@ Design and correctness analysis using:
 | `testability` | Dependency injection, global state, pure functions |
 
 Plus correctness analysis: requirements match, logic correctness, edge cases, error handling
+
+### Test Quality Review (test-reviewer) - Test Files Only
+
+Test-specific analysis using:
+
+| Category | What's Checked |
+|----------|----------------|
+| Substantive assertions | Tests prove something meaningful, not rubber stamps |
+| True functionality | Tests verify behavior, not implementation details |
+| Test organization | Tests mirror source structure, cohesive groupings |
+| Edge case coverage | Error paths and boundary conditions tested |
+| Test data variety | Realistic, varied data; parametrization used appropriately |
+| Fixture usage | Fixtures reduce duplication without tight coupling |
+| Mock discipline | Mocks used only when necessary |
 
 ## Output
 
@@ -182,11 +248,11 @@ Where `<scope>` is derived from:
 
 The merged report contains:
 
-1. **Summary** - Scope, verdict, key finding
-2. **Critical Issues** - Must fix before merge (from either reviewer)
+1. **Summary** - Scope, verdict, key finding, reviewers used
+2. **Critical Issues** - Must fix before merge (from any reviewer)
 3. **Improvements** - Should address, grouped by category
 4. **Nitpicks** - Minor items, one line each
-5. **Overlapping Concerns** - Issues flagged by both reviewers (elevated priority)
+5. **Overlapping Concerns** - Issues flagged by multiple reviewers (elevated priority)
 
 Empty sections are omitted. Use `review-template` skill for exact format.
 
@@ -197,6 +263,7 @@ Derive `<scope>` for output filename from:
 | Review Target | Scope |
 |---------------|-------|
 | Single file `foo.py` | `foo` |
+| Single test file `test_foo.py` | `test-foo` |
 | Multiple files in `tools/` | `tools` |
 | Commit `abc123f` | `commit-abc123f` |
 | Staged changes | `staged` |
@@ -208,12 +275,14 @@ Derive `<scope>` for output filename from:
 - **After refactoring** - Ensure changes maintain code quality
 - **Before a PR** - Get comprehensive feedback on all changes
 - **After `/implement`** - Review the implemented phase
+- **After writing tests** - Verify tests are substantive
 
 ## Important Notes
 
 - The reviewers **do NOT modify any code** - they only generate review documents
-- Reviews run sequentially (style first, then substance) to ensure stability
-- Overlapping findings from both reviewers indicate higher priority issues
+- Reviews run sequentially (style → substance → test quality) to ensure stability
+- Overlapping findings from multiple reviewers indicate higher priority issues
+- Tests are automatically run before test quality review
 - For test writing based on review findings, use `python-test-writer` agent
 - For implementing review suggestions, use `python-code-writer` agent
 

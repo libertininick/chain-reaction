@@ -12,34 +12,33 @@ This repository is configured with specialized agents and commands that automate
 /plan <description>
        │
        ▼
-┌─────────────────────────────────────────────────────┐
-│                                                     │
-│   /implement Phase N             /review --staged   │
-│        │                               │            │
-│        ▼                               ▼            │
-│   ┌──────────┐    ┌──────────┐    ┌──────────┐      │
-│   │Code Write│───▶│Test Write│───▶│  Review  │      │
-│   │  Agent   │    │  Agent   │    │  Agents  │      │
-│   └──────────┘    └──────────┘    └──────────┘      │
-│        │                               │            │
-│        ▼                               ▼            │
-│   Validation                    Style + Substance   │
-│   (ruff, ty, pytest)            Review Findings     │
-│                                        │            │
-│        ▲                               │            │
-│        │         ┌──────────────────────────┐       │
-│        │         │  git commit (manual)     │       │
-│        │         │  /update-plan <path>     │       │
-│        └─────────│  Next phase...           │       │
-│                  └──────────────────────────┘       │
-│                                                     │
-└─────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────────┐
+│                                                               │
+│   /implement Phase N                  /review                 │
+│        │                                 │                    │
+│        ▼                                 ▼                    │
+│   ┌──────────┐    ┌──────────┐    ┌─────────────────────────┐ │
+│   │Code Write│───▶│Test Write│───▶│ Style + Substance +     │ │
+│   │  Agent   │    │  Agent   │    │ Test Quality Reviewers  │ │
+│   └──────────┘    └──────────┘    └─────────────────────────┘ │
+│        │                                      │               │
+│        ▼                                      ▼               │
+│   Validation                           Unified Review         │
+│   (ruff, ty, pytest)                   Findings               │
+│                                               │               │
+│        ▲              ┌──────────────────────────┐            │
+│        │              │  git commit (manual)     │◀───────────┘
+│        │              │  /update-plan <path>     │
+│        └──────────────│  Next phase...           │
+│                       └──────────────────────────┘
+│                                                               │
+└───────────────────────────────────────────────────────────────┘
 ```
 
 **Key components:**
-- **5 specialized agents** with appropriate models and context bundles
-- **7 commands** that orchestrate agent workflows
-- **19 skills** that define coding conventions and standards
+- **7 specialized agents** with appropriate models and context bundles
+- **8 commands** that orchestrate agent workflows
+- **20 skills** that define coding conventions and standards
 - **Automatic outputs** saved to `.claude/agent-outputs/`
 
 ---
@@ -186,7 +185,7 @@ The `/review` command runs both style and substance reviews sequentially.
 
 **Command syntax:**
 ```
-/review [target] [--plan <path>]
+/review [target] [--plan <path>] [--src-only | --tests-only]
 ```
 
 **Target options:**
@@ -195,6 +194,11 @@ The `/review` command runs both style and substance reviews sequentially.
 - `path/to/file.py` — Review specific files
 - (no target) — Defaults to `--staged`
 
+**Filtering options:**
+- `--src-only` — Review only source files (style + substance reviewers)
+- `--tests-only` — Review only test files (all three reviewers)
+- (no filter) — Reviews all files with appropriate reviewers
+
 **Example:**
 ```
 /review --staged --plan .claude/agent-outputs/plans/2026-02-04T120000Z-pydantic-validation-plan.md
@@ -202,29 +206,40 @@ The `/review` command runs both style and substance reviews sequentially.
 
 **What happens:**
 
-1. **Style reviewer** checks:
+1. **Classify files** as source or test files (auto-detected)
+
+2. **Run tests** (if test files in scope) to verify they pass
+
+3. **Style reviewer** checks all files for:
    - Naming conventions
    - Docstring completeness
    - Type hint coverage
    - Import organization
    - Code organization patterns
 
-2. **Substance reviewer**  checks:
+4. **Substance reviewer** checks all files for:
    - Correctness and edge cases
    - Error handling completeness
    - Design quality
    - Maintainability
    - Testability
 
-3. **Aggregate findings** into severity categories:
+5. **Test reviewer** checks test files for:
+   - Substantive assertions (not rubber stamps)
+   - True functionality testing (behavior, not implementation)
+   - Edge case coverage
+   - Test data variety
+   - Fixture and mock discipline
+
+6. **Aggregate findings** into severity categories:
    - **Critical** — Must fix before merging
    - **Improvement** — Should fix, meaningful quality impact
    - **Nitpick** — Nice to have, stylistic preference
-   - **Overlapping concerns** — Issues found by both reviewers (high priority)
+   - **Overlapping concerns** — Issues found by multiple reviewers (high priority)
 
-4. **Save output** to `.claude/agent-outputs/reviews/<timestamp>-<scope>-review.md`
+7. **Save output** to `.claude/agent-outputs/reviews/<timestamp>-<scope>-review.md`
 
-5. **Verdict**: APPROVE, NEEDS CHANGES, or REJECT
+8. **Verdict**: APPROVE, NEEDS CHANGES, or REJECT
 
 **Your responsibilities:**
 
@@ -316,10 +331,12 @@ Repeat the cycle for each remaining phase:
 
 Once all phases are complete:
 
-**1. Run comprehensive review:**
+**1. Run comprehensive code review:**
 ```
 /review --commits main..HEAD --plan <plan-path>
 ```
+
+This includes style, substance, and test quality review for all files.
 
 **2. Address any final issues**
 
@@ -340,7 +357,9 @@ This creates a structured PR description at `.claude/agent-outputs/pr-descriptio
 |---------|---------|-----------------|
 | `/plan <desc>` | Create implementation plan | `agent-outputs/plans/` |
 | `/implement Phase N from <path>` | Execute a plan phase | Modified source files |
-| `/review [target]` | Style + substance review | `agent-outputs/reviews/` |
+| `/review [target]` | Full review (style + substance + test quality) | `agent-outputs/reviews/` |
+| `/review --src-only` | Source code review only | `agent-outputs/reviews/` |
+| `/review --tests-only` | Test quality review only | `agent-outputs/reviews/` |
 | `/update-plan <path>` | Sync plan with reality | Updated plan file |
 | `/pr-description` | Generate PR description | `agent-outputs/pr-descriptions/` |
 | `/create-skill` | Scaffold new skill | `skills/<name>/` |
@@ -356,8 +375,9 @@ This creates a structured PR description at `.claude/agent-outputs/pr-descriptio
 | **python-code-writer** | Opus | `/implement` | Frameworks, all code conventions |
 | **python-test-writer** | Opus | `/implement` | Testing conventions, pytest patterns |
 | **code-style-reviewer** | Sonnet | `/review` | Style conventions, naming, organization |
-| **code-cleaner** | Opus | `/implement`, `/clean` | Code organization, simplification |
 | **code-substance-reviewer** | Opus | `/review` | Design, correctness, maintainability |
+| **test-reviewer** | Sonnet | `/review` | Test quality, coverage completeness, assertions |
+| **code-cleaner** | Opus | `/implement`, `/clean` | Code organization, simplification |
 
 Each agent loads a **context bundle**—pre-composed skill content that gives it exactly the knowledge it needs.
 
@@ -388,13 +408,15 @@ uv run pytest --cov                   # With coverage
 
 3. **Two-stage review catches more:** Style review (fast, conventions) + substance review (thorough, design).
 
-4. **You own the code:** Review everything. Agents are capable but not infallible.
+4. **Verify test quality explicitly:** AI tends to optimize for appearance over substance. Passing tests don't guarantee meaningful tests. The `/review` command includes test quality checks automatically; use `--tests-only` to focus exclusively on test quality.
 
-5. **Commit manually:** Claude Code never commits unless you explicitly ask—this keeps you in control.
+5. **You own the code:** Review everything. Agents are capable but not infallible. AI can do better when pushed—its default is often minimal effort.
 
-6. **Trust the conventions:** Skills encode project standards. Agents load them automatically via bundles.
+6. **Commit manually:** Claude Code never commits unless you explicitly ask—this keeps you in control.
 
-7. **Outputs are saved:** Plans, reviews, and PR descriptions persist in `agent-outputs/` for reference.
+7. **Trust the conventions:** Skills encode project standards. Agents load them automatically via bundles.
+
+8. **Outputs are saved:** Plans, reviews, and PR descriptions persist in `agent-outputs/` for reference.
 
 ---
 
@@ -420,3 +442,15 @@ uv run pytest --cov                   # With coverage
 - Use `/create-skill` to scaffold
 - Add to `manifest.json` dependencies
 - Run `/sync-context` to regenerate bundles
+
+**Tests look suspicious or too simple:**
+- Run `/review --tests-only` to audit test quality
+- Look for rubber-stamp assertions (`assert result is not None`)
+- Check for repetitive test data (same values in every test)
+- Verify edge cases are actually tested
+
+**Test quality degrades later in implementation:**
+- This is common as context fills—AI starts taking shortcuts
+- Run `/review --tests-only` on all new test files before committing
+- Consider breaking large phases into smaller chunks
+- Ask explicitly for varied test data and edge case coverage

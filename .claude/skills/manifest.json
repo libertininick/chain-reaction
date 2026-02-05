@@ -294,22 +294,11 @@
     },
     {
       "name": "review",
-      "description": "Code review",
-      "version": "1.0.0",
+      "description": "Unified code review (source + tests)",
+      "version": "2.0.0",
       "depends_on_agents": [
         "code-style-reviewer",
-        "code-substance-reviewer"
-      ],
-      "depends_on_skills": [
-        "review-template",
-        "write-markdown-output"
-      ]
-    },
-    {
-      "name": "review-tests",
-      "description": "Review test quality",
-      "version": "1.0.0",
-      "depends_on_agents": [
+        "code-substance-reviewer",
         "test-reviewer"
       ],
       "depends_on_skills": [
