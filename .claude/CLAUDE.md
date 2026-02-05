@@ -51,8 +51,8 @@ Reusable workflows in `.claude/commands/`. See each file for details.
 | `/implement` | Execute plan phases |
 | `/plan` | Create implementation plan |
 | `/pr-description` | Generate PR description |
-| `/review` | Code review (source + tests) |
-| `/sync-context` | Sync Claude context files with skills, agents, and commands on disk |
+| `/review` | Unified code review (source + tests) |
+| `/sync` | Sync Claude context files with skills, agents, and commands on disk |
 | `/update-plan` | Sync plan with main |
 
 

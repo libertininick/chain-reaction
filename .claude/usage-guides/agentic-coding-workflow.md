@@ -453,7 +453,7 @@ This creates a structured PR description at `.claude/agent-outputs/pr-descriptio
 | `/update-plan <path>` | Sync plan with reality | Updated plan file |
 | `/pr-description` | Generate PR description | `agent-outputs/pr-descriptions/` |
 | `/create-skill` | Scaffold new skill | `skills/<name>/` |
-| `/sync-context` | Regenerate CLAUDE.md and bundles | Various config files |
+| `/sync` | Regenerate CLAUDE.md and bundles | Various config files |
 
 [Back to top](#top)
 
@@ -521,7 +521,7 @@ uv run pytest --cov                   # With coverage
 ## Troubleshooting
 
 **Agent seems to lack context about conventions:**
-- Run `/sync-context` to regenerate bundles
+- Run `/sync` to regenerate bundles
 - Check that `manifest.json` lists correct skill dependencies
 
 **Plan doesn't match what I want:**
@@ -539,7 +539,7 @@ uv run pytest --cov                   # With coverage
 **Need a new skill or convention:**
 - Use `/create-skill` to scaffold
 - Add to `manifest.json` dependencies
-- Run `/sync-context` to regenerate bundles
+- Run `/sync` to regenerate bundles
 
 **Tests look suspicious or too simple:**
 - Run `/review --tests-only` to audit test quality

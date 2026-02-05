@@ -307,7 +307,7 @@
       ]
     },
     {
-      "name": "sync-context",
+      "name": "sync",
       "description": "Sync Claude context files with skills, agents, and commands on disk",
       "version": "1.0.0"
     },
