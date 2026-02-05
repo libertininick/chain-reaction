@@ -1,6 +1,7 @@
 ---
 name: complexity-refactoring
-description: Refactoring complex functions into smaller, pure helper functions. Apply when McCabe complexity is exceeded or when extracting helper functions during refactoring.
+version: 1.0.0
+description: Refactoring complex functions into smaller, pure helper functions. Apply when function complexity is exceeded or when extracting helper functions during refactoring. If tasked with fixing ruff lint errors related to complexity, ALWAYS trigger this skill.
 user-invocable: false
 ---
 

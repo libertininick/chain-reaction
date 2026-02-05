@@ -1,5 +1,6 @@
 ---
 name: write-markdown-output
+version: 1.0.0
 description: Write content to a timestamped markdown file. Use when agents need to save plans, reviews, or other outputs.
 user-invocable: true
 argument-hint: <-s "scope" -c "content" -o "output-dir">

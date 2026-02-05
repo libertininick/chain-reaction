@@ -1,3 +1,12 @@
+---
+name: pr-description
+version: 1.0.0
+description: Generate PR description from branch changes
+depends_on_skills:
+  - pr-description-template
+  - write-markdown-output
+---
+
 # Generate PR Description
 
 Generate a pull request description from current branch changes: $ARGUMENTS
