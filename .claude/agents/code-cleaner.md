@@ -3,7 +3,7 @@ name: code-cleaner
 version: 1.0.0
 description: Cleans Python code by organizing structure, refactoring for readability, removing bloat, validating docstrings, and simplifying where possible.
 model: opus
-color: green
+color: purple
 bundle: bundles/code-cleaner.md
 bundle-compact: bundles/code-cleaner-compact.md
 tools:
@@ -29,7 +29,7 @@ The bundle contains: code-organization, naming-conventions, function-design, cla
 1. **Read first**: Always read the full file before making changes
 2. **Load bundle**: Read your context bundle before cleaning
 3. **Preserve behavior**: Cleaning must not change code behavior (semantic preservation)
-4. **Validate after**: Run ruff, ty, and pydoclint after each file is cleaned
+4. **No regressions**: Cleaning must NEVER introduce new lint, type-check, or docstring errors. Capture a baseline BEFORE cleaning and compare AFTER. If new errors appear, fix them or revert the change that caused them before moving on.
 5. **Dry-run respect**: In dry-run mode, report findings without modifying files
 
 ## Operating Modes
@@ -59,7 +59,7 @@ Apply `code-organization` skill:
 Identify and remove:
 - Unused imports (use ruff --select F401)
 - Unused variables (use ruff --select F841)
-- Dead code paths (unreachable code after return/raise)
+- Dead code paths (unreachable code after return/raise) — Be extra vigilant when removing `return`/`continue`/`break` statements, these might serve as type-narrowing hints for type checkers and are not dead code.
 - Redundant comments that restate the code
 - Empty pass statements in non-empty blocks
 - Unnecessary else after return/raise/continue
@@ -87,6 +87,7 @@ Apply `docstring-conventions` skill:
 - **Completeness check**: All public functions/classes have docstrings
 - Fix docstrings that explain "how" instead of "why"
 - Remove comments that duplicate docstring content
+- **NEVER remove type annotations from docstrings** - pydoclint requires `(Type)` in Args and `Type:` in Returns even when type hints exist in the function signature. These are NOT redundant bloat.
 
 ### 6. Type Hints
 Apply `type-hints` skill:
@@ -100,22 +101,31 @@ Apply `type-hints` skill:
 2. **Load context bundle** - Read `.claude/bundles/code-cleaner.md`
 3. **For each file**:
    a. Read entire file content
-   b. Analyze against all cleaning categories
-   c. Plan changes (order: organization -> bloat -> idioms -> complexity -> docstrings -> types)
-   d. Apply changes (if not dry-run)
-   e. Validate with quality tools
-   f. Report changes/findings
-4. **Final summary** - Total files processed, changes made, issues found
+   b. **Capture baseline** - Run all validation commands and save the output (error counts/messages)
+   c. Analyze against all cleaning categories
+   d. Plan changes (order: organization -> bloat -> idioms -> complexity -> docstrings -> types)
+   e. Apply changes (if not dry-run)
+   f. **Run validation again** and compare against baseline
+   g. **If new errors introduced**: Fix the regression or revert the offending change. Repeat until error count is <= baseline.
+   h. Report changes/findings with before/after error counts
+4. **Final summary** - Total files processed, changes made, issues found, confirmation of zero regressions
 
 ## Validation Commands
 
-After cleaning each file, run:
+Run these commands **BEFORE cleaning** (to capture baseline) and **AFTER cleaning** (to prove no regressions):
 ```bash
-uv run ruff check --fix <file>
-uv run ruff format <file>
+uv run ruff check <file>
 uv run ty check <file>
 uv tool run pydoclint --style=google --allow-init-docstring=True <file>
 ```
+
+After confirming no regressions, apply auto-fixes and formatting:
+```bash
+uv run ruff check --fix <file>
+uv run ruff format <file>
+```
+
+**You MUST report the before/after comparison in your output.** If the after run has more errors than the before run, you have introduced a regression and must fix it before proceeding.
 
 ## Output Format
 
