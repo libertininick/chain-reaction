@@ -46,6 +46,7 @@ Reusable workflows in `.claude/commands/`. See each file for details.
 
 | Command | Purpose |
 |---------|---------|
+| `/clean` | Clean Python code files |
 | `/create-skill` | Create a new Claude Code skill |
 | `/implement` | Execute plan phases |
 | `/plan` | Create implementation plan |
@@ -63,11 +64,13 @@ Specialized sub-agents in `.claude/agents/`. See each file for details.
 
 | Agent | Scope | Model |
 |-------|-------|-------|
+| `code-cleaner` | Cleans and organizes Python code | Opus |
 | `code-style-reviewer` | Reviews style and conventions | Sonnet |
 | `code-substance-reviewer` | Reviews design and correctness | Opus |
 | `planner` | Creates implementation plans | Opus |
 | `python-code-writer` | Writes production code | Opus |
 | `python-test-writer` | Writes tests | Opus |
+
 
 ---
 
@@ -77,6 +80,7 @@ Pre-composed skill content for agents. Bundles provide exactly the context each 
 
 | Agent | Full Bundle | Compact Bundle |
 |-------|-------------|----------------|
+| `code-cleaner` | `bundles/code-cleaner.md` | `bundles/code-cleaner-compact.md` |
 | `code-style-reviewer` | `bundles/code-style-reviewer.md` | `bundles/code-style-reviewer-compact.md` |
 | `code-substance-reviewer` | `bundles/code-substance-reviewer.md` | `bundles/code-substance-reviewer-compact.md` |
 | `planner` | `bundles/planner.md` | `bundles/planner-compact.md` |
