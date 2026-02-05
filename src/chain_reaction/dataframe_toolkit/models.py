@@ -51,8 +51,8 @@ class ColumnSummary(BaseModel):
         count (int): The number of non-null entries in the column.
         null_count (int): The number of null entries in the column.
         unique_count (int): The number of unique entries in the column.
-        min (float | str): The minimum value in the column.
-        max (float | str): The maximum value in the column.
+        min (float | str | None): The minimum value in the column, or None for empty/all-null columns.
+        max (float | str | None): The maximum value in the column, or None for empty/all-null columns.
         mean (float | str | None): The mean value in the column.
         std (float | str | None): The standard deviation of the values in the column.
         p25 (float | str | None): The 25th percentile of the values in the column.
@@ -65,8 +65,8 @@ class ColumnSummary(BaseModel):
     count: int = Field(description="The number of non-null entries in the column.")
     null_count: int = Field(description="The number of null entries in the column.")
     unique_count: int = Field(description="The number of unique entries in the column.")
-    min: float | str = Field(description="The minimum value in the column.")
-    max: float | str = Field(description="The maximum value in the column.")
+    min: float | str | None = Field(description="The minimum value in the column, or None for empty/all-null columns.")
+    max: float | str | None = Field(description="The maximum value in the column, or None for empty/all-null columns.")
     mean: float | str | None = Field(description="The mean value in the column.")
     std: float | str | None = Field(description="The standard deviation of the values in the column.")
     p25: float | str | None = Field(description="The 25th percentile of the values in the column.")
@@ -83,6 +83,10 @@ class ColumnSummary(BaseModel):
 
         Returns:
             ColumnSummary: The generated ColumnSummary.
+
+        Note:
+            For empty series or all-null columns, min and max will be None since
+            these statistics are not defined for such data.
         """
         # Get descriptive statistics for the series
         des_dict = get_series_description(series)
@@ -93,8 +97,8 @@ class ColumnSummary(BaseModel):
             count=int(des_dict["count"]),
             null_count=int(des_dict["null_count"]),
             unique_count=series.n_unique(),
-            min=des_dict["min"],
-            max=des_dict["max"],
+            min=des_dict.get("min"),
+            max=des_dict.get("max"),
             mean=des_dict.get("mean"),
             std=des_dict.get("std"),
             p25=des_dict.get("25%"),

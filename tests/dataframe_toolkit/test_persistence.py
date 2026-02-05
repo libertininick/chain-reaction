@@ -568,6 +568,43 @@ class TestSortReferencesByDependencyOrder:
         with pytest.raises(ValueError, match="Cyclic dependency detected"):
             _sort_references_by_dependency_order(references)
 
+    def test_sort_references_unknown_parent_id_raises_error(self) -> None:
+        """Given reference with unknown parent_id, When sorted, Then raises ValueError."""
+        # Arrange
+        df = pl.DataFrame({"a": [1, 2, 3]})
+        col_summary = {"a": ColumnSummary.from_series(df["a"])}
+
+        # Create A (base)
+        ref_a = DataFrameReference(
+            id="df_aaaaaaaa",
+            name="A",
+            description="",
+            num_rows=3,
+            num_columns=1,
+            column_names=["a"],
+            column_summaries=col_summary,
+            parent_ids=[],
+        )
+
+        # Create B (depends on non-existent reference - use valid ID format)
+        ref_b = DataFrameReference(
+            id="df_bbbbbbbb",
+            name="B",
+            description="",
+            num_rows=3,
+            num_columns=1,
+            column_names=["a"],
+            column_summaries=col_summary,
+            parent_ids=["df_aaaaaaaa", "df_cccccccc"],  # 'df_cccccccc' does not exist
+            source_query="SELECT * FROM A JOIN missing",
+        )
+
+        references = [ref_a, ref_b]
+
+        # Act/Assert
+        with pytest.raises(ValueError, match=r"unknown parent_ids.*df_cccccccc"):
+            _sort_references_by_dependency_order(references)
+
 
 class TestRestoreFromState:
     """Tests for restore_from_state function."""

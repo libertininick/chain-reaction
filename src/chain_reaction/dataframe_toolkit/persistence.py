@@ -331,11 +331,19 @@ def _sort_references_by_dependency_order(references: list[DataFrameReference]) -
         list[DataFrameReference]: Sorted references with parents before children.
 
     Raises:
-        ValueError: If cyclic dependencies are detected in the references.
+        ValueError: If cyclic dependencies are detected in the references,
+            or if any reference has parent_ids pointing to non-existent references.
     """
     refs_by_id = {ref.id: ref for ref in references}
 
-    graph = {ref.id: [pid for pid in ref.parent_ids if pid in refs_by_id] for ref in references}
+    # Validate all parent_ids exist before building the graph
+    for ref in references:
+        missing = [pid for pid in ref.parent_ids if pid not in refs_by_id]
+        if missing:
+            msg = f"Reference '{ref.name}' has unknown parent_ids: {missing}. State may be corrupted."
+            raise ValueError(msg)
+
+    graph = {ref.id: ref.parent_ids for ref in references}
 
     try:
         sorted_ids = list(TopologicalSorter(graph).static_order())

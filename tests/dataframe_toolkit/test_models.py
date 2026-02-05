@@ -209,18 +209,27 @@ class TestDataFrameReference:
         with check:
             assert len(ref1.id) == 11  # "df_" + 8 hex chars
 
-    def test_from_dataframe_empty_dataframe_raises_key_error(self) -> None:
-        """Given empty DataFrame, When from_dataframe called, Then raises KeyError for min/max.
-
-        Note: This tests the current limitation where ColumnSummary.from_series
-        cannot handle empty columns because min/max values are not available.
-        """
+    def test_from_dataframe_empty_dataframe_creates_valid_reference(self) -> None:
+        """Given empty DataFrame, When from_dataframe called, Then creates reference with None min/max."""
         # Arrange
         df = pl.DataFrame({"a": pl.Series([], dtype=pl.Int64), "b": pl.Series([], dtype=pl.Utf8)})
 
-        # Act/Assert
-        with pytest.raises(KeyError, match="min"):
-            DataFrameReference.from_dataframe("empty_df", df)
+        # Act
+        ref = DataFrameReference.from_dataframe("empty_df", df)
+
+        # Assert
+        with check:
+            assert ref.num_rows == 0
+        with check:
+            assert ref.num_columns == 2
+        with check:
+            assert ref.column_summaries["a"].min is None
+        with check:
+            assert ref.column_summaries["a"].max is None
+        with check:
+            assert ref.column_summaries["b"].min is None
+        with check:
+            assert ref.column_summaries["b"].max is None
 
     def test_from_dataframe_with_null_values_creates_valid_reference(self) -> None:
         """Given DataFrame with nulls, When from_dataframe called, Then creates reference with null counts."""
@@ -698,18 +707,27 @@ class TestDataFrameReference:
         with check:
             assert "Boolean" in ref.column_summaries["bool_col"].dtype
 
-    def test_dataframe_with_all_null_column_raises_key_error(self) -> None:
-        """Given DataFrame with all-null column, When from_dataframe called, Then raises KeyError.
-
-        Note: This tests the current limitation where ColumnSummary.from_series
-        cannot handle all-null columns because min/max values are not available.
-        """
+    def test_dataframe_with_all_null_column_creates_valid_reference(self) -> None:
+        """Given DataFrame with all-null column, When from_dataframe called, Then min/max are None."""
         # Arrange
         df = pl.DataFrame({"all_null": [None, None, None], "has_values": [1, 2, 3]})
 
-        # Act/Assert
-        with pytest.raises(KeyError, match="min"):
-            DataFrameReference.from_dataframe("with_nulls", df)
+        # Act
+        ref = DataFrameReference.from_dataframe("with_nulls", df)
+
+        # Assert
+        with check:
+            assert ref.num_rows == 3
+        with check:
+            assert ref.column_summaries["all_null"].min is None
+        with check:
+            assert ref.column_summaries["all_null"].max is None
+        with check:
+            assert ref.column_summaries["all_null"].null_count == 3
+        with check:
+            assert ref.column_summaries["has_values"].min == 1
+        with check:
+            assert ref.column_summaries["has_values"].max == 3
 
     def test_dataframe_with_partial_null_column_creates_valid_reference(self) -> None:
         """Given DataFrame with some nulls in column, When from_dataframe called, Then creates reference."""
