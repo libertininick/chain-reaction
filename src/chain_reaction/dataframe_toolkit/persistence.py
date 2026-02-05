@@ -303,7 +303,18 @@ def _reconstruct_derivatives(
 ) -> None:
     """Reconstruct and register derivative dataframes from state.
 
-    Replays SQL queries for derivatives in dependency order.
+    Replays SQL queries for derivatives in dependency order and validates that
+    reconstructed dataframes match the expected statistics from the saved state.
+
+    Note:
+        Non-deterministic SQL queries may cause reconstruction validation to fail
+        even when the state is valid. Examples include:
+
+        - ORDER BY without LIMIT: Row order may differ, affecting percentile statistics
+        - Floating-point aggregations: Accumulation order may differ slightly
+
+        If you encounter validation failures with valid state, consider whether
+        the original query was non-deterministic.
 
     Args:
         state (DataFrameToolkitState): The state containing derivative references.
@@ -380,6 +391,11 @@ def _reconstruct_dataframe(
             f"Base dataframes must be re-registered before reconstruction. "
             f"Available dataframes: {available}"
         )
+        raise ValueError(msg)
+
+    # Derivatives must have a source_query to replay
+    if not ref.source_query:
+        msg = f"Derivative '{ref.name}' has parent_ids but no source_query - state may be corrupted"
         raise ValueError(msg)
 
     missing_parents = [pid for pid in ref.parent_ids if pid not in references]
