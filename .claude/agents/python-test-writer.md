@@ -5,6 +5,7 @@ description: Creates comprehensive pytest test suites. Use when writing tests fo
 model: opus
 color: red
 bundle: bundles/python-test-writer.md
+bundle-compact: bundles/python-test-writer-compact.md
 tools:
   - Bash
   - Glob

@@ -5,6 +5,7 @@ description: Expert planning specialist for complex features and refactoring. Us
 model: opus
 color: green
 bundle: bundles/planner.md
+bundle-compact: bundles/planner-compact.md
 tools:
   - Read
   - Write

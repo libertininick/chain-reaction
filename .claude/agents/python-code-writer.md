@@ -5,6 +5,7 @@ description: Writes clean, maintainable, testable Python code following reposito
 model: opus
 color: blue
 bundle: bundles/python-code-writer.md
+bundle-compact: bundles/python-code-writer-compact.md
 tools:
   - Bash
   - Glob
