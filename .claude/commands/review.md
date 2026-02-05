@@ -36,31 +36,20 @@ Determine which files to review based on arguments, then classify them:
 
 If test files are being reviewed, execute `uv run pytest <test-files> -v` to verify tests pass before reviewing.
 
-### Phase 3: Style Review
+### Phase 3: Launch Reviews (parallel)
 
-Launch the `code-style-reviewer` agent with:
-- ALL files in scope (both source and test files)
-- Implementation plan context (if `--plan` provided)
+Launch the applicable review agents **in parallel** using multiple `Task` tool calls in a single message. The reviewers have strictly disjoint scopes and produce independent analysis, so parallel execution is safe and significantly faster.
 
-Wait for completion before proceeding.
+**Always launch (on all files in scope):**
+- `code-style-reviewer` — with all files + plan context (if `--plan` provided)
+- `code-substance-reviewer` — with all files + plan context (if `--plan` provided)
 
-### Phase 4: Substance Review
+**Conditionally launch (if test files in scope):**
+- `test-reviewer` — with only the test files + test execution results from Phase 2
 
-Launch the `code-substance-reviewer` agent with:
-- ALL files in scope (both source and test files)
-- Implementation plan context (if `--plan` provided)
+Wait for **all** launched agents to complete before proceeding to Phase 4.
 
-Wait for completion before proceeding.
-
-### Phase 5: Test Quality Review (if test files in scope)
-
-If test files are being reviewed, launch the `test-reviewer` agent with:
-- Only the test files
-- Results from test execution (Phase 2)
-
-Wait for completion.
-
-### Phase 6: Aggregate and Write Report
+### Phase 4: Aggregate and Write Report
 
 After all reviews complete:
 
@@ -80,7 +69,7 @@ uv run python .claude/skills/write-markdown-output/scripts/write_markdown_output
     -o ".claude/agent-outputs/reviews"
 ```
 
-**IMPORTANT**: Run reviewers sequentially, NOT in parallel.
+**IMPORTANT**: Launch all applicable reviewers in parallel (multiple Task calls in a single message). They have disjoint scopes.
 
 ## Filtering Flags
 
@@ -282,7 +271,7 @@ Derive `<scope>` for output filename from:
 ## Important Notes
 
 - The reviewers **do NOT modify any code** - they only generate review documents
-- Reviews run sequentially (style → substance → test quality) to ensure stability
+- Reviews run in parallel (style + substance + test quality) since scopes are disjoint
 - Overlapping findings from multiple reviewers indicate higher priority issues
 - Tests are automatically run before test quality review
 - For test writing based on review findings, use `python-test-writer` agent
