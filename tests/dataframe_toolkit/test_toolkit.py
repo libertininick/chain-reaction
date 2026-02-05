@@ -851,7 +851,13 @@ class TestGetTools:
 
 
 class TestConversationResumptionScenarios:
-    """End-to-end tests for conversation resumption workflow using from_state."""
+    """End-to-end tests for conversation resumption workflow using from_state.
+
+    TODO(testability): These tests directly access `toolkit._context` and
+    `toolkit._references` to simulate derivative creation. Once `execute_sql`
+    is implemented (Phase 6), refactor these tests to use the public API instead.
+    See: .claude/agent-outputs/reviews/2026-02-04T033041Z-main-HEAD-review.md
+    """
 
     def test_conversation_resumption_scenario(self) -> None:
         """Full workflow: create toolkit, execute SQL, export, reconstruct with from_state."""
