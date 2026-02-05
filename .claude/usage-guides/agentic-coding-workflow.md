@@ -158,11 +158,10 @@ The `/implement` command orchestrates multiple agents to build a single phase.
    - Loads bundle (testing conventions)
    - Writes pytest tests for the new code
    - Covers success paths, edge cases, error handling
-4. **Style-reviewer agent**:
-   - Reviews new/modified files for convention compliance
-   - Reports issues by severity (critical, improvement, nitpick)
-5. **If issues found**: Code-writer fixes them automatically
-6. **Final validation**: All lint/type/test commands pass
+4. **Code-cleaner agent**:
+   - Cleans and organizes new/modified files
+   - Removes bloat, simplifies structure
+5. **Final validation**: All lint/type/test commands pass
 
 **Validation commands run automatically:**
 ```bash
@@ -356,7 +355,8 @@ This creates a structured PR description at `.claude/agent-outputs/pr-descriptio
 | **planner** | Opus | `/plan` | Plan template, all development conventions |
 | **python-code-writer** | Opus | `/implement` | Frameworks, all code conventions |
 | **python-test-writer** | Opus | `/implement` | Testing conventions, pytest patterns |
-| **code-style-reviewer** | Sonnet | `/implement`, `/review` | Style conventions, naming, organization |
+| **code-style-reviewer** | Sonnet | `/review` | Style conventions, naming, organization |
+| **code-cleaner** | Opus | `/implement`, `/clean` | Code organization, simplification |
 | **code-substance-reviewer** | Opus | `/review` | Design, correctness, maintainability |
 
 Each agent loads a **context bundle**—pre-composed skill content that gives it exactly the knowledge it needs.

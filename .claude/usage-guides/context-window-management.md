@@ -109,7 +109,7 @@ Creates an implementation plan before writing code.
 
 Executes plan phases using specialized agents.
 
-**Context benefit:** Dispatches work to `python-code-writer`, `python-test-writer`, and `code-style-reviewer` in sequence. Each agent loads its own conventions in isolation.
+**Context benefit:** Dispatches work to `python-code-writer`, `python-test-writer`, and `code-cleaner` in sequence. Each agent loads its own conventions in isolation.
 
 **Workflow:**
 ```

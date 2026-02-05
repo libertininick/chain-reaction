@@ -218,17 +218,43 @@
         "docstring-conventions",
         "run-python-safely"
       ]
+    },
+    {
+      "name": "code-cleaner",
+      "description": "Cleans and organizes Python code",
+      "model": "opus",
+      "version": "1.0.0",
+      "depends_on": [
+        "code-organization",
+        "naming-conventions",
+        "function-design",
+        "class-design",
+        "pythonic-conventions",
+        "complexity-refactoring",
+        "docstring-conventions",
+        "type-hints",
+        "maintainability",
+        "testability"
+      ]
     }
   ],
   "commands": [
     {
       "name": "implement",
       "description": "Execute plan phases",
-      "version": "1.0.0",
+      "version": "1.2.0",
       "depends_on_agents": [
         "python-code-writer",
         "python-test-writer",
-        "code-style-reviewer"
+        "code-cleaner"
+      ]
+    },
+    {
+      "name": "clean",
+      "description": "Clean Python code files",
+      "version": "1.0.0",
+      "depends_on_agents": [
+        "code-cleaner"
       ]
     },
     {
