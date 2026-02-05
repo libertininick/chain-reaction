@@ -106,7 +106,7 @@ Skills provide coding standards and conventions. See `.claude/skills/manifest.js
 - **Conventions**: `class-design`, `code-organization`, `complexity-refactoring`, `data-structures`, `docstring-conventions`, `frameworks`, `function-design`, `naming-conventions`, `pythonic-conventions`, `test-writing`, `type-hints`
 - **Assessment**: `maintainability`, `test-quality`, `testability`
 - **Templates**: `plan-template`, `pr-description-template`, `review-template`, `skill-template`
-- **Utilities**: `run-python-safely`, `write-markdown-output`
+- **Utilities**: `run-python-safely`, `validate-manifest`, `write-markdown-output`
 
 **Note**: Agents should load their context bundles (above) rather than invoking skills individually.
 

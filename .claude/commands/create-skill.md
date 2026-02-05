@@ -4,6 +4,7 @@ version: 1.0.0
 description: Create a new Claude Code skill
 depends_on_skills:
   - skill-template
+  - validate-manifest
 ---
 
 # Create a New Skill
@@ -108,12 +109,15 @@ Add the skill name to the appropriate category in `.claude/CLAUDE.md` Skills sec
 - **Conventions**: ..., `<new-skill>`
 ```
 
-### Step 6: Verify Registration
+### Step 6: Validate Manifest
+
+Run the manifest validation script:
 
 ```bash
-# Check skill appears in manifest
-grep -A3 '"name": "<skill-name>"' .claude/skills/manifest.json
+uv run python .claude/scripts/validate_manifest.py
 ```
+
+Fix any errors before proceeding.
 
 ## Writing Effective Skills
 

@@ -142,6 +142,13 @@
       "description": "Write timestamped markdown files to agent output directories",
       "user_invocable": false,
       "version": "1.0.0"
+    },
+    {
+      "name": "validate-manifest",
+      "category": "utilities",
+      "description": "Validate manifest.json structure and references",
+      "user_invocable": false,
+      "version": "1.0.0"
     }
   ],
   "agents": [
@@ -262,7 +269,8 @@
       "description": "Add a new approved framework",
       "version": "1.0.0",
       "depends_on_skills": [
-        "frameworks"
+        "frameworks",
+        "validate-manifest"
       ]
     },
     {
@@ -324,7 +332,8 @@
       "description": "Create a new Claude Code skill",
       "version": "1.0.0",
       "depends_on_skills": [
-        "skill-template"
+        "skill-template",
+        "validate-manifest"
       ]
     },
     {

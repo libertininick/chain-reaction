@@ -2,6 +2,9 @@
 name: add-framework
 version: 1.0.0
 description: Add a new approved framework to the frameworks skill
+depends_on_skills:
+  - frameworks
+  - validate-manifest
 ---
 
 # Add Framework
@@ -65,12 +68,15 @@ Since the frameworks skill is included in agent bundles, regenerate them:
 uv run python .claude/scripts/generate_bundles.py
 ```
 
-### Step 6: Verify
+### Step 6: Validate Manifest
 
-Confirm the framework was added:
+Run the manifest validation script:
+
 ```bash
-grep "<framework-name>" .claude/skills/frameworks/SKILL.md
+uv run python .claude/scripts/validate_manifest.py
 ```
+
+Fix any errors before completing.
 
 ## Example
 
