@@ -258,6 +258,14 @@
   ],
   "commands": [
     {
+      "name": "add-framework",
+      "description": "Add a new approved framework",
+      "version": "1.0.0",
+      "depends_on_skills": [
+        "frameworks"
+      ]
+    },
+    {
       "name": "implement",
       "description": "Execute plan phases",
       "version": "1.2.0",

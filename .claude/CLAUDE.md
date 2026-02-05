@@ -46,6 +46,7 @@ Reusable workflows in `.claude/commands/`. See each file for details.
 
 | Command | Purpose |
 |---------|---------|
+| `/add-framework` | Add a new approved framework |
 | `/clean` | Clean Python code files |
 | `/create-skill` | Create a new Claude Code skill |
 | `/implement` | Execute plan phases |
