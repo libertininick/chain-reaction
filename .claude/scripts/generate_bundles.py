@@ -295,15 +295,19 @@ def generate_bundle(
     dependencies: list[str] = agent_config.get("depends_on_skills", [])
     timestamp = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
-    lines: list[str] = [
-        *_build_bundle_header(agent_name, timestamp),
-        *_build_table_of_contents(dependencies, skills_lookup),
-    ]
-
+    # Load skills first to filter missing ones from both TOC and content
+    loaded_skills: dict[str, SkillContent] = {}
     for skill_name in dependencies:
         skill = load_skill_content(skill_name)
-        if skill is None:
-            continue
+        if skill is not None:
+            loaded_skills[skill_name] = skill
+
+    lines: list[str] = [
+        *_build_bundle_header(agent_name, timestamp),
+        *_build_table_of_contents(list(loaded_skills.keys()), skills_lookup),
+    ]
+
+    for skill_name, skill in loaded_skills.items():
         lines.extend(_format_skill_section(skill_name, skill, compact=compact))
 
     return "\n".join(lines)
