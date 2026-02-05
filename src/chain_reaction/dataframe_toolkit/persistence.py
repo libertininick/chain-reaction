@@ -14,6 +14,7 @@ The restoration process:
 from __future__ import annotations
 
 import math
+import numbers
 from collections.abc import Mapping
 from graphlib import CycleError, TopologicalSorter
 
@@ -232,13 +233,19 @@ def _compare_column_summaries(
 def _floats_nearly_equal(actual: float, expected: float, *, rel_tol: float) -> bool:
     """Compare two floats for near-equality, treating NaN == NaN as True.
 
+    Unlike standard float comparison where NaN != NaN, this function treats
+    two NaN values as equal. This is useful for validating statistical summaries
+    where NaN indicates missing/undefined values that should match.
+
     Args:
         actual (float): The actual value to compare.
         expected (float): The expected value to compare against.
         rel_tol (float): Relative tolerance for the comparison.
 
     Returns:
-        bool: True if values are considered equal.
+        bool: True if both values are NaN, if both are finite and within
+            rel_tol of each other, or if both are the same infinity.
+            False if only one value is NaN.
     """
     if math.isnan(actual) and math.isnan(expected):
         return True
@@ -269,8 +276,8 @@ def _values_nearly_equal(
         return False
     if isinstance(actual, str) and isinstance(expected, str):
         return actual == expected
-    if isinstance(actual, (int, float)) and isinstance(expected, (int, float)):
-        return _floats_nearly_equal(actual, expected, rel_tol=rel_tol)
+    if isinstance(actual, numbers.Number) and isinstance(expected, numbers.Number):
+        return _floats_nearly_equal(float(actual), float(expected), rel_tol=rel_tol)
     return False
 
 
