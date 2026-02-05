@@ -11,6 +11,8 @@ depends_on_skills:
 
 Create a new Claude Code skill: $ARGUMENTS
 
+> If `$ARGUMENTS` is `--help`, show only the **Usage** and **Examples** sections below, then stop.
+
 ## What This Does
 
 This command guides you through creating a new skill with proper structure and registration.
@@ -22,6 +24,20 @@ The workflow:
 4. **Create SKILL.md** - Generate skill file with frontmatter and initial content
 5. **Register in manifest** - Add entry to `.claude/skills/manifest.json`
 6. **Update CLAUDE.md** - Add to appropriate category in Skills section
+
+## Usage
+
+```
+/create-skill <skill-name> + <description of skill>
+```
+
+## Examples
+
+```
+/create-skill naming-conventions to capture our specific naming convention patterns exemplified in <file>.py
+/create-skill deployment-checklist for our 3 step checklist ...
+/create-skill api-conventions ...
+```
 
 ## When to Use This Command
 

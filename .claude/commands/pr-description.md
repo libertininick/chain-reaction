@@ -11,6 +11,8 @@ depends_on_skills:
 
 Generate a pull request description from current branch changes: $ARGUMENTS
 
+> If `$ARGUMENTS` is `--help`, show only the **Usage** and **Examples** sections below, then stop.
+
 ## Template Reference
 
 **IMPORTANT**: Before generating, load the PR description template skill for format and examples:
@@ -25,7 +27,7 @@ Generate a pull request description from current branch changes: $ARGUMENTS
 /pr-description --plan <plan-path> --phases <N1,N2,...>
 ```
 
-**Examples:**
+## Examples:
 ```
 /pr-description
 /pr-description --plan .claude/agent-outputs/plans/2024-01-22T143052Z-api-refactor-plan.md

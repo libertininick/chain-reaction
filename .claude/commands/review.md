@@ -15,6 +15,8 @@ depends_on_skills:
 
 Conduct a code review: $ARGUMENTS
 
+> If `$ARGUMENTS` is `--help`, show only the **Usage** and **Examples** sections below, then stop.
+
 ## Review Process
 
 This command orchestrates a comprehensive review using specialized agents, then aggregates results into a unified report.

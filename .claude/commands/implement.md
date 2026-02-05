@@ -12,6 +12,8 @@ depends_on_agents:
 
 Implement one or more phases of plan: $ARGUMENTS
 
+> If `$ARGUMENTS` is `--help`, show only the **Usage** and **Examples** sections below, then stop.
+
 ## What This Does
 
 This command orchestrates implementation of phases from an approved plan document by dispatching work to specialized agents.
@@ -29,7 +31,7 @@ This command orchestrates implementation of phases from an approved plan documen
 
 - `--no-clean`: Skip the code cleaning step (cleaning runs by default)
 
-**Examples:**
+## Examples:
 ```
 /implement Phase 1 from .claude/agent-outputs/plans/2024-01-22T143052Z-api-refactor-plan.md
 /implement Phase 1 from .claude/agent-outputs/plans/2024-01-22T143052Z-api-refactor-plan.md --no-clean

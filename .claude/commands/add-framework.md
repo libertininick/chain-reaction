@@ -11,6 +11,22 @@ depends_on_skills:
 
 Add a new approved framework: $ARGUMENTS
 
+> If `$ARGUMENTS` is `--help`, show only the **Usage** and **Examples** sections below, then stop.
+
+## Usage
+
+```
+/add-framework <framework-name>
+```
+
+## Examples
+
+```
+/add-framework httpx
+/add-framework pydantic
+/add-framework sqlalchemy
+```
+
 ## What This Does
 
 This command adds a new approved framework to the codebase by:
@@ -78,13 +94,9 @@ uv run python .claude/scripts/validate_manifest.py
 
 Fix any errors before completing.
 
-## Example
+## Walkthrough
 
-```
-/add-framework httpx
-```
-
-Would:
+`/add-framework httpx` would:
 1. Find Context7 ID: `/encode/httpx`
 2. Find docs: `https://www.python-httpx.org/`
 3. Add row: `| httpx | Async HTTP client | /encode/httpx | [docs](https://www.python-httpx.org/) |`

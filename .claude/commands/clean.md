@@ -10,6 +10,8 @@ depends_on_agents:
 
 Clean Python code files: $ARGUMENTS
 
+> If `$ARGUMENTS` is `--help`, show only the **Usage** and **Examples** sections below, then stop.
+
 ## What This Does
 
 This command dispatches the `code-cleaner` agent to analyze and fix code quality issues including:

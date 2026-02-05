@@ -8,6 +8,8 @@ description: Sync Claude context files with skills, agents, and commands on disk
 
 Synchronize `.claude/` context files with the actual skills, agents, and commands on disk: $ARGUMENTS
 
+> If `$ARGUMENTS` is `--help`, show only the **Usage** and **Examples** sections below, then stop.
+
 ## Quick Reference
 
 | Task | Command |
@@ -16,6 +18,14 @@ Synchronize `.claude/` context files with the actual skills, agents, and command
 | Preview changes | `uv run python .claude/scripts/sync_context.py --dry-run` |
 | Check for drift | `uv run python .claude/scripts/sync_context.py --check` |
 | Regenerate bundles | `uv run python .claude/scripts/generate_bundles.py` |
+
+## Examples
+
+```
+/sync                # Full sync (scripts + bundles)
+/sync --dry-run      # Preview changes without writing
+/sync --check        # Check for drift
+```
 
 ## What Gets Updated
 
