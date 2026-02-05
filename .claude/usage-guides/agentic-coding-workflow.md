@@ -377,7 +377,7 @@ After completing and committing a phase, sync the plan with current state.
 
 **Why this matters:**
 
-- Code changes things—next phases may need adjustment
+- Code and scope may have changed during implementation requiring adjustment for next phases (e.g. changed originally planned interfaces...)
 - You may have discovered edge cases or new requirements
 - Main branch may have evolved while you worked
 - Fresh planning prevents drift from the original vision
