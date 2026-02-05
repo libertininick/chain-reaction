@@ -22,6 +22,7 @@ Approved frameworks and libraries for this codebase with Context7 IDs for docume
 | LangChain | Agent architecture, LLM integrations | `/websites/langchain` | [docs](https://docs.langchain.com/oss/python/langchain/overview) |
 | LangGraph | Stateful agent orchestration | `/websites/langgraph` | [docs](https://docs.langchain.com/oss/python/langgraph/overview) |
 | FastMCP | MCP server implementations | `/jlowin/fastmcp` | [docs](https://gofastmcp.com/getting-started/welcome) |
+| httpx | Async HTTP client | `/encode/httpx` | [docs](https://www.python-httpx.org/) |
 | Polars | DataFrame operations | `/pola-rs/polars` | [docs](https://docs.pola.rs/api/python/stable/reference/index.html) |
 | Pydantic | Data validation, settings | `/pydantic/pydantic` | [docs](https://docs.pydantic.dev/latest) |
 | diskcache | Disk-based caching | `/grantjenks/python-diskcache` | [docs](https://grantjenks.com/docs/diskcache/) |
