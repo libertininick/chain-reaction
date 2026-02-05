@@ -58,23 +58,23 @@ This configuration separates concerns into three distinct layers:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                        COMMANDS                              │
-│           Orchestration: workflows that use agents           │
-│       /plan  /implement  /review  /pr-description            │
+│                        COMMANDS                             │
+│           Orchestration: workflows that use agents          │
+│       /plan  /implement  /review  /pr-description           │
 └─────────────────────────┬───────────────────────────────────┘
                           │ invoke
                           ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                         AGENTS                               │
-│            Execution: specialists that do work               │
-│  planner  code-writer  test-writer  test-reviewer  reviewers │
+│                         AGENTS                              │
+│            Execution: specialists that do work              │
+│ planner  code-writer  test-writer  test-reviewer  reviewers │
 └─────────────────────────┬───────────────────────────────────┘
                           │ load
                           ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                         SKILLS                               │
-│          Knowledge: conventions, templates, criteria         │
-│   class-design  testing  frameworks  plan-template  ...      │
+│                         SKILLS                              │
+│          Knowledge: conventions, templates, criteria        │
+│  class-design  test-writing  frameworks  plan-template  ... │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -184,7 +184,7 @@ Both are `.gitignore`d. Regenerate bundles after skill changes. Agent outputs ar
 │   │   ├── SKILL.md
 │   │   ├── rules.md
 │   │   └── examples.md
-│   ├── testing/
+│   ├── test-writing/
 │   │   └── SKILL.md
 │   └── ...
 │
@@ -323,7 +323,7 @@ Both are `.gitignore`d. Regenerate bundles after skill changes. Agent outputs ar
 
 | Category | Purpose | Examples |
 |----------|---------|----------|
-| **conventions** | How code should be written | `class-design`, `naming-conventions`, `testing` |
+| **conventions** | How code should be written | `class-design`, `naming-conventions`, `test-writing` |
 | **assessment** | Criteria for code review | `maintainability`, `testability`, `test-quality` |
 | **templates** | Output format specifications | `plan-template`, `review-template` |
 | **utilities** | Reusable operations | `run-python-safely`, `write-markdown-output` |
