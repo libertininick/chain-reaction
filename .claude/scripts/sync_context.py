@@ -114,14 +114,14 @@ class AgentInfo:
         description (str): Human-readable description of the agent's purpose.
         model (str): Model to use (e.g., "opus", "sonnet").
         version (str): Semantic version string.
-        depends_on (list[str]): List of skill names this agent requires.
+        depends_on_skills (list[str]): List of skill names this agent requires.
     """
 
     name: str
     description: str
     model: str
     version: str = "1.0.0"
-    depends_on: list[str] = field(default_factory=list)
+    depends_on_skills: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -273,7 +273,7 @@ def scan_agents() -> dict[str, AgentInfo]:
             description=frontmatter.get("description", ""),
             model=frontmatter.get("model", "opus"),
             version=frontmatter.get("version", "1.0.0"),
-            depends_on=frontmatter.get("depends_on", []),
+            depends_on_skills=frontmatter.get("depends_on_skills", []),
         )
 
     return agents
@@ -636,7 +636,7 @@ def _sync_agents(
                 "description": info.description,
                 "model": info.model,
                 "version": info.version,
-                "depends_on": info.depends_on,
+                "depends_on_skills": info.depends_on_skills,
             })
             changes.append(f"Added agent: {name}")
 

@@ -42,7 +42,7 @@ AGENT_REQUIRED_FIELDS: Final[frozenset[str]] = frozenset({
     "description",
     "model",
     "version",
-    "depends_on",
+    "depends_on_skills",
 })
 
 COMMAND_REQUIRED_FIELDS: Final[frozenset[str]] = frozenset({
@@ -206,8 +206,8 @@ def validate_agents(
         # Check version format
         errors.extend(validate_version_format(agent, "Agent", agent_name))
 
-        # Check depends_on references existing skills
-        depends_on = agent.get("depends_on", [])
+        # Check depends_on_skills references existing skills
+        depends_on = agent.get("depends_on_skills", [])
         for dep in depends_on:
             if dep not in valid_skill_names:
                 errors.append(f"Agent '{agent_name}' depends on unknown skill: '{dep}'")

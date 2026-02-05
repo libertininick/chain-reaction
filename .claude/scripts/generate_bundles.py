@@ -292,7 +292,7 @@ def generate_bundle(
     Returns:
         str: The generated bundle content.
     """
-    dependencies: list[str] = agent_config.get("depends_on", [])
+    dependencies: list[str] = agent_config.get("depends_on_skills", [])
     timestamp = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     lines: list[str] = [
@@ -346,7 +346,7 @@ def _process_agent(
         dry_run (bool): If True, print what would be generated without writing.
     """
     agent_name: str = agent_config["name"]
-    dependencies: list[str] = agent_config.get("depends_on", [])
+    dependencies: list[str] = agent_config.get("depends_on_skills", [])
 
     print(f"\nGenerating bundle for: {agent_name}")
     print(f"  Dependencies: {len(dependencies)} skills")

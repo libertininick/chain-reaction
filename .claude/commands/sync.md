@@ -41,7 +41,7 @@ mkdir -p .claude/skills/my-skill
 # Sync to update manifest.json and CLAUDE.md
 uv run python .claude/scripts/sync_context.py
 
-# If skill is used by an agent, add to depends_on in manifest.json, then:
+# If skill is used by an agent, add to depends_on_skills in manifest.json, then:
 uv run python .claude/scripts/generate_bundles.py
 ```
 

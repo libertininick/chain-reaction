@@ -91,7 +91,7 @@ This configuration separates concerns into three distinct layers:
 ```json
 {
   "skills": [{ "name": "class-design", "category": "conventions", ... }],
-  "agents": [{ "name": "planner", "depends_on": ["plan-template", ...] }],
+  "agents": [{ "name": "planner", "depends_on_skills": ["plan-template", ...] }],
   "commands": [{ "name": "plan", "depends_on_agents": ["planner"] }]
 }
 ```
@@ -231,7 +231,7 @@ Both are `.gitignore`d. Regenerate bundles after skill changes. Agent outputs ar
    ```json
    {
      "name": "python-code-writer",
-     "depends_on": ["your-skill", ...]
+     "depends_on_skills": ["your-skill", ...]
    }
    ```
 
@@ -270,7 +270,7 @@ Both are `.gitignore`d. Regenerate bundles after skill changes. Agent outputs ar
      "name": "your-agent",
      "description": "What this agent does",
      "model": "sonnet",
-     "depends_on": ["skill1", "skill2"]
+     "depends_on_skills": ["skill1", "skill2"]
    }
    ```
 
@@ -333,7 +333,7 @@ Both are `.gitignore`d. Regenerate bundles after skill changes. Agent outputs ar
 ## Troubleshooting
 
 ### Agent doesn't know about a skill
-- Check `manifest.json` that the agent's `depends_on` includes the skill
+- Check `manifest.json` that the agent's `depends_on_skills` includes the skill
 - Regenerate bundles: `uv run python .claude/scripts/generate_bundles.py`
 
 ### Command not appearing in /help

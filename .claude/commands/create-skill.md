@@ -134,7 +134,7 @@ Test the skill:
 2. If auto-loadable: Ask Claude something that should trigger it
 3. Verify with: "What skills are available?"
 
-If the skill is added to an agent's `depends_on` list, regenerate bundles:
+If the skill is added to an agent's `depends_on_skills` list, regenerate bundles:
 ```bash
 uv run python .claude/scripts/generate_bundles.py
 ```

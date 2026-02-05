@@ -57,7 +57,7 @@ def valid_manifest() -> dict[str, Any]:
                 "description": "Writes Python code",
                 "model": "opus",
                 "version": "1.0.0",
-                "depends_on": ["naming-conventions"],
+                "depends_on_skills": ["naming-conventions"],
             },
         ],
         "commands": [
@@ -258,7 +258,7 @@ class TestMissingRequiredFields:
             "agents": [
                 {
                     "name": "test-agent",
-                    # Missing: description, model, version, depends_on
+                    # Missing: description, model, version, depends_on_skills
                 }
             ],
         }
@@ -275,7 +275,7 @@ class TestMissingRequiredFields:
         with check:
             assert "version" in errors[0]
         with check:
-            assert "depends_on" in errors[0]
+            assert "depends_on_skills" in errors[0]
 
     def test_validate_commands_missing_required_fields_returns_error(self) -> None:
         """Command missing required fields should produce error."""
@@ -377,7 +377,7 @@ class TestMissingDependencies:
                     "description": "Test agent",
                     "model": "opus",
                     "version": "1.0.0",
-                    "depends_on": ["nonexistent-skill"],
+                    "depends_on_skills": ["nonexistent-skill"],
                 }
             ],
         }
@@ -403,7 +403,7 @@ class TestMissingDependencies:
                     "description": "Test agent",
                     "model": "opus",
                     "version": "1.0.0",
-                    "depends_on": ["existing-skill"],
+                    "depends_on_skills": ["existing-skill"],
                 }
             ],
         }
@@ -544,14 +544,14 @@ class TestDuplicateNames:
                     "description": "First agent",
                     "model": "opus",
                     "version": "1.0.0",
-                    "depends_on": [],
+                    "depends_on_skills": [],
                 },
                 {
                     "name": "duplicate-agent",
                     "description": "Second agent",
                     "model": "sonnet",
                     "version": "1.0.0",
-                    "depends_on": [],
+                    "depends_on_skills": [],
                 },
             ],
         }
@@ -667,7 +667,7 @@ class TestInvalidVersionFormat:
                     "description": "Test agent",
                     "model": "opus",
                     "version": "1.0",  # Invalid format
-                    "depends_on": [],
+                    "depends_on_skills": [],
                 }
             ],
         }
@@ -925,7 +925,7 @@ class TestFullManifestValidation:
                     "description": "Agent A",
                     "model": "opus",
                     "version": "1.0.0",
-                    "depends_on": ["skill-a"],
+                    "depends_on_skills": ["skill-a"],
                 },
             ],
             "commands": [
@@ -972,7 +972,7 @@ class TestFullManifestValidation:
                     "description": "Agent A",
                     "model": "opus",
                     "version": "1.0.0",
-                    "depends_on": ["nonexistent-skill"],  # Error: unknown skill
+                    "depends_on_skills": ["nonexistent-skill"],  # Error: unknown skill
                 },
             ],
             "commands": [

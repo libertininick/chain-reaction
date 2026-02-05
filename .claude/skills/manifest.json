@@ -156,7 +156,7 @@
       "description": "Reviews style and conventions",
       "model": "sonnet",
       "version": "1.0.0",
-      "depends_on": [
+      "depends_on_skills": [
         "code-organization",
         "naming-conventions",
         "docstring-conventions",
@@ -171,7 +171,7 @@
       "description": "Reviews design and correctness",
       "model": "opus",
       "version": "1.0.0",
-      "depends_on": [
+      "depends_on_skills": [
         "class-design",
         "function-design",
         "maintainability",
@@ -184,7 +184,7 @@
       "description": "Creates implementation plans",
       "model": "opus",
       "version": "1.0.0",
-      "depends_on": [
+      "depends_on_skills": [
         "plan-template",
         "write-markdown-output",
         "frameworks",
@@ -203,7 +203,7 @@
       "description": "Writes production code",
       "model": "opus",
       "version": "1.0.0",
-      "depends_on": [
+      "depends_on_skills": [
         "frameworks",
         "code-organization",
         "naming-conventions",
@@ -224,7 +224,7 @@
       "description": "Writes tests",
       "model": "opus",
       "version": "1.0.0",
-      "depends_on": [
+      "depends_on_skills": [
         "test-writing",
         "frameworks",
         "naming-conventions",
@@ -237,7 +237,7 @@
       "description": "Cleans and organizes Python code",
       "model": "opus",
       "version": "1.0.0",
-      "depends_on": [
+      "depends_on_skills": [
         "code-organization",
         "naming-conventions",
         "function-design",
@@ -255,7 +255,7 @@
       "description": "Reviews test quality and coverage",
       "model": "sonnet",
       "version": "1.0.0",
-      "depends_on": [
+      "depends_on_skills": [
         "test-quality",
         "test-writing",
         "review-template"

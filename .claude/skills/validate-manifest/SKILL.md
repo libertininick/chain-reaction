@@ -13,7 +13,7 @@ Validates the `.claude/skills/manifest.json` file for structure, required fields
 
 Use this skill after modifying the manifest:
 - Adding a new skill, agent, or command
-- Updating dependencies (`depends_on`, `depends_on_skills`, `depends_on_agents`)
+- Updating dependencies (`depends_on_skills`, `depends_on_agents`)
 - Changing categories or versions
 
 ## Validation Script
@@ -59,7 +59,7 @@ uv run python .claude/scripts/validate_manifest.py
   "description": "Brief description",
   "model": "opus|sonnet|haiku",
   "version": "1.0.0",
-  "depends_on": ["skill-name-1", "skill-name-2"]
+  "depends_on_skills": ["skill-name-1", "skill-name-2"]
 }
 ```
 
