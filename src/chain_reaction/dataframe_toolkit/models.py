@@ -162,6 +162,7 @@ class DataFrameReference(BaseModel):
             column_descriptions (dict[str, str] | None): Optional textual descriptions of the columns. Defaults to None.
             parent_ids (list[DataFrameId] | None): Identifiers of the parent DataFrames, if any. Defaults to None.
             source_query (str | None): The SQL query that generated this DataFrame, if any. Defaults to None.
+                NOTE: empty queries are not allowed, use None for no query.
 
         Returns:
             DataFrameReference: The generated DataFrameReference.
