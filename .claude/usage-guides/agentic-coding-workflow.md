@@ -1,38 +1,103 @@
+<a id="top"></a>
 # Agentic Coding Workflow Guide
 
 A structured approach for working with Claude Code in this repository using specialized agents, commands, and conventions.
 
 ---
 
-## Overview: The Plan → Implement → Review Cycle
+## Table of Contents
 
-This repository is configured with specialized agents and commands that automate the agentic coding workflow:
+- [Overview: The Workflow](#overview-the-workflow)
+- [Phase 1: Iterative Planning](#phase-1-iterative-planning)
+- [Phase 2: Implement and Review (Per Phase)](#phase-2-implement-and-review-per-phase)
+- [Phase 3: Commit Changes (Manual)](#phase-3-commit-changes-manual)
+- [Phase 4: Update Plan with `/update-plan`](#phase-4-update-plan-with-update-plan)
+- [Phase 5: Iterate Until Complete](#phase-5-iterate-until-complete)
+- [Phase 6: Final Review and PR](#phase-6-final-review-and-pr)
+- [Quick Reference: Commands](#quick-reference-commands)
+- [Agents and Their Roles](#agents-and-their-roles)
+- [Validation Commands](#validation-commands)
+- [Principles to Remember](#principles-to-remember)
+- [Troubleshooting](#troubleshooting)
+
+---
+
+## Overview: The Workflow
+
+This repository is configured with specialized agents and commands that automate the agentic coding workflow. The workflow has two main iterative loops:
 
 ```
-/plan <description>
-       │
-       ▼
-┌───────────────────────────────────────────────────────────────┐
-│                                                               │
-│   /implement Phase N                  /review                 │
-│        │                                 │                    │
-│        ▼                                 ▼                    │
-│   ┌──────────┐    ┌──────────┐    ┌─────────────────────────┐ │
-│   │Code Write│───▶│Test Write│───▶│ Style + Substance +     │ │
-│   │  Agent   │    │  Agent   │    │ Test Quality Reviewers  │ │
-│   └──────────┘    └──────────┘    └─────────────────────────┘ │
-│        │                                      │               │
-│        ▼                                      ▼               │
-│   Validation                           Unified Review         │
-│   (ruff, ty, pytest)                   Findings               │
-│                                               │               │
-│        ▲              ┌──────────────────────────┐            │
-│        │              │  git commit (manual)     │◀───────────┘
-│        │              │  /update-plan <path>     │
-│        └──────────────│  Next phase...           │
-│                       └──────────────────────────┘
-│                                                               │
-└───────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  PHASE 1: ITERATIVE PLANNING                                                │
+│                                                                             │
+│    /plan ──▶ manual review ──▶ /update-plan ─┐                              │
+│       ▲                                      │                              │
+│       └──────────── (iterate until ready) ◀──┘                              │
+│                            │                                                │
+│                            ▼                                                │
+│                      Plan Approved                                          │
+└─────────────────────────────────────────────────────────────────────────────┘
+                             │
+                             ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  PHASES 2-5: ITERATIVE IMPLEMENTATION (per phase)                           │
+│                                                                             │
+│  ┌────────────────────────────────────────────────────────────────────────┐ │
+│  │  PHASE 2: IMPLEMENT + REVIEW LOOP                                      │ │
+│  │                                                                        │ │
+│  │    /implement Phase N                                                  │ │
+│  │         │                                                              │ │
+│  │         ▼                                                              │ │
+│  │    ┌──────────┐    ┌──────────┐    ┌──────────┐                        │ │
+│  │    │Code Write│───▶│Test Write│───▶│  Clean   │                        │ │
+│  │    │  Agent   │    │  Agent   │    │  Agent   │                        │ │
+│  │    └──────────┘    └──────────┘    └──────────┘                        │ │
+│  │         │                                                              │ │
+│  │         ▼                                                              │ │
+│  │    Validation (ruff, ty, pytest)                                       │ │
+│  │         │                                                              │ │
+│  │         ▼                                                              │ │
+│  │    /review ──▶ Fix Issues ──┐                                          │ │
+│  │         ▲                   │                                          │ │
+│  │         └─── (iterate) ◀────┘                                          │ │
+│  │                   │                                                    │ │
+│  │                   ▼                                                    │ │
+│  │             Review Passed                                              │ │
+│  └────────────────────────────────────────────────────────────────────────┘ │
+│                      │                                                      │
+│                      ▼                                                      │
+│  ┌────────────────────────────────────────────────────────────────────────┐ │
+│  │  PHASE 3: COMMIT                                                       │ │
+│  │                                                                        │ │
+│  │    git commit (manual) ──▶ /pr-description (optional)                  │ │
+│  └────────────────────────────────────────────────────────────────────────┘ │
+│                      │                                                      │
+│                      ▼                                                      │
+│  ┌────────────────────────────────────────────────────────────────────────┐ │
+│  │  PHASE 4: UPDATE PLAN                                                  │ │
+│  │                                                                        │ │
+│  │    /update-plan ──▶ Adjust remaining phases based on learnings         │ │
+│  └────────────────────────────────────────────────────────────────────────┘ │
+│                      │                                                      │
+│                      ▼                                                      │
+│  ┌────────────────────────────────────────────────────────────────────────┐ │
+│  │  PHASE 5: NEXT PHASE                                                   │ │
+│  │                                                                        │ │
+│  │    More phases? ──YES──▶ Return to Phase 2                             │ │
+│  │         │                                                              │ │
+│  │         NO                                                             │ │
+│  │         │                                                              │ │
+│  │         ▼                                                              │ │
+│  │    All phases complete                                                 │ │
+│  └────────────────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────────────────┘
+                             │
+                             ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  PHASE 6: FINAL REVIEW                                                      │
+│                                                                             │
+│    /review --commits main..HEAD ──▶ /pr-description ──▶ Open PR             │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
 
 **Key components:**
@@ -41,9 +106,15 @@ This repository is configured with specialized agents and commands that automate
 - **20 skills** that define coding conventions and standards
 - **Automatic outputs** saved to `.claude/agent-outputs/`
 
+[Back to top](#top)
+
 ---
 
-## Phase 1: Frame Your Objective
+## Phase 1: Iterative Planning
+
+Create, review, and refine your plan until it's ready for implementation.
+
+### Step 1a: Frame Your Objective
 
 Before running `/plan`, establish a clear picture of what you're building.
 
@@ -66,11 +137,9 @@ Before running `/plan`, establish a clear picture of what you're building.
 - Check the `frameworks` skill for approved libraries before requesting new dependencies
 - Mention what's explicitly out of scope to prevent over-engineering
 
----
+### Step 1b: Create a Plan with `/plan`
 
-## Phase 2: Create a Plan with `/plan`
-
-The `/plan` command dispatches to the **planner agent**  which creates a detailed implementation plan.
+The `/plan` command dispatches to the **planner agent** which creates a detailed implementation plan.
 
 **Command syntax:**
 ```
@@ -123,16 +192,29 @@ The `/plan` command dispatches to the **planner agent**  which creates a detaile
 - Specific completion criteria
 ```
 
-**Your responsibilities:**
+### Step 1c: Review and Refine the Plan
 
-- Review the plan before proceeding
+**Review the plan** before proceeding:
 - Push back if phases are too large (ask to subdivide)
 - Validate the plan against your objective
-- Save or note the plan path for subsequent commands
+- Check for missing edge cases or requirements
+
+**Iterate using `/update-plan`** to refine:
+```
+/update-plan @.claude/agent-outputs/plans/<plan-file>.md We need to think more about how we are going to do validation of ... there are a lot of edge cases here, let's enumerate them.
+```
+
+Repeat until the plan is solid and ready for implementation.
+
+[Back to top](#top)
 
 ---
 
-## Phase 3: Implement with `/implement`
+## Phase 2: Implement and Review (Per Phase)
+
+For each phase in your plan, implement the code, review it, and iterate until the review passes.
+
+### Step 2a: Implement with `/implement`
 
 The `/implement` command orchestrates multiple agents to build a single phase.
 
@@ -170,18 +252,9 @@ uv run ty check             # Type check
 uv run pytest tests/        # Run tests
 ```
 
-**Your responsibilities:**
+### Step 2b: Review with `/review`
 
-- Read the generated code—you own it now
-- Run tests manually if you want additional verification
-- Check for scope creep (did the agent add things not in this phase?)
-- Stage and commit when satisfied
-
----
-
-## Phase 4: Review with `/review`
-
-The `/review` command runs both style and substance reviews sequentially.
+After implementation, review the changes and iterate until issues are resolved.
 
 **Command syntax:**
 ```
@@ -241,17 +314,23 @@ The `/review` command runs both style and substance reviews sequentially.
 
 8. **Verdict**: APPROVE, NEEDS CHANGES, or REJECT
 
-**Your responsibilities:**
+### Step 2c: Fix and Iterate
 
-- Address critical issues before committing
-- Consider improvement suggestions
-- Nitpicks are optional but indicate polish opportunities
+If the review finds issues:
+1. Address critical issues (must fix before proceeding)
+2. Consider improvement suggestions
+3. Nitpicks are optional but indicate polish opportunities
+4. Run `/review` again until it passes
+
+**Only proceed to commit when the review passes.**
+
+[Back to top](#top)
 
 ---
 
-## Phase 5: Commit Changes (Manual)
+## Phase 3: Commit Changes (Manual)
 
-Claude Code never commits unless explicitly instructed. After successful implementation and review:
+Claude Code never commits unless explicitly instructed. After the review passes:
 
 ```bash
 git add -p                    # Stage changes selectively
@@ -268,12 +347,15 @@ Plan: .claude/agent-outputs/plans/<plan-file>.md"
 - Use conventional commit format (feat, fix, refactor, test, docs)
 - Reference the plan file for traceability
 - Commit working code before moving on—never leave the repo broken
+- Optionally generate a phase PR description with `/pr-description`
+
+[Back to top](#top)
 
 ---
 
-## Phase 6: Update Plan with `/update-plan`
+## Phase 4: Update Plan with `/update-plan`
 
-After completing a phase, sync the plan with current state.
+After completing and committing a phase, sync the plan with current state.
 
 **Command syntax:**
 ```
@@ -300,16 +382,18 @@ After completing a phase, sync the plan with current state.
 - Main branch may have evolved while you worked
 - Fresh planning prevents drift from the original vision
 
+[Back to top](#top)
+
 ---
 
-## Phase 7: Iterate Until Complete
+## Phase 5: Iterate Until Complete
 
-Repeat the cycle for each remaining phase:
+Repeat Phases 2-4 for each remaining phase in the plan:
 
-1. `/implement Phase N+1 from <plan-path>`
-2. `/review --staged --plan <plan-path>`
-3. `git commit -m "..."`
-4. `/update-plan <plan-path>`
+1. `/implement Phase N+1 from <plan-path>` — implement code and tests
+2. `/review --staged --plan <plan-path>` — review and fix until passing
+3. `git commit -m "..."` — commit the changes
+4. `/update-plan <plan-path>` — update and adjust the plan
 
 **Checkpoint questions after each iteration:**
 
@@ -325,9 +409,11 @@ Repeat the cycle for each remaining phase:
 - Growing list of "fix later" items
 - Unclear how current work connects to the objective
 
+[Back to top](#top)
+
 ---
 
-## Phase 8: Final Review and PR
+## Phase 6: Final Review and PR
 
 Once all phases are complete:
 
@@ -336,9 +422,11 @@ Once all phases are complete:
 /review --commits main..HEAD --plan <plan-path>
 ```
 
-This includes style, substance, and test quality review for all files.
+This reviews all changes since branching from main, including style, substance, and test quality.
 
 **2. Address any final issues**
+
+Fix any remaining issues found in the comprehensive review.
 
 **3. Generate PR description:**
 ```
@@ -348,6 +436,8 @@ This includes style, substance, and test quality review for all files.
 This creates a structured PR description at `.claude/agent-outputs/pr-descriptions/`.
 
 **4. Open the PR**
+
+[Back to top](#top)
 
 ---
 
@@ -365,6 +455,8 @@ This creates a structured PR description at `.claude/agent-outputs/pr-descriptio
 | `/create-skill` | Scaffold new skill | `skills/<name>/` |
 | `/sync-context` | Regenerate CLAUDE.md and bundles | Various config files |
 
+[Back to top](#top)
+
 ---
 
 ## Agents and Their Roles
@@ -380,6 +472,8 @@ This creates a structured PR description at `.claude/agent-outputs/pr-descriptio
 | **code-cleaner** | Opus | `/implement`, `/clean` | Code organization, simplification |
 
 Each agent loads a **context bundle**—pre-composed skill content that gives it exactly the knowledge it needs.
+
+[Back to top](#top)
 
 ---
 
@@ -397,6 +491,8 @@ uv run pydoclint \                    # Docstring validation
 uv run pytest                         # Run tests
 uv run pytest --cov                   # With coverage
 ```
+
+[Back to top](#top)
 
 ---
 
@@ -417,6 +513,8 @@ uv run pytest --cov                   # With coverage
 7. **Trust the conventions:** Skills encode project standards. Agents load them automatically via bundles.
 
 8. **Outputs are saved:** Plans, reviews, and PR descriptions persist in `agent-outputs/` for reference.
+
+[Back to top](#top)
 
 ---
 
@@ -454,3 +552,5 @@ uv run pytest --cov                   # With coverage
 - Run `/review --tests-only` on all new test files before committing
 - Consider breaking large phases into smaller chunks
 - Ask explicitly for varied test data and edge case coverage
+
+[Back to top](#top)
