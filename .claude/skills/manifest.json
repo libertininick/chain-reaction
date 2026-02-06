@@ -163,7 +163,8 @@
         "pythonic-conventions",
         "type-hints",
         "function-design",
-        "class-design"
+        "class-design",
+        "review-template"
       ]
     },
     {
