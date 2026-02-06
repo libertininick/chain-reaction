@@ -619,7 +619,7 @@ class TestRestoreFromState:
         references: dict[DataFrameId, DataFrameReference] = {}
 
         # Act
-        restore_from_state(state, {"test": df}, context, references)
+        restore_from_state(state=state, base_dataframes={"test": df}, context=context, references=references)
 
         # Assert
         with check:
@@ -641,7 +641,9 @@ class TestRestoreFromState:
         references: dict[DataFrameId, DataFrameReference] = {}
 
         # Act
-        restore_from_state(state, {"first": df1, "second": df2}, context, references)
+        restore_from_state(
+            state=state, base_dataframes={"first": df1, "second": df2}, context=context, references=references
+        )
 
         # Assert
         with check:
@@ -680,7 +682,7 @@ class TestRestoreFromState:
         references: dict[DataFrameId, DataFrameReference] = {}
 
         # Act
-        restore_from_state(state, {"base": base_df}, context, references)
+        restore_from_state(state=state, base_dataframes={"base": base_df}, context=context, references=references)
 
         # Assert
         with check:
@@ -712,4 +714,4 @@ class TestRestoreFromState:
 
         # Act/Assert - only provide one of two required bases
         with pytest.raises(ValueError, match="Missing base dataframes"):
-            restore_from_state(state, {"first": df1}, context, references)
+            restore_from_state(state=state, base_dataframes={"first": df1}, context=context, references=references)

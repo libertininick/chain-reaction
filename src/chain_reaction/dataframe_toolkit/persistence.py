@@ -35,6 +35,7 @@ __all__ = ["restore_from_state"]
 
 
 def restore_from_state(
+    *,
     state: DataFrameToolkitState,
     base_dataframes: Mapping[str, pl.DataFrame],
     context: DataFrameContext,
@@ -79,7 +80,7 @@ def restore_from_state(
         >>> # Deserialize state from JSON
         >>> state = DataFrameToolkitState(references=[])
         >>> # Restore with base dataframes
-        >>> restore_from_state(state, {}, context, references)
+        >>> restore_from_state(state=state, base_dataframes={}, context=context, references=references)
     """
     # 1. Find all base references in the state (those without parent dependencies)
     base_refs = {ref.id: ref for ref in state.references if not ref.parent_ids}
