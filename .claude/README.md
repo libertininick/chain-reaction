@@ -4,14 +4,36 @@
 
 ## Quick Start
 
-After cloning, run `sync` command to generate bundles (they're gitignored):
+After pulling `.claude/`:
+1. Add `context7` MCP server to Claude:
+   - Sign up for the free Contex7 account: https://context7.com/sign-up
+   - Generate an API key
+   - Connect Claude to the context7 MCP server: https://context7.com/docs/clients/claude-code#local-server
 
-```bash
-/sync
-# Or manually: uv run python .claude/scripts/sync_context.py
-```
+      ```sh
+      claude mcp add context7 -- npx -y @upstash/context7-mcp --api-key YOUR_API_KEY
+      ```
+   - Confirm connection by running `/mcp` inside a Claude session, you should see:
+      ```sh
+      Manage MCP servers                                                                                                        
+      1 server                                                                                                                  
+                                                                                                                                 
+         Local MCPs (../.claude.json [project: ../repos/buzzai])                     
+      ❯ context7 · ✔ connected  
+      ```
+2. Inside a Claude session run `/sync` command to generate bundles (they're gitignored):
 
+   ```sh
+   /sync
+   # Or manually from your terminal: uv run python .claude/scripts/sync_context.py
+   ```
+
+   Note, each time you pull changes from .claude, add a skill, command, or agent, or update a setting you should run `/sync` to ensure the context bundles are up to date.
+
+## Core Workflow
 The core workflow is: **plan → implement → review → verify tests → commit**
+
+Custom Claude commands for project:
 
 ```bash
 /plan <description>           # Create implementation plan
