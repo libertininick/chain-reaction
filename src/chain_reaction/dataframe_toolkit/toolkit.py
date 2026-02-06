@@ -424,8 +424,10 @@ class DataFrameToolkit:
         preserving original IDs for proper derivative reconstruction.
 
         Provided base dataframes are validated against the expected schema
-        (column names, shape) and column statistics (dtype, count, null_count,
-        min, max, mean, etc.) from the saved state to ensure data consistency.
+        and column statistics from the saved state to ensure data consistency.
+
+        Validation checks: shape, column names/order, dtype, count, null_count,
+        unique_count, min, max, mean, std, p25, p50, p75.
 
         Args:
             state (DataFrameToolkitState): Serialized state from export_state().
