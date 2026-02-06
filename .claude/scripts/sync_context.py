@@ -763,13 +763,12 @@ def _generate_agents_section(
     lines = [
         "Specialized sub-agents in `.claude/agents/`. See each file for details.",
         "",
-        "| Agent | Scope | Model |",
-        "|-------|-------|-------|",
+        "| Agent | Scope |",
+        "|-------|-------|",
     ]
     for name, info in sorted(agents.items()):
-        model_display = info.model.capitalize()
         desc = manifest_agents.get(name, {}).get("description", info.description)
-        lines.append(f"| `{name}` | {desc} | {model_display} |")
+        lines.append(f"| `{name}` | {desc} |")
     return "\n".join(lines)
 
 

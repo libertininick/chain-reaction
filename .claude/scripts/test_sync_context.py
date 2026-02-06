@@ -1284,13 +1284,11 @@ class TestGenerateAgentsSection:
 
         # Assert
         with check:
-            assert "| Agent | Scope | Model |" in section
+            assert "| Agent | Scope |" in section
         with check:
-            assert "| `code-writer` |" in section
+            assert "| `code-writer` | Writes code |" in section
         with check:
-            assert "Opus" in section
-        with check:
-            assert "Sonnet" in section
+            assert "| `reviewer` | Reviews code |" in section
 
     def test_generate_agents_section_uses_manifest_description(self) -> None:
         """Agents section should prefer manifest descriptions over disk descriptions."""
