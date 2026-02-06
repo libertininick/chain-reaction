@@ -10,6 +10,8 @@ depends_on_skills:
 
 Update an existing implementation plan: $ARGUMENTS
 
+> If `$ARGUMENTS` is `--help`, show only the **Usage** and **Examples** sections below, then stop.
+
 ## What This Does
 
 This command updates an existing plan document after syncing with `main` to ensure the plan remains accurate and actionable.
@@ -27,7 +29,7 @@ The update process will:
 /update-plan <plan-path> --completed-phases <N1,N2,...>
 ```
 
-**Examples:**
+## Examples:
 ```
 /update-plan .claude/agent-outputs/plans/2024-01-22T143052Z-api-refactor-plan.md
 /update-plan .claude/agent-outputs/plans/2024-01-22T143052Z-api-refactor-plan.md --completed-phases 1,2

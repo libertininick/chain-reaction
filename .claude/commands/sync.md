@@ -1,5 +1,5 @@
 ---
-name: sync-context
+name: sync
 version: 1.0.0
 description: Sync Claude context files with skills, agents, and commands on disk
 ---
@@ -7,6 +7,8 @@ description: Sync Claude context files with skills, agents, and commands on disk
 # Sync Claude Context Files
 
 Synchronize `.claude/` context files with the actual skills, agents, and commands on disk: $ARGUMENTS
+
+> If `$ARGUMENTS` is `--help`, show only the **Usage** and **Examples** sections below, then stop.
 
 ## Quick Reference
 
@@ -17,11 +19,18 @@ Synchronize `.claude/` context files with the actual skills, agents, and command
 | Check for drift | `uv run python .claude/scripts/sync_context.py --check` |
 | Regenerate bundles | `uv run python .claude/scripts/generate_bundles.py` |
 
+## Examples
+
+```
+/sync                # Full sync (scripts + bundles)
+/sync --dry-run      # Preview changes without writing
+/sync --check        # Check for drift
+```
+
 ## What Gets Updated
 
 | Section | Source of Truth | Updates |
 |---------|-----------------|---------|
-| CLAUDE.md Project Structure | Filesystem scan | Top-level directories |
 | CLAUDE.md Commands | `.claude/commands/*.md` | Command table |
 | CLAUDE.md Agents | `.claude/agents/*.md` | Agent table |
 | CLAUDE.md Context Bundles | Agent list | Bundle table |
@@ -41,7 +50,7 @@ mkdir -p .claude/skills/my-skill
 # Sync to update manifest.json and CLAUDE.md
 uv run python .claude/scripts/sync_context.py
 
-# If skill is used by an agent, add to depends_on in manifest.json, then:
+# If skill is used by an agent, add to depends_on_skills in manifest.json, then:
 uv run python .claude/scripts/generate_bundles.py
 ```
 

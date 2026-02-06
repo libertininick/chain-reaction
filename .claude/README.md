@@ -4,17 +4,48 @@
 
 ## Quick Start
 
-The core workflow is: **plan → implement → review → commit**
+After pulling `.claude/`:
+1. Add `context7` MCP server to Claude:
+   - Sign up for the free Contex7 account: https://context7.com/sign-up
+   - Generate an API key
+   - Connect Claude to the context7 MCP server: https://context7.com/docs/clients/claude-code#local-server
+
+      ```sh
+      claude mcp add context7 -- npx -y @upstash/context7-mcp --api-key YOUR_API_KEY
+      ```
+   - Confirm connection by running `/mcp` inside a Claude session, you should see:
+      ```sh
+      Manage MCP servers                                                                                                        
+      1 server                                                                                                                  
+                                                                                                                                 
+         Local MCPs (../.claude.json [project: ../repos/buzzai])                     
+      ❯ context7 · ✔ connected  
+      ```
+2. Inside a Claude session run `/sync` command to generate bundles (they're gitignored):
+
+   ```sh
+   /sync
+   # Or manually from your terminal: uv run python .claude/scripts/sync_context.py
+   ```
+
+   Note, each time you pull changes from .claude, add a skill, command, or agent, or update a setting you should run `/sync` to ensure the context bundles are up to date.
+
+## Core Workflow
+The core workflow is: **plan → implement → review → verify tests → commit**
+
+Custom Claude commands for project:
 
 ```bash
 /plan <description>           # Create implementation plan
 /implement Phase 1 from ...   # Execute a phase
-/review                       # Style + substance review
+/review                       # Full review (style + substance + test quality)
+/review --src-only            # Review source code only
+/review --tests-only          # Review tests only
 git commit                    # Commit manually
 /update-plan                  # Mark phase complete, continue
 ```
 
----
+Every command supports `--help` to show usage and examples (e.g., `/review --help`).
 
 ## Usage Guides
 
@@ -22,9 +53,11 @@ Deep dives into specific topics. Start here after you're comfortable with the Qu
 
 | Guide | What You'll Learn |
 |-------|-------------------|
+| **[Understanding LLM Coding Agents](usage-guides/understanding-llm-coding-agents.md)** | Step-by-step guide to how AI coding agents actually work. Pattern matching, tool use, context windows, and agentic loops demystified. |
 | **[Agentic Coding Workflow](usage-guides/agentic-coding-workflow.md)** | Complete walkthrough of the plan → implement → review cycle. Commands, agents, validation, troubleshooting. |
 | **[Context Window Management](usage-guides/context-window-management.md)** | Why AI performance degrades as context fills up, and how this configuration uses agents and bundles to keep sessions efficient. |
 | **[Reviewer-Friendly PRs](usage-guides/reviewer-friendly-prs.md)** | Creating PRs that respect reviewers' time. Validation checklists, description templates, structuring large changes. |
+| **[Thinking Tokens & Model Selection](usage-guides/thinking-llms-guide.md)** | How thinking tokens actually work, when extended thinking helps (and when it doesn't), and practical model selection guidance for code generation. |
 
 ---
 
@@ -36,23 +69,23 @@ This configuration separates concerns into three distinct layers:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                        COMMANDS                              │
-│           Orchestration: workflows that use agents           │
-│         /plan  /implement  /review  /pr-description          │
+│                        COMMANDS                             │
+│           Orchestration: workflows that use agents          │
+│       /plan  /implement  /review  /pr-description           │
 └─────────────────────────┬───────────────────────────────────┘
                           │ invoke
                           ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                         AGENTS                               │
-│            Execution: specialists that do work               │
-│    planner  code-writer  test-writer  reviewers              │
+│                         AGENTS                              │
+│            Execution: specialists that do work              │
+│ planner  code-writer  test-writer  test-reviewer  reviewers │
 └─────────────────────────┬───────────────────────────────────┘
                           │ load
                           ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                         SKILLS                               │
-│          Knowledge: conventions, templates, criteria         │
-│   class-design  testing  frameworks  plan-template  ...      │
+│                         SKILLS                              │
+│          Knowledge: conventions, templates, criteria        │
+│  class-design  test-writing  frameworks  plan-template  ... │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -69,14 +102,14 @@ This configuration separates concerns into three distinct layers:
 ```json
 {
   "skills": [{ "name": "class-design", "category": "conventions", ... }],
-  "agents": [{ "name": "planner", "depends_on": ["plan-template", ...] }],
+  "agents": [{ "name": "planner", "depends_on_skills": ["plan-template", ...] }],
   "commands": [{ "name": "plan", "depends_on_agents": ["planner"] }]
 }
 ```
 
 Changes to relationships happen in one place. The manifest drives:
 - Bundle generation (what skills each agent receives)
-- CLAUDE.md generation (via `/sync-context`)
+- CLAUDE.md generation (via `/sync`)
 - Documentation of dependencies
 
 ### Bundle Generation
@@ -141,7 +174,7 @@ Both are `.gitignore`d. Regenerate bundles after skill changes. Agent outputs ar
 
 ```
 .claude/
-├── CLAUDE.md              # Agent instructions (auto-generated by /sync-context)
+├── CLAUDE.md              # Agent instructions (auto-generated by /sync)
 ├── README.md              # This file (humans only)
 ├── settings.local.json    # Local settings
 │
@@ -156,13 +189,14 @@ Both are `.gitignore`d. Regenerate bundles after skill changes. Agent outputs ar
 │   ├── python-code-writer.md
 │   └── ...
 │
+├── manifest.json          # Single source of truth
+│
 ├── skills/                # Knowledge & conventions
-│   ├── manifest.json      # Single source of truth
 │   ├── class-design/
 │   │   ├── SKILL.md
 │   │   ├── rules.md
 │   │   └── examples.md
-│   ├── testing/
+│   ├── test-writing/
 │   │   └── SKILL.md
 │   └── ...
 │
@@ -209,7 +243,7 @@ Both are `.gitignore`d. Regenerate bundles after skill changes. Agent outputs ar
    ```json
    {
      "name": "python-code-writer",
-     "depends_on": ["your-skill", ...]
+     "depends_on_skills": ["your-skill", ...]
    }
    ```
 
@@ -220,7 +254,7 @@ Both are `.gitignore`d. Regenerate bundles after skill changes. Agent outputs ar
 
 6. **Update CLAUDE.md:**
    ```bash
-   /sync-context
+   /sync
    ```
 
 ### Adding a New Agent
@@ -248,14 +282,14 @@ Both are `.gitignore`d. Regenerate bundles after skill changes. Agent outputs ar
      "name": "your-agent",
      "description": "What this agent does",
      "model": "sonnet",
-     "depends_on": ["skill1", "skill2"]
+     "depends_on_skills": ["skill1", "skill2"]
    }
    ```
 
 3. **Generate bundles and sync:**
    ```bash
    uv run python .claude/scripts/generate_bundles.py
-   /sync-context
+   /sync
    ```
 
 ### Adding a New Command
@@ -286,7 +320,7 @@ Both are `.gitignore`d. Regenerate bundles after skill changes. Agent outputs ar
 
 3. **Sync context:**
    ```bash
-   /sync-context
+   /sync
    ```
 
 ### Modifying Conventions
@@ -301,8 +335,8 @@ Both are `.gitignore`d. Regenerate bundles after skill changes. Agent outputs ar
 
 | Category | Purpose | Examples |
 |----------|---------|----------|
-| **conventions** | How code should be written | `class-design`, `naming-conventions`, `testing` |
-| **assessment** | Criteria for code review | `maintainability`, `testability` |
+| **conventions** | How code should be written | `class-design`, `naming-conventions`, `test-writing` |
+| **assessment** | Criteria for code review | `maintainability`, `testability`, `test-quality` |
 | **templates** | Output format specifications | `plan-template`, `review-template` |
 | **utilities** | Reusable operations | `run-python-safely`, `write-markdown-output` |
 
@@ -311,16 +345,16 @@ Both are `.gitignore`d. Regenerate bundles after skill changes. Agent outputs ar
 ## Troubleshooting
 
 ### Agent doesn't know about a skill
-- Check `manifest.json` that the agent's `depends_on` includes the skill
+- Check `manifest.json` that the agent's `depends_on_skills` includes the skill
 - Regenerate bundles: `uv run python .claude/scripts/generate_bundles.py`
 
 ### Command not appearing in /help
 - Ensure the command file has correct frontmatter
-- Run `/sync-context` to regenerate CLAUDE.md
+- Run `/sync` to regenerate CLAUDE.md
 
 ### Changes to skills not reflected
 - Regenerate bundles after any skill modification
 - Bundles are gitignored, so they won't auto-update
 
 ### CLAUDE.md out of sync
-- Run `/sync-context` to regenerate from current disk state
+- Run `/sync` to regenerate from current disk state

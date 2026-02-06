@@ -48,7 +48,7 @@ Execute the plan phase by phase:
 /implement Phase 1 from .claude/agent-outputs/plans/2024-01-22T143052Z-api-refactor-plan.md
 ```
 
-The `python-code-writer` and `python-test-writer` agents implement each phase, followed by automatic style review.
+The `python-code-writer` and `python-test-writer` agents implement each phase, followed by automatic code cleaning.
 
 **Why this helps reviewers:** Phased implementation keeps PRs focused. Each phase is a logical unit reviewers can evaluate independently.
 

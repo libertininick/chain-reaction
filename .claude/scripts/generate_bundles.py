@@ -30,7 +30,7 @@ import yaml
 
 CLAUDE_DIR: Final[Path] = Path(__file__).parent.parent
 SKILLS_DIR: Final[Path] = CLAUDE_DIR / "skills"
-MANIFEST_PATH: Final[Path] = SKILLS_DIR / "manifest.json"
+MANIFEST_PATH: Final[Path] = CLAUDE_DIR / "manifest.json"
 BUNDLES_DIR: Final[Path] = CLAUDE_DIR / "bundles"
 
 FRONTMATTER_PATTERN: Final[re.Pattern[str]] = re.compile(r"^---\n(.*?)\n---\n", re.DOTALL)
@@ -292,18 +292,22 @@ def generate_bundle(
     Returns:
         str: The generated bundle content.
     """
-    dependencies: list[str] = agent_config.get("depends_on", [])
+    dependencies: list[str] = agent_config.get("depends_on_skills", [])
     timestamp = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    # Load skills first to filter missing ones from both TOC and content
+    loaded_skills: dict[str, SkillContent] = {}
+    for skill_name in dependencies:
+        skill = load_skill_content(skill_name)
+        if skill is not None:
+            loaded_skills[skill_name] = skill
 
     lines: list[str] = [
         *_build_bundle_header(agent_name, timestamp),
-        *_build_table_of_contents(dependencies, skills_lookup),
+        *_build_table_of_contents(list(loaded_skills.keys()), skills_lookup),
     ]
 
-    for skill_name in dependencies:
-        skill = load_skill_content(skill_name)
-        if skill is None:
-            continue
+    for skill_name, skill in loaded_skills.items():
         lines.extend(_format_skill_section(skill_name, skill, compact=compact))
 
     return "\n".join(lines)
@@ -346,7 +350,7 @@ def _process_agent(
         dry_run (bool): If True, print what would be generated without writing.
     """
     agent_name: str = agent_config["name"]
-    dependencies: list[str] = agent_config.get("depends_on", [])
+    dependencies: list[str] = agent_config.get("depends_on_skills", [])
 
     print(f"\nGenerating bundle for: {agent_name}")
     print(f"  Dependencies: {len(dependencies)} skills")

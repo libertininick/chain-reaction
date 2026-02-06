@@ -10,6 +10,8 @@ depends_on_agents:
 
 Create a comprehensive implementation plan for: $ARGUMENTS
 
+> If `$ARGUMENTS` is `--help`, show only the **Usage** and **Examples** sections below, then stop.
+
 ## What This Does
 
 This command invokes the **planner agent** to create a detailed, actionable implementation plan **before writing any code**.
@@ -33,6 +35,20 @@ Use `/plan` when starting:
 - ❌ Simple one-line fixes
 - ❌ Trivial updates or typos
 - ❌ Pure research tasks (use exploration agents instead)
+
+## Usage
+
+```
+/plan <description of what to build>
+```
+
+## Examples
+
+```
+/plan Add JWT-based authentication to the API endpoints
+/plan Refactor the parser module to support async operations
+/plan Fix race condition in the background task queue
+```
 
 ## What You Get
 

@@ -1,16 +1,18 @@
 ---
 name: implement
-version: 1.0.0
+version: 1.2.0
 description: Execute plan phases using specialized agents
 depends_on_agents:
   - python-code-writer
   - python-test-writer
-  - code-style-reviewer
+  - code-cleaner
 ---
 
 # Implement Plan
 
 Implement one or more phases of plan: $ARGUMENTS
+
+> If `$ARGUMENTS` is `--help`, show only the **Usage** and **Examples** sections below, then stop.
 
 ## What This Does
 
@@ -19,14 +21,20 @@ This command orchestrates implementation of phases from an approved plan documen
 ## Usage
 
 ```
-/implement Phase <N> from <plan-path>           # Single phase
+/implement Phase <N> from <plan-path>              # Single phase (includes cleaning)
+/implement Phase <N> from <plan-path> --no-clean   # Skip code cleaning
 /implement Phase <N1>, <N2>, and <N3> from <plan-path>  # Multiple phases
-/implement <plan-path>                          # Entire plan
+/implement <plan-path>                             # Entire plan
 ```
 
-**Examples:**
+### Flags
+
+- `--no-clean`: Skip the code cleaning step (cleaning runs by default)
+
+## Examples:
 ```
 /implement Phase 1 from .claude/agent-outputs/plans/2024-01-22T143052Z-api-refactor-plan.md
+/implement Phase 1 from .claude/agent-outputs/plans/2024-01-22T143052Z-api-refactor-plan.md --no-clean
 /implement Phase 3 and 4 from .claude/agent-outputs/plans/2024-01-22T143052Z-api-refactor-plan.md
 /implement .claude/agent-outputs/plans/2024-01-22T143052Z-api-refactor-plan.md
 ```
@@ -58,15 +66,12 @@ For each specified phase:
 4. **Validate**
    - Run validation commands per [CLAUDE.md](../CLAUDE.md)
 
-5. **Style Review & Fix**
-   - Dispatch to `code-style-reviewer` agent to review only files created or modified in this phase
-   - Agent applies style-focused skills (`code-organization`, `naming-conventions`, `docstring-conventions`, `type-hints`, etc.)
-   - Agent produces a findings report grouped by severity (Critical, Improvement, Nitpick)
-   - If findings exist:
-     - Dispatch to `python-code-writer` agent to address all Critical and Improvement issues
-     - Nitpicks are optional but encouraged
-     - Re-run validation commands after fixes
-   - If no findings: proceed to completion
+5. **Clean Code (default, skip with --no-clean)**
+   - Dispatch to `code-cleaner` agent
+   - Agent cleans all files created or modified across all implemented phases
+   - Validates changes pass quality checks
+   - Reports summary of cleaning operations
+   - Skip this step if `--no-clean` flag is provided
 
 ## After Implementation
 

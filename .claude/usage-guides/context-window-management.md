@@ -87,10 +87,6 @@ The most powerful tool for context management in this configuration is **agent d
 | **Sonnet** | Rule-based checks, straightforward implementation | Faster, lower cost |
 | **Haiku** | Quick lookups, simple tasks | Minimal context usage |
 
-This configuration uses:
-- **Opus** for `planner`, `python-code-writer`, `python-test-writer`, `code-substance-reviewer`
-- **Sonnet** for `code-style-reviewer`
-
 ---
 
 ## Commands: Orchestrated Context Efficiency
@@ -109,7 +105,7 @@ Creates an implementation plan before writing code.
 
 Executes plan phases using specialized agents.
 
-**Context benefit:** Dispatches work to `python-code-writer`, `python-test-writer`, and `code-style-reviewer` in sequence. Each agent loads its own conventions in isolation.
+**Context benefit:** Dispatches work to `python-code-writer`, `python-test-writer`, and `code-cleaner` in sequence. Each agent loads its own conventions in isolation.
 
 **Workflow:**
 ```
@@ -366,5 +362,5 @@ Continuing implementation discussions long after the plan is obsolete:
 **This Configuration:**
 - Agent definitions: `.claude/agents/`
 - Command definitions: `.claude/commands/`
-- Skill catalog: `.claude/skills/manifest.json`
+- Skill catalog: `.claude/manifest.json`
 - Context bundles: `.claude/bundles/`

@@ -13,6 +13,7 @@ This script:
 from __future__ import annotations
 
 import argparse
+import copy
 import json
 import re
 import subprocess
@@ -20,6 +21,8 @@ import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
+
+import validate_manifest
 
 # =============================================================================
 # Constants
@@ -43,18 +46,10 @@ SKILLS_DIR = CLAUDE_DIR / "skills"
 AGENTS_DIR = CLAUDE_DIR / "agents"
 COMMANDS_DIR = CLAUDE_DIR / "commands"
 BUNDLES_DIR = CLAUDE_DIR / "bundles"
-MANIFEST_PATH = SKILLS_DIR / "manifest.json"
+MANIFEST_PATH = CLAUDE_DIR / "manifest.json"
 CLAUDE_MD_PATH = CLAUDE_DIR / "CLAUDE.md"
 GENERATE_BUNDLES_SCRIPT = CLAUDE_DIR / "scripts" / "generate_bundles.py"
 PROJECT_ROOT = CLAUDE_DIR.parent
-
-_KNOWN_PROJECT_DIRS = {
-    "src/chain_reaction": "Library tools and classes",
-    "agents": "LangSmith Studio agent definitions",
-    "notebooks": "Learning notebooks by topic",
-    "mcp-servers": "FastMCP server implementations",
-    "tests": "Test suite",
-}
 
 _SKILL_CATEGORIES = ("conventions", "assessment", "templates", "utilities")
 
@@ -114,14 +109,14 @@ class AgentInfo:
         description (str): Human-readable description of the agent's purpose.
         model (str): Model to use (e.g., "opus", "sonnet").
         version (str): Semantic version string.
-        depends_on (list[str]): List of skill names this agent requires.
+        depends_on_skills (list[str]): List of skill names this agent requires.
     """
 
     name: str
     description: str
     model: str
     version: str = "1.0.0"
-    depends_on: list[str] = field(default_factory=list)
+    depends_on_skills: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -273,7 +268,7 @@ def scan_agents() -> dict[str, AgentInfo]:
             description=frontmatter.get("description", ""),
             model=frontmatter.get("model", "opus"),
             version=frontmatter.get("version", "1.0.0"),
-            depends_on=frontmatter.get("depends_on", []),
+            depends_on_skills=frontmatter.get("depends_on_skills", []),
         )
 
     return agents
@@ -306,22 +301,6 @@ def scan_commands() -> dict[str, CommandInfo]:
     return commands
 
 
-def scan_project_structure() -> list[tuple[str, str]]:
-    """Scan project root for top-level directories with comments.
-
-    Returns:
-        list[tuple[str, str]]: List of (path, description) tuples.
-    """
-    structure: list[tuple[str, str]] = []
-
-    for dir_path, description in _KNOWN_PROJECT_DIRS.items():
-        full_path = PROJECT_ROOT / dir_path
-        if full_path.exists() and full_path.is_dir():
-            structure.append((dir_path, description))
-
-    return structure
-
-
 # =============================================================================
 # Public Interface - Manifest Operations
 # =============================================================================
@@ -335,7 +314,7 @@ def load_manifest() -> dict[str, Any]:
     """
     if MANIFEST_PATH.exists():
         return json.loads(MANIFEST_PATH.read_text())
-    return dict(_DEFAULT_MANIFEST)
+    return copy.deepcopy(_DEFAULT_MANIFEST)
 
 
 def update_manifest(
@@ -400,7 +379,6 @@ def generate_claude_md_sections(
         dict[str, str]: Dict mapping section name to content.
     """
     return {
-        "Project Structure": _generate_project_structure_section(),
         "Commands": _generate_commands_section(commands, manifest),
         "Agents": _generate_agents_section(agents, manifest),
         "Context Bundles": _generate_bundles_section(agents),
@@ -541,6 +519,15 @@ def main() -> int:
     else:
         print("\nNo changes needed. All files are in sync.")
 
+    print("\nValidating manifest...")
+    validation_errors = validate_manifest.validate_manifest(manifest)
+    if validation_errors:
+        print("WARNING: Manifest has validation errors:", file=sys.stderr)
+        for error in validation_errors:
+            print(f"  - {error}", file=sys.stderr)
+    else:
+        print("Manifest valid.")
+
     return 0
 
 
@@ -636,7 +623,7 @@ def _sync_agents(
                 "description": info.description,
                 "model": info.model,
                 "version": info.version,
-                "depends_on": info.depends_on,
+                "depends_on_skills": info.depends_on_skills,
             })
             changes.append(f"Added agent: {name}")
 
@@ -692,22 +679,6 @@ def _sync_commands(
 # =============================================================================
 
 
-def _generate_project_structure_section() -> str:
-    """Generate the Project Structure section content.
-
-    Returns:
-        str: Formatted markdown section content.
-    """
-    structure = scan_project_structure()
-    lines = ["```"]
-    max_path_len = max(len(path) for path, _ in structure) if structure else 20
-    for path, desc in structure:
-        padding = " " * (max_path_len - len(path) + 3)
-        lines.append(f"{path}{padding}# {desc}")
-    lines.append("```")
-    return "\n".join(lines)
-
-
 def _generate_commands_section(
     commands: dict[str, CommandInfo],
     manifest: dict[str, Any],
@@ -751,13 +722,12 @@ def _generate_agents_section(
     lines = [
         "Specialized sub-agents in `.claude/agents/`. See each file for details.",
         "",
-        "| Agent | Scope | Model |",
-        "|-------|-------|-------|",
+        "| Agent | Scope |",
+        "|-------|-------|",
     ]
     for name, info in sorted(agents.items()):
-        model_display = info.model.capitalize()
         desc = manifest_agents.get(name, {}).get("description", info.description)
-        lines.append(f"| `{name}` | {desc} | {model_display} |")
+        lines.append(f"| `{name}` | {desc} |")
     return "\n".join(lines)
 
 
@@ -811,7 +781,7 @@ def _generate_skills_section(
             categories[cat].append(f"`{name}`")
 
     lines = [
-        "Skills provide coding standards and conventions. See `.claude/skills/manifest.json` for the complete catalog.",
+        "Skills provide coding standards and conventions. See `.claude/manifest.json` for the complete catalog.",
         "",
         "**Categories**:",
     ]

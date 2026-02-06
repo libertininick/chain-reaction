@@ -2,9 +2,10 @@
 name: python-test-writer
 version: 1.1.0
 description: Creates comprehensive pytest test suites. Use when writing tests for new functions/classes, updating tests after logic changes, or creating edge case coverage.
-model: opus
+model: sonnet
 color: red
 bundle: bundles/python-test-writer.md
+bundle-compact: bundles/python-test-writer-compact.md
 tools:
   - Bash
   - Glob

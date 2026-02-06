@@ -4,11 +4,14 @@ version: 1.0.0
 description: Create a new Claude Code skill
 depends_on_skills:
   - skill-template
+  - validate-manifest
 ---
 
 # Create a New Skill
 
 Create a new Claude Code skill: $ARGUMENTS
+
+> If `$ARGUMENTS` is `--help`, show only the **Usage** and **Examples** sections below, then stop.
 
 ## What This Does
 
@@ -19,8 +22,22 @@ The workflow:
 2. **Determine skill type** - Reference (auto-loaded), Task (manual only), or Hybrid
 3. **Create directory** - Create `.claude/skills/<skill-name>/`
 4. **Create SKILL.md** - Generate skill file with frontmatter and initial content
-5. **Register in manifest** - Add entry to `.claude/skills/manifest.json`
+5. **Register in manifest** - Add entry to `.claude/manifest.json`
 6. **Update CLAUDE.md** - Add to appropriate category in Skills section
+
+## Usage
+
+```
+/create-skill <skill-name> + <description of skill>
+```
+
+## Examples
+
+```
+/create-skill naming-conventions to capture our specific naming convention patterns exemplified in <file>.py
+/create-skill deployment-checklist for our 3 step checklist ...
+/create-skill api-conventions ...
+```
 
 ## When to Use This Command
 
@@ -87,7 +104,7 @@ argument-hint: <optional hints for autocomplete>
 
 ### Step 4: Register in manifest.json
 
-Add entry to `.claude/skills/manifest.json` in the `skills` array:
+Add entry to `.claude/manifest.json` in the `skills` array:
 
 ```json
 {
@@ -108,12 +125,15 @@ Add the skill name to the appropriate category in `.claude/CLAUDE.md` Skills sec
 - **Conventions**: ..., `<new-skill>`
 ```
 
-### Step 6: Verify Registration
+### Step 6: Validate Manifest
+
+Run the manifest validation script:
 
 ```bash
-# Check skill appears in manifest
-grep -A3 '"name": "<skill-name>"' .claude/skills/manifest.json
+uv run python .claude/scripts/validate_manifest.py
 ```
+
+Fix any errors before proceeding.
 
 ## Writing Effective Skills
 
@@ -130,7 +150,7 @@ Test the skill:
 2. If auto-loadable: Ask Claude something that should trigger it
 3. Verify with: "What skills are available?"
 
-If the skill is added to an agent's `depends_on` list, regenerate bundles:
+If the skill is added to an agent's `depends_on_skills` list, regenerate bundles:
 ```bash
 uv run python .claude/scripts/generate_bundles.py
 ```
