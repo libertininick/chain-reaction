@@ -461,15 +461,15 @@ This creates a structured PR description at `.claude/agent-outputs/pr-descriptio
 
 ## Agents and Their Roles
 
-| Agent | Model | When Used | What It Knows |
-|-------|-------|-----------|---------------|
-| **planner** | Opus | `/plan` | Plan template, all development conventions |
-| **python-code-writer** | Opus | `/implement` | Frameworks, all code conventions |
-| **python-test-writer** | Opus | `/implement` | Testing conventions, pytest patterns |
-| **code-style-reviewer** | Sonnet | `/review` | Style conventions, naming, organization |
-| **code-substance-reviewer** | Opus | `/review` | Design, correctness, maintainability |
-| **test-reviewer** | Sonnet | `/review` | Test quality, coverage completeness, assertions |
-| **code-cleaner** | Opus | `/implement`, `/clean` | Code organization, simplification |
+| Agent | When Used | What It Knows |
+|-------|-----------|---------------|
+| **planner** | `/plan` | Plan template, all development conventions |
+| **python-code-writer** | `/implement` | Frameworks, all code conventions |
+| **python-test-writer** | `/implement` | Testing conventions, pytest patterns |
+| **code-style-reviewer** | `/review` | Style conventions, naming, organization |
+| **code-substance-reviewer** | `/review` | Design, correctness, maintainability |
+| **test-reviewer** | `/review` | Test quality, coverage completeness, assertions |
+| **code-cleaner** | `/implement`, `/clean` | Code organization, simplification |
 
 Each agent loads a **context bundle**—pre-composed skill content that gives it exactly the knowledge it needs.
 

@@ -63,15 +63,15 @@ Reusable workflows in `.claude/commands/`. See each file for details.
 
 Specialized sub-agents in `.claude/agents/`. See each file for details.
 
-| Agent | Scope | Model |
-|-------|-------|-------|
-| `code-cleaner` | Cleans and organizes Python code | Opus |
-| `code-style-reviewer` | Reviews style and conventions | Sonnet |
-| `code-substance-reviewer` | Reviews design and correctness | Opus |
-| `planner` | Creates implementation plans | Opus |
-| `python-code-writer` | Writes production code | Opus |
-| `python-test-writer` | Writes tests | Opus |
-| `test-reviewer` | Reviews test quality and coverage | Sonnet |
+| Agent | Scope |
+|-------|-------|
+| `code-cleaner` | Cleans and organizes Python code |
+| `code-style-reviewer` | Reviews style and conventions |
+| `code-substance-reviewer` | Reviews design and correctness |
+| `planner` | Creates implementation plans |
+| `python-code-writer` | Writes production code |
+| `python-test-writer` | Writes tests |
+| `test-reviewer` | Reviews test quality and coverage |
 
 
 ---

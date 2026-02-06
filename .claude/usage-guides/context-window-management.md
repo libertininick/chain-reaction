@@ -87,10 +87,6 @@ The most powerful tool for context management in this configuration is **agent d
 | **Sonnet** | Rule-based checks, straightforward implementation | Faster, lower cost |
 | **Haiku** | Quick lookups, simple tasks | Minimal context usage |
 
-This configuration uses:
-- **Opus** for `planner`, `python-code-writer`, `python-test-writer`, `code-substance-reviewer`
-- **Sonnet** for `code-style-reviewer`
-
 ---
 
 ## Commands: Orchestrated Context Efficiency

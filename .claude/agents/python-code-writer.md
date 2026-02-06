@@ -2,7 +2,7 @@
 name: python-code-writer
 version: 1.1.0
 description: Writes clean, maintainable, testable Python code following repository conventions. Use when implementing new features, functions, classes, or modules.
-model: opus
+model: sonnet
 color: blue
 bundle: bundles/python-code-writer.md
 bundle-compact: bundles/python-code-writer-compact.md

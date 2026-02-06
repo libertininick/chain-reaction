@@ -202,7 +202,7 @@
     {
       "name": "python-code-writer",
       "description": "Writes production code",
-      "model": "opus",
+      "model": "sonnet",
       "version": "1.0.0",
       "depends_on_skills": [
         "frameworks",
@@ -223,7 +223,7 @@
     {
       "name": "python-test-writer",
       "description": "Writes tests",
-      "model": "opus",
+      "model": "sonnet",
       "version": "1.0.0",
       "depends_on_skills": [
         "test-writing",
@@ -254,7 +254,7 @@
     {
       "name": "test-reviewer",
       "description": "Reviews test quality and coverage",
-      "model": "sonnet",
+      "model": "opus",
       "version": "1.0.0",
       "depends_on_skills": [
         "test-quality",

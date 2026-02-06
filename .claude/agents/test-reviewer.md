@@ -2,7 +2,7 @@
 name: test-reviewer
 version: 1.0.0
 description: Reviews test suites for quality, coverage completeness, organization, and realistic test data variety.
-model: sonnet
+model: opus
 color: cyan
 bundle: bundles/test-reviewer.md
 bundle-compact: bundles/test-reviewer-compact.md
