@@ -389,22 +389,24 @@ def _reconstruct_dataframe(
         pl.DataFrame: The reconstructed dataframe.
 
     Raises:
-        ValueError: If the reference is a base dataframe (no source_query),
-            if required parents are missing, or if SQL execution fails.
+        RuntimeError: If invariants are violated (base dataframe reached
+            reconstruction, or derivative missing source_query).
+        ValueError: If required parents are missing or SQL execution fails.
     """
     if not ref.parent_ids:
-        available = [r.name for r in references.values()]
         msg = (
-            f"Base dataframe '{ref.name}' (id={ref.id}) is not registered. "
-            f"Base dataframes must be re-registered before reconstruction. "
-            f"Available dataframes: {available}"
+            f"Invariant violation: base dataframe '{ref.name}' (id={ref.id}) "
+            f"reached _reconstruct_derivative. The topological sort should "
+            f"exclude base dataframes from reconstruction."
         )
-        raise ValueError(msg)
+        raise RuntimeError(msg)
 
     # Derivatives must have a source_query to replay
     if not ref.source_query:
-        msg = f"Derivative '{ref.name}' has parent_ids but no source_query - state may be corrupted"
-        raise ValueError(msg)
+        msg = (
+            f"Invariant violation: derivative '{ref.name}' has parent_ids but no source_query - state may be corrupted"
+        )
+        raise RuntimeError(msg)
 
     missing_parents = [pid for pid in ref.parent_ids if pid not in references]
     if missing_parents:
