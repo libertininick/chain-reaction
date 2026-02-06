@@ -22,6 +22,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+import validate_manifest
+
 # =============================================================================
 # Constants
 # =============================================================================
@@ -541,6 +543,15 @@ def main() -> int:
             print("\nDry run complete. Run without --dry-run to apply changes.")
     else:
         print("\nNo changes needed. All files are in sync.")
+
+    print("\nValidating manifest...")
+    validation_errors = validate_manifest.validate_manifest(manifest)
+    if validation_errors:
+        print("WARNING: Manifest has validation errors:", file=sys.stderr)
+        for error in validation_errors:
+            print(f"  - {error}", file=sys.stderr)
+    else:
+        print("Manifest valid.")
 
     return 0
 
