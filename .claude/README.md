@@ -23,6 +23,8 @@ git commit                    # Commit manually
 /update-plan                  # Mark phase complete, continue
 ```
 
+Every command supports `--help` to show usage and examples (e.g., `/review --help`).
+
 ## Usage Guides
 
 Deep dives into specific topics. Start here after you're comfortable with the Quick Start workflow.
