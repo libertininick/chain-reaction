@@ -24,13 +24,6 @@
       "version": "1.0.0"
     },
     {
-      "name": "skill-template",
-      "category": "templates",
-      "description": "Skill structure, frontmatter, and writing guidelines",
-      "user_invocable": false,
-      "version": "1.0.0"
-    },
-    {
       "name": "data-structures",
       "category": "conventions",
       "description": "Pydantic models vs dataclasses guidance",
@@ -42,6 +35,13 @@
       "category": "conventions",
       "description": "Google-style docstrings",
       "user_invocable": false,
+      "version": "1.0.0"
+    },
+    {
+      "name": "explore-project",
+      "category": "utilities",
+      "description": "Explore project structure to understand layout, packages, and key files",
+      "user_invocable": true,
       "version": "1.0.0"
     },
     {
@@ -108,9 +108,9 @@
       "version": "1.0.0"
     },
     {
-      "name": "testability",
-      "category": "assessment",
-      "description": "Dependency injection, global state, pure functions",
+      "name": "skill-template",
+      "category": "templates",
+      "description": "Skill structure, frontmatter, and writing guidelines",
       "user_invocable": false,
       "version": "1.0.0"
     },
@@ -129,16 +129,16 @@
       "version": "1.0.0"
     },
     {
-      "name": "type-hints",
-      "category": "conventions",
-      "description": "Type annotations, generics, protocols",
+      "name": "testability",
+      "category": "assessment",
+      "description": "Dependency injection, global state, pure functions",
       "user_invocable": false,
       "version": "1.0.0"
     },
     {
-      "name": "write-markdown-output",
-      "category": "utilities",
-      "description": "Write timestamped markdown files to agent output directories",
+      "name": "type-hints",
+      "category": "conventions",
+      "description": "Type annotations, generics, protocols",
       "user_invocable": false,
       "version": "1.0.0"
     },
@@ -148,9 +148,34 @@
       "description": "Validate manifest.json structure and references",
       "user_invocable": false,
       "version": "1.0.0"
+    },
+    {
+      "name": "write-markdown-output",
+      "category": "utilities",
+      "description": "Write timestamped markdown files to agent output directories",
+      "user_invocable": false,
+      "version": "1.0.0"
     }
   ],
   "agents": [
+    {
+      "name": "code-cleaner",
+      "description": "Cleans and organizes Python code",
+      "model": "opus",
+      "version": "1.0.0",
+      "depends_on_skills": [
+        "code-organization",
+        "naming-conventions",
+        "function-design",
+        "class-design",
+        "pythonic-conventions",
+        "complexity-refactoring",
+        "docstring-conventions",
+        "type-hints",
+        "maintainability",
+        "testability"
+      ]
+    },
     {
       "name": "code-style-reviewer",
       "description": "Reviews style and conventions",
@@ -234,24 +259,6 @@
       ]
     },
     {
-      "name": "code-cleaner",
-      "description": "Cleans and organizes Python code",
-      "model": "opus",
-      "version": "1.0.0",
-      "depends_on_skills": [
-        "code-organization",
-        "naming-conventions",
-        "function-design",
-        "class-design",
-        "pythonic-conventions",
-        "complexity-refactoring",
-        "docstring-conventions",
-        "type-hints",
-        "maintainability",
-        "testability"
-      ]
-    },
-    {
       "name": "test-reviewer",
       "description": "Reviews test quality and coverage",
       "model": "opus",
@@ -274,20 +281,29 @@
       ]
     },
     {
+      "name": "clean",
+      "description": "Clean Python code files",
+      "version": "1.0.0",
+      "depends_on_agents": [
+        "code-cleaner"
+      ]
+    },
+    {
+      "name": "create-skill",
+      "description": "Create a new Claude Code skill",
+      "version": "1.0.0",
+      "depends_on_skills": [
+        "skill-template",
+        "validate-manifest"
+      ]
+    },
+    {
       "name": "implement",
       "description": "Execute plan phases",
       "version": "1.2.0",
       "depends_on_agents": [
         "python-code-writer",
         "python-test-writer",
-        "code-cleaner"
-      ]
-    },
-    {
-      "name": "clean",
-      "description": "Clean Python code files",
-      "version": "1.0.0",
-      "depends_on_agents": [
         "code-cleaner"
       ]
     },
@@ -326,15 +342,6 @@
       "name": "sync",
       "description": "Sync Claude context files with skills, agents, and commands on disk",
       "version": "1.0.0"
-    },
-    {
-      "name": "create-skill",
-      "description": "Create a new Claude Code skill",
-      "version": "1.0.0",
-      "depends_on_skills": [
-        "skill-template",
-        "validate-manifest"
-      ]
     },
     {
       "name": "update-plan",

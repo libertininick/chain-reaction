@@ -31,7 +31,6 @@ Synchronize `.claude/` context files with the actual skills, agents, and command
 
 | Section | Source of Truth | Updates |
 |---------|-----------------|---------|
-| CLAUDE.md Project Structure | Filesystem scan | Top-level directories |
 | CLAUDE.md Commands | `.claude/commands/*.md` | Command table |
 | CLAUDE.md Agents | `.claude/agents/*.md` | Agent table |
 | CLAUDE.md Context Bundles | Agent list | Bundle table |

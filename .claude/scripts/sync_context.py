@@ -51,14 +51,6 @@ CLAUDE_MD_PATH = CLAUDE_DIR / "CLAUDE.md"
 GENERATE_BUNDLES_SCRIPT = CLAUDE_DIR / "scripts" / "generate_bundles.py"
 PROJECT_ROOT = CLAUDE_DIR.parent
 
-_KNOWN_PROJECT_DIRS = {
-    "src/chain_reaction": "Library tools and classes",
-    "agents": "LangSmith Studio agent definitions",
-    "notebooks": "Learning notebooks by topic",
-    "mcp-servers": "FastMCP server implementations",
-    "tests": "Test suite",
-}
-
 _SKILL_CATEGORIES = ("conventions", "assessment", "templates", "utilities")
 
 _CATEGORY_DISPLAY_NAMES = {
@@ -309,22 +301,6 @@ def scan_commands() -> dict[str, CommandInfo]:
     return commands
 
 
-def scan_project_structure() -> list[tuple[str, str]]:
-    """Scan project root for top-level directories with comments.
-
-    Returns:
-        list[tuple[str, str]]: List of (path, description) tuples.
-    """
-    structure: list[tuple[str, str]] = []
-
-    for dir_path, description in _KNOWN_PROJECT_DIRS.items():
-        full_path = PROJECT_ROOT / dir_path
-        if full_path.exists() and full_path.is_dir():
-            structure.append((dir_path, description))
-
-    return structure
-
-
 # =============================================================================
 # Public Interface - Manifest Operations
 # =============================================================================
@@ -403,7 +379,6 @@ def generate_claude_md_sections(
         dict[str, str]: Dict mapping section name to content.
     """
     return {
-        "Project Structure": _generate_project_structure_section(),
         "Commands": _generate_commands_section(commands, manifest),
         "Agents": _generate_agents_section(agents, manifest),
         "Context Bundles": _generate_bundles_section(agents),
@@ -702,22 +677,6 @@ def _sync_commands(
 # =============================================================================
 # Private Helpers - Section Generation
 # =============================================================================
-
-
-def _generate_project_structure_section() -> str:
-    """Generate the Project Structure section content.
-
-    Returns:
-        str: Formatted markdown section content.
-    """
-    structure = scan_project_structure()
-    lines = ["```"]
-    max_path_len = max(len(path) for path, _ in structure) if structure else 20
-    for path, desc in structure:
-        padding = " " * (max_path_len - len(path) + 3)
-        lines.append(f"{path}{padding}# {desc}")
-    lines.append("```")
-    return "\n".join(lines)
 
 
 def _generate_commands_section(

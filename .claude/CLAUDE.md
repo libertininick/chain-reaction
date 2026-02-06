@@ -2,17 +2,6 @@
 
 Guidance for Claude Code when working in this repository.
 
-## Project Structure
-
-```
-src/chain_reaction   # Library tools and classes
-agents               # LangSmith Studio agent definitions
-notebooks            # Learning notebooks by topic
-mcp-servers          # FastMCP server implementations
-tests                # Test suite
-```
-
-
 ## Quick Reference
 
 | Task | Command |
@@ -106,7 +95,7 @@ Skills provide coding standards and conventions. See `.claude/manifest.json` for
 - **Conventions**: `class-design`, `code-organization`, `complexity-refactoring`, `data-structures`, `docstring-conventions`, `frameworks`, `function-design`, `naming-conventions`, `pythonic-conventions`, `test-writing`, `type-hints`
 - **Assessment**: `maintainability`, `test-quality`, `testability`
 - **Templates**: `plan-template`, `pr-description-template`, `review-template`, `skill-template`
-- **Utilities**: `run-python-safely`, `validate-manifest`, `write-markdown-output`
+- **Utilities**: `explore-project`, `run-python-safely`, `validate-manifest`, `write-markdown-output`
 
 **Note**: Agents should load their context bundles (above) rather than invoking skills individually.
 

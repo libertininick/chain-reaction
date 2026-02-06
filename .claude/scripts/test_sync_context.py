@@ -31,7 +31,6 @@ from sync_context import (
     regenerate_bundles,
     scan_agents,
     scan_commands,
-    scan_project_structure,
     scan_skills,
     update_claude_md,
     update_manifest,
@@ -802,69 +801,6 @@ class TestScanCommands:
 
 
 # ============================================================================
-# Test: scan_project_structure
-# ============================================================================
-
-
-class TestScanProjectStructure:
-    """Tests for scan_project_structure that identifies known project directories."""
-
-    def test_scan_project_structure_existing_dirs_returns_tuples(self, tmp_path: Path) -> None:
-        """Known directories that exist should be returned as (path, description) tuples.
-
-        Args:
-            tmp_path (Path): Pytest temporary directory fixture.
-        """
-        # Arrange
-        (tmp_path / "tests").mkdir()
-        (tmp_path / "agents").mkdir()
-
-        # Act
-        with patch.object(sync_context, "PROJECT_ROOT", tmp_path):
-            structure = scan_project_structure()
-
-        # Assert
-        paths = [path for path, _ in structure]
-        with check:
-            assert "tests" in paths
-        with check:
-            assert "agents" in paths
-
-    def test_scan_project_structure_no_known_dirs_returns_empty(self, tmp_path: Path) -> None:
-        """When no known directories exist, an empty list should be returned.
-
-        Args:
-            tmp_path (Path): Pytest temporary directory fixture.
-        """
-        # Act
-        with patch.object(sync_context, "PROJECT_ROOT", tmp_path):
-            structure = scan_project_structure()
-
-        # Assert
-        assert structure == []
-
-    def test_scan_project_structure_ignores_nonexistent_known_dirs(self, tmp_path: Path) -> None:
-        """Only known directories that actually exist on disk should be included.
-
-        Args:
-            tmp_path (Path): Pytest temporary directory fixture.
-        """
-        # Arrange - only create one of the known dirs
-        (tmp_path / "tests").mkdir()
-
-        # Act
-        with patch.object(sync_context, "PROJECT_ROOT", tmp_path):
-            structure = scan_project_structure()
-
-        # Assert
-        paths = [path for path, _ in structure]
-        with check:
-            assert "tests" in paths
-        with check:
-            assert "notebooks" not in paths
-
-
-# ============================================================================
 # Test: load_manifest
 # ============================================================================
 
@@ -1180,7 +1116,7 @@ class TestGenerateClaudeMdSections:
             sections = generate_claude_md_sections({}, {}, {}, manifest)
 
         # Assert
-        expected_keys = {"Project Structure", "Commands", "Agents", "Context Bundles", "Skills"}
+        expected_keys = {"Commands", "Agents", "Context Bundles", "Skills"}
         assert set(sections.keys()) == expected_keys
 
     def test_generate_claude_md_sections_content_is_populated(self) -> None:
@@ -1765,72 +1701,6 @@ class TestSyncCommandsHelper:
             assert entry["depends_on_agents"] == ["agent-a"]
         with check:
             assert entry["depends_on_skills"] == ["skill-x"]
-
-
-# ============================================================================
-# Test: _generate_project_structure_section
-# ============================================================================
-
-
-class TestGenerateProjectStructureSection:
-    """Tests for _generate_project_structure_section private helper."""
-
-    def test_generate_project_structure_section_format(self, tmp_path: Path) -> None:
-        """Section should produce a code block with path-description pairs.
-
-        Args:
-            tmp_path (Path): Pytest temporary directory fixture.
-        """
-        # Arrange
-        (tmp_path / "tests").mkdir()
-        (tmp_path / "agents").mkdir()
-
-        # Act
-        with patch.object(sync_context, "PROJECT_ROOT", tmp_path):
-            section = sync_context._generate_project_structure_section()
-
-        # Assert
-        with check:
-            assert section.startswith("```")
-        with check:
-            assert section.endswith("```")
-        with check:
-            assert "tests" in section
-        with check:
-            assert "# Test suite" in section
-
-    def test_generate_project_structure_section_empty_returns_empty_block(self, tmp_path: Path) -> None:
-        """No known directories should produce an empty code block.
-
-        Args:
-            tmp_path (Path): Pytest temporary directory fixture.
-        """
-        # Act
-        with patch.object(sync_context, "PROJECT_ROOT", tmp_path):
-            section = sync_context._generate_project_structure_section()
-
-        # Assert
-        assert section == "```\n```"
-
-    def test_generate_project_structure_section_padding_alignment(self, tmp_path: Path) -> None:
-        """Paths should be padded to align description markers.
-
-        Args:
-            tmp_path (Path): Pytest temporary directory fixture.
-        """
-        # Arrange
-        (tmp_path / "tests").mkdir()
-        (tmp_path / "src" / "chain_reaction").mkdir(parents=True)
-
-        # Act
-        with patch.object(sync_context, "PROJECT_ROOT", tmp_path):
-            section = sync_context._generate_project_structure_section()
-
-        # Assert - all description '#' markers should be at the same column
-        content_lines = [line for line in section.split("\n") if line and line != "```"]
-        assert len(content_lines) == 2
-        hash_positions = [line.index("# ") for line in content_lines]
-        assert hash_positions[0] == hash_positions[1]
 
 
 # ============================================================================
