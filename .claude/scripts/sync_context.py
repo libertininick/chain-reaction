@@ -13,6 +13,7 @@ This script:
 from __future__ import annotations
 
 import argparse
+import copy
 import json
 import re
 import subprocess
@@ -335,7 +336,7 @@ def load_manifest() -> dict[str, Any]:
     """
     if MANIFEST_PATH.exists():
         return json.loads(MANIFEST_PATH.read_text())
-    return dict(_DEFAULT_MANIFEST)
+    return copy.deepcopy(_DEFAULT_MANIFEST)
 
 
 def update_manifest(
