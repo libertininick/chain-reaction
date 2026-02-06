@@ -17,7 +17,7 @@ from chain_reaction.dataframe_toolkit.models import (
     DataFrameToolkitState,
     ToolCallError,
 )
-from chain_reaction.dataframe_toolkit.persistence import restore_from_state
+from chain_reaction.dataframe_toolkit.persistence import REL_TOL_DEFAULT, restore_from_state
 
 
 class DataFrameToolkit:
@@ -414,6 +414,8 @@ class DataFrameToolkit:
         cls,
         state: DataFrameToolkitState,
         base_dataframes: Mapping[str, pl.DataFrame],
+        *,
+        rel_tol: float = REL_TOL_DEFAULT,
     ) -> DataFrameToolkit:
         """Create a toolkit from saved state and base dataframes.
 
@@ -431,6 +433,8 @@ class DataFrameToolkit:
                 DataFrame for all base tables. Keys can be either names or IDs
                 (df_xxxxxxxx format). DataFrames must match the schema and
                 statistics from when the state was exported.
+            rel_tol (float): Relative tolerance for floating point comparisons
+                during validation. Defaults to 1e-9.
 
         Returns:
             DataFrameToolkit: Fully reconstructed toolkit with all base and
@@ -461,6 +465,7 @@ class DataFrameToolkit:
             base_dataframes=base_dataframes,
             context=toolkit._context,
             references=toolkit._references,
+            rel_tol=rel_tol,
         )
         return toolkit
 

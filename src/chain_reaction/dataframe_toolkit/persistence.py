@@ -17,6 +17,7 @@ import math
 import numbers
 from collections.abc import Mapping
 from graphlib import CycleError, TopologicalSorter
+from typing import Final
 
 import polars as pl
 
@@ -31,7 +32,9 @@ from chain_reaction.dataframe_toolkit.models import (
     DataFrameToolkitState,
 )
 
-__all__ = ["restore_from_state"]
+__all__ = ["REL_TOL_DEFAULT", "restore_from_state"]
+
+REL_TOL_DEFAULT: Final[float] = 1e-9
 
 
 def restore_from_state(
@@ -40,6 +43,7 @@ def restore_from_state(
     base_dataframes: Mapping[str, pl.DataFrame],
     context: DataFrameContext,
     references: dict[DataFrameId, DataFrameReference],
+    rel_tol: float = REL_TOL_DEFAULT,
 ) -> None:
     """Restore DataFrameToolkit state by registering base dataframes and reconstructing derivatives.
 
@@ -61,6 +65,8 @@ def restore_from_state(
         context (DataFrameContext): The DataFrameContext to restore into. Modified in place.
         references (dict[DataFrameId, DataFrameReference]): The references dict
             to restore into. Modified in place.
+        rel_tol (float): Relative tolerance for floating point comparisons
+            during validation. Defaults to 1e-9.
 
     Raises:
         ValueError: If a provided key doesn't match any base reference,
@@ -101,14 +107,14 @@ def restore_from_state(
     # 4. Validate each provided dataframe matches its reference
     for df_id, dataframe in normalized_bases.items():
         ref = base_refs[df_id]
-        _validate_dataframe_matches_reference(dataframe, ref)
+        _validate_dataframe_matches_reference(dataframe, ref, rel_tol=rel_tol)
 
     # 5. Register base dataframes with their references
     for df_id, dataframe in normalized_bases.items():
         _register_with_reference(base_refs[df_id], dataframe, context, references)
 
     # 6. Reconstruct derivative dataframes via SQL replay in dependency order
-    _reconstruct_derivatives(state, context, references)
+    _reconstruct_derivatives(state, context, references, rel_tol=rel_tol)
 
 
 # Private helpers
@@ -153,7 +159,7 @@ def _validate_dataframe_matches_reference(
     dataframe: pl.DataFrame,
     reference: DataFrameReference,
     *,
-    rel_tol: float = 1e-9,
+    rel_tol: float = REL_TOL_DEFAULT,
 ) -> None:
     """Validate that a DataFrame matches the expected schema and statistics from a reference.
 
@@ -199,7 +205,7 @@ def _compare_column_summaries(
     actual: ColumnSummary,
     expected: ColumnSummary,
     *,
-    rel_tol: float = 1e-9,
+    rel_tol: float = REL_TOL_DEFAULT,
 ) -> dict[str, tuple[object, object]]:
     """Compare two column summaries and return any mismatches.
 
@@ -259,7 +265,7 @@ def _values_nearly_equal(  # noqa: C901, PLR0911
     *,
     actual: bool | float | str | None,
     expected: bool | float | str | None,
-    rel_tol: float = 1e-9,
+    rel_tol: float = REL_TOL_DEFAULT,
 ) -> bool:
     """Check if two values are nearly equal, handling floats, strings, and None.
 
@@ -312,6 +318,8 @@ def _reconstruct_derivatives(
     state: DataFrameToolkitState,
     context: DataFrameContext,
     references: dict[DataFrameId, DataFrameReference],
+    *,
+    rel_tol: float = REL_TOL_DEFAULT,
 ) -> None:
     """Reconstruct and register derivative dataframes from state.
 
@@ -332,13 +340,15 @@ def _reconstruct_derivatives(
         state (DataFrameToolkitState): The state containing derivative references.
         context (DataFrameContext): The context for SQL execution and registration.
         references (dict[DataFrameId, DataFrameReference]): The registered references.
+        rel_tol (float): Relative tolerance for floating point comparisons
+            during validation. Defaults to 1e-9.
     """
     for ref in _sort_references_by_dependency_order(state.references):
         if ref.id in references:
             continue
 
         result_df = _reconstruct_dataframe(ref, context, references)
-        _validate_dataframe_matches_reference(result_df, ref)
+        _validate_dataframe_matches_reference(result_df, ref, rel_tol=rel_tol)
 
         context.register(ref.id, result_df)
         references[ref.id] = ref
