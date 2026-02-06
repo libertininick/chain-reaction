@@ -178,8 +178,9 @@ Both are `.gitignore`d. Regenerate bundles after skill changes. Agent outputs ar
 │   ├── python-code-writer.md
 │   └── ...
 │
+├── manifest.json          # Single source of truth
+│
 ├── skills/                # Knowledge & conventions
-│   ├── manifest.json      # Single source of truth
 │   ├── class-design/
 │   │   ├── SKILL.md
 │   │   ├── rules.md

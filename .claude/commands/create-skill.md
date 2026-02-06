@@ -22,7 +22,7 @@ The workflow:
 2. **Determine skill type** - Reference (auto-loaded), Task (manual only), or Hybrid
 3. **Create directory** - Create `.claude/skills/<skill-name>/`
 4. **Create SKILL.md** - Generate skill file with frontmatter and initial content
-5. **Register in manifest** - Add entry to `.claude/skills/manifest.json`
+5. **Register in manifest** - Add entry to `.claude/manifest.json`
 6. **Update CLAUDE.md** - Add to appropriate category in Skills section
 
 ## Usage
@@ -104,7 +104,7 @@ argument-hint: <optional hints for autocomplete>
 
 ### Step 4: Register in manifest.json
 
-Add entry to `.claude/skills/manifest.json` in the `skills` array:
+Add entry to `.claude/manifest.json` in the `skills` array:
 
 ```json
 {

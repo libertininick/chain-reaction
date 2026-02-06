@@ -125,7 +125,7 @@ def manifest_file(tmp_path: Path, manifest_data: dict[str, Any]) -> Path:
     """
     skills_dir = tmp_path / "skills"
     skills_dir.mkdir(exist_ok=True)
-    manifest_path = skills_dir / "manifest.json"
+    manifest_path = tmp_path / "manifest.json"
     manifest_path.write_text(json.dumps(manifest_data, indent=2))
     return manifest_path
 
@@ -1203,8 +1203,7 @@ class TestGenerateAllBundles:
                 {"name": "simple-skill", "description": "Simple", "version": "1.0.0"},
             ]
         }
-        manifest_path = tmp_path / "skills" / "manifest.json"
-        manifest_path.parent.mkdir(parents=True, exist_ok=True)
+        manifest_path = tmp_path / "manifest.json"
         manifest_path.write_text(json.dumps(manifest))
 
         # Act
@@ -1255,8 +1254,7 @@ class TestGenerateAllBundles:
                 },
             ],
         }
-        manifest_path = tmp_path / "skills" / "manifest.json"
-        manifest_path.parent.mkdir(parents=True, exist_ok=True)
+        manifest_path = tmp_path / "manifest.json"
         manifest_path.write_text(json.dumps(manifest))
 
         # Act

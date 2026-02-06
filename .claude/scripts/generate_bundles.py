@@ -30,7 +30,7 @@ import yaml
 
 CLAUDE_DIR: Final[Path] = Path(__file__).parent.parent
 SKILLS_DIR: Final[Path] = CLAUDE_DIR / "skills"
-MANIFEST_PATH: Final[Path] = SKILLS_DIR / "manifest.json"
+MANIFEST_PATH: Final[Path] = CLAUDE_DIR / "manifest.json"
 BUNDLES_DIR: Final[Path] = CLAUDE_DIR / "bundles"
 
 FRONTMATTER_PATTERN: Final[re.Pattern[str]] = re.compile(r"^---\n(.*?)\n---\n", re.DOTALL)

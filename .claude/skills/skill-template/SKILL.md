@@ -171,7 +171,7 @@ After creating the SKILL.md, register the skill in the system:
 
 ### 1. Add to manifest.json
 
-Add an entry to `.claude/skills/manifest.json` in the `skills` array:
+Add an entry to `.claude/manifest.json` in the `skills` array:
 
 ```json
 {

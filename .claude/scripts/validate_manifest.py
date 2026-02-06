@@ -25,7 +25,7 @@ from pathlib import Path
 from typing import Any, Final
 
 CLAUDE_DIR: Final[Path] = Path(__file__).parent.parent
-MANIFEST_PATH: Final[Path] = CLAUDE_DIR / "skills" / "manifest.json"
+MANIFEST_PATH: Final[Path] = CLAUDE_DIR / "manifest.json"
 
 SEMVER_PATTERN: Final[re.Pattern[str]] = re.compile(r"^\d+\.\d+\.\d+$")
 

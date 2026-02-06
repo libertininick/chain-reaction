@@ -366,5 +366,5 @@ Continuing implementation discussions long after the plan is obsolete:
 **This Configuration:**
 - Agent definitions: `.claude/agents/`
 - Command definitions: `.claude/commands/`
-- Skill catalog: `.claude/skills/manifest.json`
+- Skill catalog: `.claude/manifest.json`
 - Context bundles: `.claude/bundles/`

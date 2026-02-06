@@ -100,7 +100,7 @@ uv run python .claude/scripts/generate_bundles.py
 
 ## Skills
 
-Skills provide coding standards and conventions. See `.claude/skills/manifest.json` for the complete catalog.
+Skills provide coding standards and conventions. See `.claude/manifest.json` for the complete catalog.
 
 **Categories**:
 - **Conventions**: `class-design`, `code-organization`, `complexity-refactoring`, `data-structures`, `docstring-conventions`, `frameworks`, `function-design`, `naming-conventions`, `pythonic-conventions`, `test-writing`, `type-hints`

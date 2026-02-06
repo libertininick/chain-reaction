@@ -44,7 +44,7 @@ SKILLS_DIR = CLAUDE_DIR / "skills"
 AGENTS_DIR = CLAUDE_DIR / "agents"
 COMMANDS_DIR = CLAUDE_DIR / "commands"
 BUNDLES_DIR = CLAUDE_DIR / "bundles"
-MANIFEST_PATH = SKILLS_DIR / "manifest.json"
+MANIFEST_PATH = CLAUDE_DIR / "manifest.json"
 CLAUDE_MD_PATH = CLAUDE_DIR / "CLAUDE.md"
 GENERATE_BUNDLES_SCRIPT = CLAUDE_DIR / "scripts" / "generate_bundles.py"
 PROJECT_ROOT = CLAUDE_DIR.parent
@@ -812,7 +812,7 @@ def _generate_skills_section(
             categories[cat].append(f"`{name}`")
 
     lines = [
-        "Skills provide coding standards and conventions. See `.claude/skills/manifest.json` for the complete catalog.",
+        "Skills provide coding standards and conventions. See `.claude/manifest.json` for the complete catalog.",
         "",
         "**Categories**:",
     ]

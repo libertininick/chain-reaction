@@ -1,13 +1,13 @@
 ---
 name: validate-manifest
 version: 1.0.0
-description: Validate .claude/skills/manifest.json structure and references. Apply after modifying the manifest to ensure correctness.
+description: Validate .claude/manifest.json structure and references. Apply after modifying the manifest to ensure correctness.
 user-invocable: false
 ---
 
 # Validate Manifest
 
-Validates the `.claude/skills/manifest.json` file for structure, required fields, and dependency references.
+Validates the `.claude/manifest.json` file for structure, required fields, and dependency references.
 
 ## When to Apply
 
