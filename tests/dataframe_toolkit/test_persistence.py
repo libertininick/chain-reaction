@@ -715,3 +715,17 @@ class TestRestoreFromState:
         # Act/Assert - only provide one of two required bases
         with pytest.raises(ValueError, match="Missing base dataframes"):
             restore_from_state(state=state, base_dataframes={"first": df1}, context=context, references=references)
+
+    def test_restore_from_state_empty_state(self) -> None:
+        """Given empty state with no references, When restored, Then references remain empty."""
+        # Arrange
+        state = DataFrameToolkitState(references=[])
+        context = DataFrameContext()
+        references: dict[DataFrameId, DataFrameReference] = {}
+
+        # Act
+        restore_from_state(state=state, base_dataframes={}, context=context, references=references)
+
+        # Assert
+        with check:
+            assert len(references) == 0
