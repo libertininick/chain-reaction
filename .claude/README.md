@@ -31,6 +31,7 @@ Deep dives into specific topics. Start here after you're comfortable with the Qu
 
 | Guide | What You'll Learn |
 |-------|-------------------|
+| **[Understanding LLM Coding Agents](usage-guides/understanding-llm-coding-agents.md)** | Step-by-step guide to how AI coding agents actually work. Pattern matching, tool use, context windows, and agentic loops demystified. |
 | **[Agentic Coding Workflow](usage-guides/agentic-coding-workflow.md)** | Complete walkthrough of the plan → implement → review cycle. Commands, agents, validation, troubleshooting. |
 | **[Context Window Management](usage-guides/context-window-management.md)** | Why AI performance degrades as context fills up, and how this configuration uses agents and bundles to keep sessions efficient. |
 | **[Reviewer-Friendly PRs](usage-guides/reviewer-friendly-prs.md)** | Creating PRs that respect reviewers' time. Validation checklists, description templates, structuring large changes. |
