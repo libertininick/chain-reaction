@@ -225,7 +225,7 @@ def _compare_column_summaries(
     for field in approx_fields:
         actual_val = getattr(actual, field)
         expected_val = getattr(expected, field)
-        if not _values_nearly_equal(actual_val, expected_val, rel_tol=rel_tol):
+        if not _values_nearly_equal(actual=actual_val, expected=expected_val, rel_tol=rel_tol):
             mismatches[field] = (actual_val, expected_val)
 
     return mismatches
@@ -255,17 +255,17 @@ def _floats_nearly_equal(actual: float, expected: float, *, rel_tol: float) -> b
     return math.isclose(actual, expected, rel_tol=rel_tol)
 
 
-def _values_nearly_equal(
-    actual: float | str | None,
-    expected: float | str | None,
+def _values_nearly_equal(  # noqa: C901, PLR0911
     *,
+    actual: bool | float | str | None,
+    expected: bool | float | str | None,
     rel_tol: float = 1e-9,
 ) -> bool:
     """Check if two values are nearly equal, handling floats, strings, and None.
 
     Args:
-        actual (float | str | None): The actual value to compare.
-        expected (float | str | None): The expected value to compare against.
+        actual (bool | float | str | None): The actual value to compare.
+        expected (bool | float | str | None): The expected value to compare against.
         rel_tol (float): Relative tolerance for float comparisons. Defaults to 1e-9.
 
     Returns:
@@ -277,6 +277,10 @@ def _values_nearly_equal(
         return False
     if isinstance(actual, str) and isinstance(expected, str):
         return actual == expected
+    if isinstance(actual, bool) and isinstance(expected, bool):
+        return actual == expected
+    if isinstance(actual, bool) or isinstance(expected, bool):
+        return False
     if isinstance(actual, numbers.Number) and isinstance(expected, numbers.Number):
         return _floats_nearly_equal(float(actual), float(expected), rel_tol=rel_tol)
     return False

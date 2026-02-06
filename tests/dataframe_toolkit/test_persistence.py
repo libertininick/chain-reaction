@@ -35,7 +35,7 @@ class TestValuesNearlyEqual:
         expected = None
 
         # Act
-        result = _values_nearly_equal(actual, expected)
+        result = _values_nearly_equal(actual=actual, expected=expected)
 
         # Assert
         with check:
@@ -45,13 +45,13 @@ class TestValuesNearlyEqual:
         """Given one value is None and other is not, When called, Then returns False."""
         # Arrange/Act/Assert
         with check:
-            assert _values_nearly_equal(None, 1.0) is False
+            assert _values_nearly_equal(actual=None, expected=1.0) is False
         with check:
-            assert _values_nearly_equal(1.0, None) is False
+            assert _values_nearly_equal(actual=1.0, expected=None) is False
         with check:
-            assert _values_nearly_equal(None, "test") is False
+            assert _values_nearly_equal(actual=None, expected="test") is False
         with check:
-            assert _values_nearly_equal("test", None) is False
+            assert _values_nearly_equal(actual="test", expected=None) is False
 
     def test_values_nearly_equal_equal_floats_returns_true(self) -> None:
         """Given two equal float values, When called, Then returns True."""
@@ -60,7 +60,7 @@ class TestValuesNearlyEqual:
         expected = 42.0
 
         # Act
-        result = _values_nearly_equal(actual, expected)
+        result = _values_nearly_equal(actual=actual, expected=expected)
 
         # Assert
         with check:
@@ -75,7 +75,7 @@ class TestValuesNearlyEqual:
         expected = 1.0 + 1e-10  # Within default rel_tol of 1e-9
 
         # Act
-        result = _values_nearly_equal(actual, expected, rel_tol=1e-9)
+        result = _values_nearly_equal(actual=actual, expected=expected, rel_tol=1e-9)
 
         # Assert
         with check:
@@ -88,7 +88,7 @@ class TestValuesNearlyEqual:
         expected = 2.0
 
         # Act
-        result = _values_nearly_equal(actual, expected)
+        result = _values_nearly_equal(actual=actual, expected=expected)
 
         # Assert
         with check:
@@ -101,7 +101,7 @@ class TestValuesNearlyEqual:
         expected = "hello"
 
         # Act
-        result = _values_nearly_equal(actual, expected)
+        result = _values_nearly_equal(actual=actual, expected=expected)
 
         # Assert
         with check:
@@ -114,7 +114,7 @@ class TestValuesNearlyEqual:
         expected = "world"
 
         # Act
-        result = _values_nearly_equal(actual, expected)
+        result = _values_nearly_equal(actual=actual, expected=expected)
 
         # Assert
         with check:
@@ -124,9 +124,9 @@ class TestValuesNearlyEqual:
         """Given one string and one float, When called, Then returns False."""
         # Arrange/Act/Assert
         with check:
-            assert _values_nearly_equal("1.0", 1.0) is False
+            assert _values_nearly_equal(actual="1.0", expected=1.0) is False
         with check:
-            assert _values_nearly_equal(1.0, "1.0") is False
+            assert _values_nearly_equal(actual=1.0, expected="1.0") is False
 
     def test_values_nearly_equal_both_nan_returns_true(self) -> None:
         """Given both values are NaN, When called, Then returns True."""
@@ -135,7 +135,7 @@ class TestValuesNearlyEqual:
         expected = float("nan")
 
         # Act
-        result = _values_nearly_equal(actual, expected)
+        result = _values_nearly_equal(actual=actual, expected=expected)
 
         # Assert
         with check:
@@ -145,9 +145,51 @@ class TestValuesNearlyEqual:
         """Given one value is NaN and other is not, When called, Then returns False."""
         # Arrange/Act/Assert
         with check:
-            assert _values_nearly_equal(float("nan"), 1.0) is False
+            assert _values_nearly_equal(actual=float("nan"), expected=1.0) is False
         with check:
-            assert _values_nearly_equal(1.0, float("nan")) is False
+            assert _values_nearly_equal(actual=1.0, expected=float("nan")) is False
+
+    def test_values_nearly_equal_both_true_returns_true(self) -> None:
+        """Given both values are True, When called, Then returns True."""
+        # Act
+        result = _values_nearly_equal(actual=True, expected=True)
+
+        # Assert
+        with check:
+            assert result is True
+
+    def test_values_nearly_equal_both_false_returns_true(self) -> None:
+        """Given both values are False, When called, Then returns True."""
+        # Act
+        result = _values_nearly_equal(actual=False, expected=False)
+
+        # Assert
+        with check:
+            assert result is True
+
+    def test_values_nearly_equal_different_bools_returns_false(self) -> None:
+        """Given one True and one False, When called, Then returns False."""
+        # Arrange/Act/Assert
+        with check:
+            assert _values_nearly_equal(actual=True, expected=False) is False
+        with check:
+            assert _values_nearly_equal(actual=False, expected=True) is False
+
+    def test_values_nearly_equal_bool_and_non_bool_returns_false(self) -> None:
+        """Given one bool and one non-bool, When called, Then returns False."""
+        # Arrange/Act/Assert
+        with check:
+            assert _values_nearly_equal(actual=True, expected=1.0) is False
+        with check:
+            assert _values_nearly_equal(actual=1.0, expected=True) is False
+        with check:
+            assert _values_nearly_equal(actual=False, expected=0.0) is False
+        with check:
+            assert _values_nearly_equal(actual=0.0, expected=False) is False
+        with check:
+            assert _values_nearly_equal(actual=True, expected="True") is False
+        with check:
+            assert _values_nearly_equal(actual="True", expected=True) is False
 
 
 class TestCompareColumnSummaries:
