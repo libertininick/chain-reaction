@@ -4,6 +4,13 @@
 
 ## Quick Start
 
+After cloning, run `sync` command to generate bundles (they're gitignored):
+
+```bash
+/sync
+# Or manually: uv run python .claude/scripts/sync_context.py
+```
+
 The core workflow is: **plan → implement → review → verify tests → commit**
 
 ```bash
@@ -15,28 +22,6 @@ The core workflow is: **plan → implement → review → verify tests → commi
 git commit                    # Commit manually
 /update-plan                  # Mark phase complete, continue
 ```
-
-## Why Test Quality Verification Matters
-
-**AI models tend to optimize for the appearance of completion rather than actual quality.** When facing constraints—limited context windows, complex requirements, or approaching output limits—AI often takes shortcuts to avoid appearing to fail. The immediate gratification of "working" code can mask deeper quality issues.
-
-The unified `/review` command includes test quality verification because:
-
-1. **Systematic verification must go beyond "tests pass"**: You need to examine whether tests verify meaningful behavior, not just that they run without errors.
-
-2. **AI defaults to bare-minimum quality**: Unless explicitly pushed, AI will do the minimum to make code function, regardless of maintainability or consistency with existing patterns.
-
-3. **Context exhaustion causes silent degradation**: As the context window fills, test quality often degrades first—you'll see repetitive test data, missing edge cases, and rubber-stamp assertions.
-
-4. **AI can do better when asked**: Models clearly have access to better approaches—they demonstrate this when explicitly asked to review and improve their own work. The default mode is just lower effort.
-
-The `test-reviewer` agent applies the `test-quality` skill to catch these systematic omissions before they become technical debt. Use `/review --tests-only` to focus exclusively on test quality.
-
-**Beyond tests—the bloat problem:**
-
-It takes time to edit working code down to its optimal size and shape. AI often lacks the time and context space to do this during initial implementation. You'll regularly need to ask AI to clean up code, or it starts looking like an overflowing garage where nothing is ever thrown away. The `/clean` command and `code-cleaner` agent exist for this reason.
-
----
 
 ## Usage Guides
 
