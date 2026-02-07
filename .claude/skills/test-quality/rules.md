@@ -84,34 +84,36 @@ Evaluate whether tests verify true functionality and provide meaningful coverage
 
 ## 5. Test Data Variety
 
-**Rule**: Use varied, realistic test data. Avoid repetition; use parametrization.
+**Rule**: Use varied, realistic test data defined inline. Avoid repetition; use parametrization. Each test should define its own data so the reader sees inputs and outputs together.
 
 | Flag as | Condition |
 |---------|-----------|
 | **Improvement** | Same hardcoded test data repeated across multiple tests |
 | **Improvement** | Tests that should be parametrized are written as separate functions |
 | **Improvement** | Test data is unrealistic (e.g., single-character names, `1` for all IDs) |
+| **Improvement** | Test data lacks type/edge diversity (no nulls, dates, large numbers, empty strings, infinity) |
+| **Improvement** | Test data hidden in fixtures instead of defined inline in the test |
 | **Nitpick** | Magic numbers without comments explaining significance |
 | **Nitpick** | Test data could be more descriptive (e.g., `"test"` vs `"alice@example.com"`) |
 
-**Ask**: "Is this data realistic? Could these tests be combined with parametrization?"
+**Ask**: "Is this data realistic and diverse? Can I see inputs and outputs together without jumping to a fixture?"
 
 ---
 
 ## 6. Fixture Usage
 
-**Rule**: Fixtures should reduce duplication without creating tight coupling.
+**Rule**: Fixtures are for instantiating dependency instances (connections, services, toolkit objects), not for defining test data. Test data belongs inline in each test so the reader sees inputs and expected outputs together without jumping elsewhere.
 
 | Flag as | Condition |
 |---------|-----------|
 | **Critical** | Fixture modifies global state or module variables |
 | **Critical** | Fixtures depend on execution order |
-| **Improvement** | Single-use fixture that should be inline test data |
+| **Improvement** | Fixture defines test data (dicts, DataFrames, simple values) that should be inline |
 | **Improvement** | Tests tightly coupled to complex fixture chains |
 | **Improvement** | Fixture does too much (setup + cleanup + assertions) |
 | **Nitpick** | Fixture in conftest.py used by only one test file |
 
-**Ask**: "Does this fixture make tests clearer or more confusing? Is the coupling worth it?"
+**Ask**: "Does this fixture create a reusable dependency instance, or is it just hiding test data?"
 
 ---
 

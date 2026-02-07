@@ -17,7 +17,7 @@ Pytest conventions for writing maintainable, behavior-focused tests.
 | Test function naming | `test_<function>_<scenario>_<expected>` |
 | Test structure | Arrange-Act-Assert with comments |
 | Multiple assertions | Use `pytest-check` for soft assertions |
-| Fixtures | Local unless shared across multiple test files |
+| Test data | Inline in each test or parameterize with `@pytest.mark.parametrize`; fixtures are for dependency instances |
 | Multiple inputs | Use `@pytest.mark.parametrize` |
 | Related tests | Group in test classes |
 
@@ -29,15 +29,16 @@ Pytest conventions for writing maintainable, behavior-focused tests.
 | Implementation testing | Test observable behavior; tests should survive refactoring |
 | Order-dependent tests | Tests must be independent; never rely on execution order |
 | Multiple bare asserts | Use `pytest-check` so all assertions run even if early ones fail |
-| Single-use fixtures | Define test data inline for clarity |
+| Fixturized test data | Define test data inline in each test; fixtures are for dependency instances |
 | Fixture duplication | Extend or generalize existing fixtures |
+| Homogeneous test data | Vary data types, include edge values (nulls, dates, large numbers, empty strings) |
 
 ## Test Organization
 
 Mirror source structure:
 
 ```
-src/chain_reaction/retrieval/embeddings.py
+src/my_library/retrieval/embeddings.py
 tests/retrieval/test_embeddings.py
 ```
 
@@ -165,38 +166,102 @@ def test_user_profile_fields() -> None:
 - Assertions that logically depend on each other (if A fails, B is meaningless)
 - Guard assertions in Arrange phase (prefer `pytest.raises` or skip these)
 
+## Test Data Variety
+
+Define test data **inline in each test** so the reader sees inputs and expected outputs together without jumping to fixtures. Vary data across tests to exercise different code paths and edge cases.
+
+```python
+# CORRECT - inline data with variety across tests
+def test_summarize_scores_with_normal_values() -> None:
+    """Summarize should compute mean for typical numeric data."""
+    # Arrange - data defined right here, easy to reason about
+    df = pl.DataFrame({"score": [85, 92, 78, 95, 88]})
+
+    # Act
+    result = summarize_scores(df)
+
+    # Assert
+    with check:
+        assert result["mean"] == pytest.approx(87.6)
+
+
+def test_summarize_scores_with_nulls_and_extremes() -> None:
+    """Summarize should handle nulls, large values, and negative zero."""
+    # Arrange - different data shape exercises different paths
+    df = pl.DataFrame({"score": [None, -0.0, 1e15, None, float("inf")]})
+
+    # Act
+    result = summarize_scores(df)
+
+    # Assert
+    with check:
+        assert result["null_count"] == 2
+
+
+# INCORRECT - same simple integers in every test, no variety
+def test_summarize_a():
+    df = pl.DataFrame({"score": [1, 2, 3]})
+    ...
+
+def test_summarize_b():
+    df = pl.DataFrame({"score": [1, 2, 3]})  # identical data!
+    ...
+```
+
+**What to vary**: column types (strings, dates, floats, booleans), null density, edge values (empty strings, `float("inf")`, `float("nan")`, `-0.0`, very large numbers), and DataFrame shapes (empty, single-row, many-row).
+
 ## Fixtures
+
+Fixtures are for **instantiating dependency instances** (database connections, service objects, toolkit instances) — not for defining test data. Test data belongs inline in each test so the reader can see inputs and expected outputs together.
 
 Keep fixtures close to their usage. Use `conftest.py` only for widely shared fixtures.
 
 ```python
-# CORRECT - shared fixture in conftest.py
-# tests/retrieval/conftest.py
+# CORRECT - fixture for a dependency instance (reusable setup)
 @pytest.fixture
-def sample_embeddings() -> list[list[float]]:
-    """Sample embeddings for testing."""
-    return [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]
-
-
-# CORRECT - local fixture extending shared fixture
-# tests/retrieval/test_search.py
-@pytest.fixture
-def populated_index(sample_embeddings: list[list[float]]) -> SearchIndex:
-    """Search index populated with sample data."""
+def search_index() -> SearchIndex:
+    """Create and populate a search index for testing."""
     index = SearchIndex()
-    for i, emb in enumerate(sample_embeddings):
+    for i, emb in enumerate([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]):
         index.add(f"doc_{i}", emb)
     return index
 
 
-# INCORRECT - single-use fixture that should be inline
+# CORRECT - test data defined inline, fixture only for the dependency
+def test_search_returns_nearest_match(search_index: SearchIndex) -> None:
+    """Search should return the nearest embedding."""
+    # Arrange - test-specific data defined inline
+    query_vector = [0.9, 0.1, 0.0]
+
+    # Act
+    results = search_index.search(query_vector, limit=1)
+
+    # Assert
+    with check:
+        assert results[0].id == "doc_0"
+
+
+# INCORRECT - fixture used to define test data
 @pytest.fixture
 def single_vector() -> list[float]:
     return [1.0, 0.0, 0.0]
 
-def test_something(single_vector):  # Just define inline instead
+def test_something(single_vector):  # Data hidden in fixture — define inline instead
+    ...
+
+
+# INCORRECT - fixture used for simple test inputs
+@pytest.fixture
+def user_data() -> dict:
+    return {"name": "Alice", "email": "alice@example.com"}
+
+def test_create_user(user_data):  # Reader must look at fixture to understand test
     ...
 ```
+
+**When to use a fixture**: The setup creates a stateful object (connection, client, index) that multiple tests share, or requires teardown.
+
+**When NOT to use a fixture**: The data is a simple value, dict, or DataFrame that is specific to the test's scenario.
 
 ## Parametrized Tests
 
@@ -231,7 +296,7 @@ def test_tokenize_spaces():
 
 ## Test Classes
 
-Group related tests in classes with shared fixtures:
+Group related tests in classes. Use fixtures for the dependency instance under test; define test data inline.
 
 ```python
 from pytest_check import check
@@ -245,19 +310,15 @@ class TestDataProcessor:
         """Create a DataProcessor instance for testing."""
         return DataProcessor(max_size=1000, validate=True)
 
-    @pytest.fixture
-    def sample_data(self) -> list[dict[str, Any]]:
-        """Provide sample data for testing."""
-        return [
-            {"id": 1, "value": 10.5, "name": "test1"},
-            {"id": 2, "value": 20.0, "name": "test2"},
+    def test_load_data_success(self, processor: DataProcessor) -> None:
+        """Test successful data loading with valid input."""
+        # Arrange - test data inline so reader sees exactly what's loaded
+        sample_data = [
+            {"id": 1, "value": 10.5, "name": "Alice"},
+            {"id": 2, "value": 20.0, "name": "Bob"},
         ]
 
-    def test_load_data_success(
-        self, processor: DataProcessor, sample_data: list[dict[str, Any]]
-    ) -> None:
-        """Test successful data loading with valid input."""
-        # Arrange/Act
+        # Act
         processor.load_data(sample_data)
 
         # Assert - use pytest-check for multiple assertions
