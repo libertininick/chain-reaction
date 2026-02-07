@@ -462,7 +462,7 @@ def _execute_reconstruction_query(ref: DataFrameReference, context: DataFrameCon
 
     try:
         result_df = context.execute_sql(ref.source_query, eager=True)
-    except Exception as e:
+    except (ValueError, pl.exceptions.PolarsError, RuntimeError) as e:
         msg = f"SQL execution failed while reconstructing '{ref.name}': {e}. Query: {ref.source_query}"
         raise ValueError(msg) from e
 
