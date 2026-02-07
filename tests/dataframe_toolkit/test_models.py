@@ -399,13 +399,13 @@ class TestDataFrameReference:
             assert ref.parent_ids == []
 
     def test_parent_ids_preserves_values(self) -> None:
-        """Given parent_ids, When from_dataframe called, Then parent_ids preserved."""
+        """Given parent_ids and source_query, When from_dataframe called, Then parent_ids preserved."""
         # Arrange
         df = pl.DataFrame({"a": [1]})
         parent_ids = ["df_11111111", "df_22222222", "df_33333333"]
 
         # Act
-        ref = DataFrameReference.from_dataframe("test", df, parent_ids=parent_ids)
+        ref = DataFrameReference.from_dataframe("test", df, parent_ids=parent_ids, source_query="SELECT * FROM base")
 
         # Assert
         with check:
@@ -428,13 +428,13 @@ class TestDataFrameReference:
             assert ref.source_query is None
 
     def test_source_query_with_value(self) -> None:
-        """Given DataFrameReference with source_query, When checked, Then source_query contains SQL string."""
+        """Given source_query and parent_ids, When checked, Then source_query contains SQL string."""
         # Arrange
         df = pl.DataFrame({"a": [1, 2, 3]})
         sql = "SELECT * FROM base_table WHERE value > 0"
 
         # Act
-        ref = DataFrameReference.from_dataframe("derived", df, source_query=sql)
+        ref = DataFrameReference.from_dataframe("derived", df, source_query=sql, parent_ids=["df_00000001"])
 
         # Assert
         with check:
@@ -447,7 +447,7 @@ class TestDataFrameReference:
         sql = "SELECT a FROM parent"
 
         # Act
-        ref = DataFrameReference.from_dataframe("derived", df, source_query=sql)
+        ref = DataFrameReference.from_dataframe("derived", df, source_query=sql, parent_ids=["df_00000001"])
         ref_dict = ref.model_dump()
 
         # Assert
@@ -463,7 +463,7 @@ class TestDataFrameReference:
         sql = "SELECT * FROM base"
 
         # Act
-        ref = DataFrameReference.from_dataframe("derived", df, source_query=sql)
+        ref = DataFrameReference.from_dataframe("derived", df, source_query=sql, parent_ids=["df_00000001"])
         json_str = ref.model_dump_json()
 
         # Assert
@@ -486,6 +486,58 @@ class TestDataFrameReference:
             assert "source_query" in ref_dict
         with check:
             assert ref_dict["source_query"] is None
+
+    # -------------------------------------------------------------------------
+    # Base/derivative consistency validation tests
+    # -------------------------------------------------------------------------
+
+    def test_source_query_without_parent_ids_raises(self) -> None:
+        """Given source_query but no parent_ids, When constructing, Then raises ValidationError."""
+        # Arrange
+        df = pl.DataFrame({"a": [1, 2, 3]})
+
+        # Act/Assert
+        with pytest.raises(ValidationError, match="has source_query but empty parent_ids"):
+            DataFrameReference.from_dataframe("derived", df, source_query="SELECT * FROM base")
+
+    def test_parent_ids_without_source_query_raises(self) -> None:
+        """Given parent_ids but no source_query, When constructing, Then raises ValidationError."""
+        # Arrange
+        df = pl.DataFrame({"a": [1, 2, 3]})
+
+        # Act/Assert
+        with pytest.raises(ValidationError, match="has parent_ids but no source_query"):
+            DataFrameReference.from_dataframe("derived", df, parent_ids=["df_00000001"])
+
+    def test_base_reference_no_parent_ids_no_source_query_succeeds(self) -> None:
+        """Given no parent_ids and no source_query, When constructing, Then succeeds as base reference."""
+        # Arrange
+        df = pl.DataFrame({"a": [1, 2, 3]})
+
+        # Act
+        ref = DataFrameReference.from_dataframe("base", df)
+
+        # Assert
+        with check:
+            assert ref.parent_ids == []
+        with check:
+            assert ref.source_query is None
+
+    def test_derivative_reference_with_both_succeeds(self) -> None:
+        """Given parent_ids and source_query, When constructing, Then succeeds as derivative reference."""
+        # Arrange
+        df = pl.DataFrame({"a": [1, 2, 3]})
+
+        # Act
+        ref = DataFrameReference.from_dataframe(
+            "derived", df, parent_ids=["df_00000001"], source_query="SELECT * FROM base"
+        )
+
+        # Assert
+        with check:
+            assert ref.parent_ids == ["df_00000001"]
+        with check:
+            assert ref.source_query == "SELECT * FROM base"
 
     # -------------------------------------------------------------------------
     # Serialization tests
@@ -779,7 +831,9 @@ class TestDataFrameToolkitState:
         """Given state with references, When serialized and deserialized, Then data preserved."""
         # Arrange
         df = pl.DataFrame({"a": [1, 2, 3]})
-        ref = DataFrameReference.from_dataframe("test", df, source_query="SELECT * FROM base")
+        ref = DataFrameReference.from_dataframe(
+            "test", df, source_query="SELECT * FROM base", parent_ids=["df_00000001"]
+        )
         state = DataFrameToolkitState(references=[ref])
 
         # Act

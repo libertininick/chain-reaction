@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import polars as pl
-from pydantic import BaseModel, Field, JsonValue
+from pydantic import BaseModel, Field, JsonValue, model_validator
 
 from chain_reaction.dataframe_toolkit.identifier import DataFrameId, generate_dataframe_id
 from chain_reaction.dataframe_toolkit.polars_utils import get_series_description
@@ -110,6 +110,18 @@ class ColumnSummary(BaseModel):
 class DataFrameReference(BaseModel):
     """A reference to a Polars DataFrame in a dataframe registry.
 
+    References are classified as either **base** or **derivative**:
+
+    - **Base**: User-provided DataFrames with no lineage. ``parent_ids`` is empty
+      and ``source_query`` is None.
+    - **Derivative**: DataFrames produced by SQL queries. ``parent_ids`` is non-empty
+      and ``source_query`` is set.
+
+    Invariant:
+        ``parent_ids`` and ``source_query`` must be consistent: both empty/None (base)
+        or both populated (derivative). A model validator enforces this at construction
+        time, so ``not ref.parent_ids`` is a reliable test for base references.
+
     Attributes:
         id (DataFrameId): Unique identifier to reference the DataFrame in the registry and SQL queries.
         name (str): The name of the DataFrame.
@@ -118,8 +130,10 @@ class DataFrameReference(BaseModel):
         num_columns (int): The number of columns in the DataFrame.
         column_names (list[str]): The names of the columns in the DataFrame.
         column_summaries (dict[str, ColumnSummary]): A summary of each column in the DataFrame.
-        parent_ids (list[DataFrameId]): The identifiers of the immediate parent DataFrames, if any.
-        source_query (str | None): The SQL query that generated this DataFrame, if any.
+        parent_ids (list[DataFrameId]): The identifiers of the immediate parent DataFrames.
+            Empty for base DataFrames, non-empty for derivatives.
+        source_query (str | None): The SQL query that generated this DataFrame.
+            None for base DataFrames, set for derivatives.
     """
 
     id: DataFrameId = Field(
@@ -133,14 +147,52 @@ class DataFrameReference(BaseModel):
     column_names: list[str] = Field(description="The names of the columns in the DataFrame.")
     column_summaries: dict[str, ColumnSummary] = Field(description="A summary of each column in the DataFrame.")
     parent_ids: list[DataFrameId] = Field(
-        description="The identifiers of the immediate parent DataFrames of this DataFrame, if any.",
+        description=(
+            "The identifiers of the immediate parent DataFrames. "
+            "Empty for base DataFrames, non-empty for derivatives. "
+            "Must be non-empty when source_query is set."
+        ),
         default_factory=list,
     )
     source_query: str | None = Field(
         default=None,
-        description="The SQL query that generated this DataFrame, if any. None for user-provided base DataFrames.",
+        description=(
+            "The SQL query that generated this DataFrame. "
+            "None for user-provided base DataFrames, set for derivatives. "
+            "Must be set when parent_ids is non-empty."
+        ),
         min_length=1,
     )
+
+    @model_validator(mode="after")
+    def _validate_base_derivative_consistency(self) -> DataFrameReference:
+        """Enforce that parent_ids and source_query are consistent.
+
+        Returns:
+            DataFrameReference: The validated instance.
+
+        Raises:
+            ValueError: If source_query is set without parent_ids, or parent_ids
+                is non-empty without source_query.
+        """
+        has_parents = bool(self.parent_ids)
+        has_query = self.source_query is not None
+
+        if has_query and not has_parents:
+            msg = (
+                f"Derivative DataFrameReference '{self.name}' has source_query but empty parent_ids. "
+                f"Derivatives must specify their parent DataFrames."
+            )
+            raise ValueError(msg)
+
+        if has_parents and not has_query:
+            msg = (
+                f"Derivative DataFrameReference '{self.name}' has parent_ids but no source_query. "
+                f"Derivatives must include the SQL query that produced them."
+            )
+            raise ValueError(msg)
+
+        return self
 
     @classmethod
     def from_dataframe(
@@ -160,8 +212,10 @@ class DataFrameReference(BaseModel):
             dataframe (pl.DataFrame): Polars DataFrame.
             description (str | None): An optional textual description of the DataFrame. Defaults to None.
             column_descriptions (dict[str, str] | None): Optional textual descriptions of the columns. Defaults to None.
-            parent_ids (list[DataFrameId] | None): Identifiers of the parent DataFrames, if any. Defaults to None.
-            source_query (str | None): The SQL query that generated this DataFrame, if any. Defaults to None.
+            parent_ids (list[DataFrameId] | None): Identifiers of the parent DataFrames.
+                Required for derivatives, must be None/empty for base DataFrames. Defaults to None.
+            source_query (str | None): The SQL query that generated this DataFrame.
+                Required for derivatives, must be None for base DataFrames. Defaults to None.
                 NOTE: empty queries are not allowed, use None for no query.
 
         Returns:
