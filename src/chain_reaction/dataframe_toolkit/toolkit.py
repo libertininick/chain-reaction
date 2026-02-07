@@ -210,8 +210,8 @@ class DataFrameToolkit:
     ) -> list[DataFrameReference]:
         """Register multiple DataFrames with the toolkit.
 
-        Validates that all names are unique before registering any DataFrames,
-        ensuring atomicity of the operation.
+        Validates all inputs before modifying state and commits to the SQL
+        context before updating references, so the two stores stay in sync.
 
         Args:
             dataframes (Mapping[str, pl.DataFrame]): Mapping of names to DataFrames.
@@ -265,11 +265,11 @@ class DataFrameToolkit:
             for name, dataframe in dataframes.items()
         ]
 
-        # Commit all at once (only after all references built successfully)
-        # Store by ID to align with registry.context (both keyed by ID = single source of truth)
-        for dataframe, reference in zip(dataframes.values(), references, strict=True):
-            self._registry.context.register(reference.id, dataframe)
-            self._registry.references[reference.id] = reference
+        # Commit: register all into context first, then update references.
+        # This ordering ensures references are never updated if context registration fails.
+        context_entries = {ref.id: df for df, ref in zip(dataframes.values(), references, strict=True)}
+        self._registry.context.register_many(context_entries)
+        self._registry.references.update({ref.id: ref for ref in references})
 
         return references
 
