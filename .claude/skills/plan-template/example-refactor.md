@@ -43,8 +43,8 @@ Refactor the existing SQL generation logic scattered across multiple files into 
 
 ### Current State
 **Existing code structure:**
-- `src/chain_reaction/dataframe_toolkit/toolkit.py` - Main toolkit with mixed concerns
-- `src/chain_reaction/dataframe_toolkit/sql_utils.py` - Some SQL utilities (incomplete)
+- `src/my_library/dataframe_toolkit/toolkit.py` - Main toolkit with mixed concerns
+- `src/my_library/dataframe_toolkit/sql_utils.py` - Some SQL utilities (incomplete)
 - Query building logic scattered across 5+ methods in toolkit.py
 - Duplicate WHERE clause construction in 3 different places
 - JOIN logic mixed with DataFrame operations
@@ -58,11 +58,11 @@ Refactor the existing SQL generation logic scattered across multiple files into 
 
 ### Proposed Changes
 **New structure:**
-- `src/chain_reaction/dataframe_toolkit/sql/query_builder.py` - Core query building abstractions
-- `src/chain_reaction/dataframe_toolkit/sql/clause_builder.py` - Clause construction utilities (WHERE, JOIN, etc.)
-- `src/chain_reaction/dataframe_toolkit/sql/query_executor.py` - Query execution (separated from building)
-- `src/chain_reaction/dataframe_toolkit/sql/__init__.py` - Public API exports
-- `src/chain_reaction/dataframe_toolkit/toolkit.py` - Refactored to use new SQL module
+- `src/my_library/dataframe_toolkit/sql/query_builder.py` - Core query building abstractions
+- `src/my_library/dataframe_toolkit/sql/clause_builder.py` - Clause construction utilities (WHERE, JOIN, etc.)
+- `src/my_library/dataframe_toolkit/sql/query_executor.py` - Query execution (separated from building)
+- `src/my_library/dataframe_toolkit/sql/__init__.py` - Public API exports
+- `src/my_library/dataframe_toolkit/toolkit.py` - Refactored to use new SQL module
 
 **Key changes:**
 - Extract query building into `QueryBuilder` class
@@ -81,21 +81,21 @@ Refactor the existing SQL generation logic scattered across multiple files into 
 ## File Inventory
 
 ### Files to Create
-- `src/chain_reaction/dataframe_toolkit/sql/__init__.py` - Module exports
-- `src/chain_reaction/dataframe_toolkit/sql/query_builder.py` - QueryBuilder class
-- `src/chain_reaction/dataframe_toolkit/sql/clause_builder.py` - Clause construction utilities
-- `src/chain_reaction/dataframe_toolkit/sql/query_executor.py` - Query execution
+- `src/my_library/dataframe_toolkit/sql/__init__.py` - Module exports
+- `src/my_library/dataframe_toolkit/sql/query_builder.py` - QueryBuilder class
+- `src/my_library/dataframe_toolkit/sql/clause_builder.py` - Clause construction utilities
+- `src/my_library/dataframe_toolkit/sql/query_executor.py` - Query execution
 - `tests/dataframe_toolkit/sql/test_query_builder.py` - QueryBuilder tests
 - `tests/dataframe_toolkit/sql/test_clause_builder.py` - Clause builder tests
 - `tests/dataframe_toolkit/sql/test_query_executor.py` - Query executor tests
 
 ### Files to Modify
-- `src/chain_reaction/dataframe_toolkit/toolkit.py` - Refactor to use new SQL module
-- `src/chain_reaction/dataframe_toolkit/__init__.py` - Update exports
+- `src/my_library/dataframe_toolkit/toolkit.py` - Refactor to use new SQL module
+- `src/my_library/dataframe_toolkit/__init__.py` - Update exports
 - `tests/dataframe_toolkit/test_toolkit.py` - Update to test through new architecture
 
 ### Files to Delete (if any)
-- `src/chain_reaction/dataframe_toolkit/sql_utils.py` - Logic will be migrated to new sql/ module
+- `src/my_library/dataframe_toolkit/sql_utils.py` - Logic will be migrated to new sql/ module
 
 ## Implementation Steps
 
@@ -105,11 +105,11 @@ Refactor the existing SQL generation logic scattered across multiple files into 
 
 #### Step 1.1: Write - Create sql submodule with ClauseBuilder
 - **Files**:
-  - `src/chain_reaction/dataframe_toolkit/sql/__init__.py`
-  - `src/chain_reaction/dataframe_toolkit/sql/clause_builder.py`
+  - `src/my_library/dataframe_toolkit/sql/__init__.py`
+  - `src/my_library/dataframe_toolkit/sql/clause_builder.py`
 - **Action**: Create sql submodule and implement clause building functions
 - **Details**:
-  - Create directory: `src/chain_reaction/dataframe_toolkit/sql/`
+  - Create directory: `src/my_library/dataframe_toolkit/sql/`
   - Create `__init__.py` with module docstring describing purpose
   - Implement `clause_builder.py` with functions:
     - `build_where_clause(conditions: list[tuple[str, str, Any]]) -> str`
@@ -137,15 +137,15 @@ Refactor the existing SQL generation logic scattered across multiple files into 
 #### Step 1.3: Validate - Verify ClauseBuilder implementation
 - **Action**: Run tests and quality checks on clause_builder module
 - **Validation Steps**:
-  1. **Import check**: `uv run python .claude/skills/run-python-safely/scripts/run_python_safely.py -c "from chain_reaction.dataframe_toolkit.sql.clause_builder import build_where_clause; clause = build_where_clause([('age', '>', 18)]); print('OK' if clause else 'FAIL')"`
+  1. **Import check**: `uv run python .claude/skills/run-python-safely/scripts/run_python_safely.py -c "from my_library.dataframe_toolkit.sql.clause_builder import build_where_clause; clause = build_where_clause([('age', '>', 18)]); print('OK' if clause else 'FAIL')"`
      - Expected: Prints "OK"
-  2. **Test execution**: `uv run pytest tests/dataframe_toolkit/sql/test_clause_builder.py -v --cov=src/chain_reaction/dataframe_toolkit/sql/clause_builder --cov-report=term-missing`
+  2. **Test execution**: `uv run pytest tests/dataframe_toolkit/sql/test_clause_builder.py -v --cov=src/my_library/dataframe_toolkit/sql/clause_builder --cov-report=term-missing`
      - Expected: All tests pass with ≥95% coverage
-  3. **Code quality**: `uv run ruff check src/chain_reaction/dataframe_toolkit/sql/clause_builder.py`
+  3. **Code quality**: `uv run ruff check src/my_library/dataframe_toolkit/sql/clause_builder.py`
      - Expected: No errors
-  4. **Type checking**: `uv run ty check src/chain_reaction/dataframe_toolkit/sql/clause_builder.py`
+  4. **Type checking**: `uv run ty check src/my_library/dataframe_toolkit/sql/clause_builder.py`
      - Expected: No errors
-  5. **Docstring validation**: `uv tool run pydoclint --style=google --allow-init-docstring=True src/chain_reaction/dataframe_toolkit/sql/clause_builder.py`
+  5. **Docstring validation**: `uv tool run pydoclint --style=google --allow-init-docstring=True src/my_library/dataframe_toolkit/sql/clause_builder.py`
      - Expected: No errors
 - **Manual Checks**:
   - All functions have type hints and Google-style docstrings
@@ -158,7 +158,7 @@ Refactor the existing SQL generation logic scattered across multiple files into 
 **Pattern**: Write → Test → Validate
 
 #### Step 2.1: Write - Create QueryBuilder class
-- **File**: `src/chain_reaction/dataframe_toolkit/sql/query_builder.py`
+- **File**: `src/my_library/dataframe_toolkit/sql/query_builder.py`
 - **Action**: Implement fluent QueryBuilder interface
 - **Details**:
   - Create class `QueryBuilder` with methods:
@@ -192,15 +192,15 @@ Refactor the existing SQL generation logic scattered across multiple files into 
 #### Step 2.3: Validate - Verify QueryBuilder implementation
 - **Action**: Run tests and quality checks on query_builder module
 - **Validation Steps**:
-  1. **Import check**: `uv run python .claude/skills/run-python-safely/scripts/run_python_safely.py -c "from chain_reaction.dataframe_toolkit.sql.query_builder import QueryBuilder; sql = QueryBuilder().select('id', 'name').from_table('users').where('age > 18').build(); print('OK' if 'SELECT' in sql else 'FAIL')"`
+  1. **Import check**: `uv run python .claude/skills/run-python-safely/scripts/run_python_safely.py -c "from my_library.dataframe_toolkit.sql.query_builder import QueryBuilder; sql = QueryBuilder().select('id', 'name').from_table('users').where('age > 18').build(); print('OK' if 'SELECT' in sql else 'FAIL')"`
      - Expected: Prints "OK"
-  2. **Test execution**: `uv run pytest tests/dataframe_toolkit/sql/test_query_builder.py -v --cov=src/chain_reaction/dataframe_toolkit/sql/query_builder --cov-report=term-missing`
+  2. **Test execution**: `uv run pytest tests/dataframe_toolkit/sql/test_query_builder.py -v --cov=src/my_library/dataframe_toolkit/sql/query_builder --cov-report=term-missing`
      - Expected: All tests pass with ≥95% coverage
-  3. **Code quality**: `uv run ruff check src/chain_reaction/dataframe_toolkit/sql/query_builder.py`
+  3. **Code quality**: `uv run ruff check src/my_library/dataframe_toolkit/sql/query_builder.py`
      - Expected: No errors
-  4. **Type checking**: `uv run ty check src/chain_reaction/dataframe_toolkit/sql/query_builder.py`
+  4. **Type checking**: `uv run ty check src/my_library/dataframe_toolkit/sql/query_builder.py`
      - Expected: No errors
-  5. **Docstring validation**: `uv tool run pydoclint --style=google --allow-init-docstring=True src/chain_reaction/dataframe_toolkit/sql/query_builder.py`
+  5. **Docstring validation**: `uv tool run pydoclint --style=google --allow-init-docstring=True src/my_library/dataframe_toolkit/sql/query_builder.py`
      - Expected: No errors
 - **Manual Checks**:
   - Methods return Self for proper chaining
@@ -214,7 +214,7 @@ Refactor the existing SQL generation logic scattered across multiple files into 
 **Pattern**: Write → Test → Validate
 
 #### Step 3.1: Write - Create QueryExecutor class
-- **File**: `src/chain_reaction/dataframe_toolkit/sql/query_executor.py`
+- **File**: `src/my_library/dataframe_toolkit/sql/query_executor.py`
 - **Action**: Implement query execution with separation from building
 - **Details**:
   - Create class `QueryExecutor` with constructor accepting connection
@@ -245,17 +245,17 @@ Refactor the existing SQL generation logic scattered across multiple files into 
 #### Step 3.3: Validate - Verify QueryExecutor implementation
 - **Action**: Run tests and quality checks on query_executor module
 - **Validation Steps**:
-  1. **Import check**: `uv run python .claude/skills/run-python-safely/scripts/run_python_safely.py -c "from chain_reaction.dataframe_toolkit.sql.query_executor import QueryExecutor; print('OK')"`
+  1. **Import check**: `uv run python .claude/skills/run-python-safely/scripts/run_python_safely.py -c "from my_library.dataframe_toolkit.sql.query_executor import QueryExecutor; print('OK')"`
      - Expected: Prints "OK"
-  2. **Test execution**: `uv run pytest tests/dataframe_toolkit/sql/test_query_executor.py -v --cov=src/chain_reaction/dataframe_toolkit/sql/query_executor --cov-report=term-missing`
+  2. **Test execution**: `uv run pytest tests/dataframe_toolkit/sql/test_query_executor.py -v --cov=src/my_library/dataframe_toolkit/sql/query_executor --cov-report=term-missing`
      - Expected: All tests pass with ≥90% coverage
-  3. **Code quality**: `uv run ruff check src/chain_reaction/dataframe_toolkit/sql/query_executor.py`
+  3. **Code quality**: `uv run ruff check src/my_library/dataframe_toolkit/sql/query_executor.py`
      - Expected: No errors
-  4. **Type checking**: `uv run ty check src/chain_reaction/dataframe_toolkit/sql/query_executor.py`
+  4. **Type checking**: `uv run ty check src/my_library/dataframe_toolkit/sql/query_executor.py`
      - Expected: No errors
-  5. **Docstring validation**: `uv tool run pydoclint --style=google --allow-init-docstring=True src/chain_reaction/dataframe_toolkit/sql/query_executor.py`
+  5. **Docstring validation**: `uv tool run pydoclint --style=google --allow-init-docstring=True src/my_library/dataframe_toolkit/sql/query_executor.py`
      - Expected: No errors
-  6. **Module exports**: `uv run python .claude/skills/run-python-safely/scripts/run_python_safely.py -c "from chain_reaction.dataframe_toolkit.sql import QueryBuilder, QueryExecutor; print('OK')"`
+  6. **Module exports**: `uv run python .claude/skills/run-python-safely/scripts/run_python_safely.py -c "from my_library.dataframe_toolkit.sql import QueryBuilder, QueryExecutor; print('OK')"`
      - Expected: Prints "OK"
 - **Manual Checks**:
   - Error handling is comprehensive and clear
@@ -269,10 +269,10 @@ Refactor the existing SQL generation logic scattered across multiple files into 
 **Pattern**: Write → Test → Validate
 
 #### Step 4.1: Write - Refactor DataFrameToolkit methods
-- **File**: `src/chain_reaction/dataframe_toolkit/toolkit.py`
+- **File**: `src/my_library/dataframe_toolkit/toolkit.py`
 - **Action**: Refactor all SQL generation methods to use new sql module
 - **Details**:
-  - Import new SQL module: `from chain_reaction.dataframe_toolkit.sql import QueryBuilder, QueryExecutor, build_where_clause, build_join_clause`
+  - Import new SQL module: `from my_library.dataframe_toolkit.sql import QueryBuilder, QueryExecutor, build_where_clause, build_join_clause`
   - Start with `query_with_filters()` as proof of concept
   - Identify all methods that build SQL queries (approximately 6-8 methods)
   - Refactor each to use QueryBuilder and QueryExecutor
@@ -303,9 +303,9 @@ Refactor the existing SQL generation logic scattered across multiple files into 
      - Expected: All existing tests pass
   3. **Integration verification**: `uv run pytest tests/dataframe_toolkit/ -v`
      - Expected: All tests pass
-  4. **Code quality**: `uv run ruff check src/chain_reaction/dataframe_toolkit/toolkit.py`
+  4. **Code quality**: `uv run ruff check src/my_library/dataframe_toolkit/toolkit.py`
      - Expected: No errors
-  5. **Type checking**: `uv run ty check src/chain_reaction/dataframe_toolkit/toolkit.py`
+  5. **Type checking**: `uv run ty check src/my_library/dataframe_toolkit/toolkit.py`
      - Expected: No errors
 - **Manual Checks**:
   - Method signatures unchanged
@@ -316,15 +316,15 @@ Refactor the existing SQL generation logic scattered across multiple files into 
 
 #### Step 4.4: Write - Clean up deprecated code and update exports
 - **Files**:
-  - `src/chain_reaction/dataframe_toolkit/sql_utils.py` (delete)
-  - `src/chain_reaction/dataframe_toolkit/__init__.py` (update)
+  - `src/my_library/dataframe_toolkit/sql_utils.py` (delete)
+  - `src/my_library/dataframe_toolkit/__init__.py` (update)
 - **Action**: Remove old code and update module exports
 - **Details**:
   - Verify all functions from sql_utils.py migrated to new sql/ module
   - Search for any remaining imports of sql_utils: `uv run python -m grep -r "from.*sql_utils" src/`
   - Delete sql_utils.py
   - Update toolkit `__init__.py`:
-    - Add export: `from chain_reaction.dataframe_toolkit.sql import QueryBuilder, QueryExecutor`
+    - Add export: `from my_library.dataframe_toolkit.sql import QueryBuilder, QueryExecutor`
     - Update module docstring to mention new sql module
     - Update `__all__` if present
 - **Why**: Clean up deprecated code and make new module accessible from toolkit namespace
@@ -337,7 +337,7 @@ Refactor the existing SQL generation logic scattered across multiple files into 
      - Expected: No matches found
   2. **Tests still pass**: `uv run pytest tests/dataframe_toolkit/ -v`
      - Expected: All tests pass
-  3. **Exports work**: `uv run python .claude/skills/run-python-safely/scripts/run_python_safely.py -c "from chain_reaction.dataframe_toolkit import QueryBuilder; print('OK')"`
+  3. **Exports work**: `uv run python .claude/skills/run-python-safely/scripts/run_python_safely.py -c "from my_library.dataframe_toolkit import QueryBuilder; print('OK')"`
      - Expected: Prints "OK"
 - **Manual Checks**:
   - sql_utils.py deleted
@@ -352,9 +352,9 @@ Refactor the existing SQL generation logic scattered across multiple files into 
 #### Step 5.1: Run comprehensive test suite
 - **Action**: Run all tests with coverage analysis
 - **Validation Steps**:
-  1. **Full test suite**: `uv run pytest tests/dataframe_toolkit/ -v --cov=src/chain_reaction/dataframe_toolkit --cov-report=term-missing`
+  1. **Full test suite**: `uv run pytest tests/dataframe_toolkit/ -v --cov=src/my_library/dataframe_toolkit --cov-report=term-missing`
      - Expected: All tests pass, coverage ≥90%
-  2. **SQL module coverage**: `uv run pytest tests/dataframe_toolkit/sql/ -v --cov=src/chain_reaction/dataframe_toolkit/sql --cov-report=term-missing`
+  2. **SQL module coverage**: `uv run pytest tests/dataframe_toolkit/sql/ -v --cov=src/my_library/dataframe_toolkit/sql --cov-report=term-missing`
      - Expected: Coverage ≥95% for sql module
 - **Manual Checks**:
   - No test failures
@@ -365,13 +365,13 @@ Refactor the existing SQL generation logic scattered across multiple files into 
 #### Step 5.2: Run all code quality checks
 - **Action**: Validate code quality across all modified files
 - **Validation Steps**:
-  1. **Linting**: `uv run ruff check src/chain_reaction/dataframe_toolkit/`
+  1. **Linting**: `uv run ruff check src/my_library/dataframe_toolkit/`
      - Expected: No errors
-  2. **Formatting**: `uv run ruff format --check src/chain_reaction/dataframe_toolkit/`
+  2. **Formatting**: `uv run ruff format --check src/my_library/dataframe_toolkit/`
      - Expected: All files properly formatted
-  3. **Type checking**: `uv run ty check src/chain_reaction/dataframe_toolkit/`
+  3. **Type checking**: `uv run ty check src/my_library/dataframe_toolkit/`
      - Expected: No type errors
-  4. **Docstrings**: `uv tool run pydoclint --style=google --allow-init-docstring=True src/chain_reaction/dataframe_toolkit/sql/`
+  4. **Docstrings**: `uv tool run pydoclint --style=google --allow-init-docstring=True src/my_library/dataframe_toolkit/sql/`
      - Expected: No docstring errors
 - **Manual Checks**:
   - Code properly formatted

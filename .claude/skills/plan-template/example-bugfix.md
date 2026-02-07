@@ -1,7 +1,7 @@
 # Example Plan: Fix DataFrame Column Type Validation Bug
 
 ## Bug Overview
-The `validate_column_types()` function in `src/chain_reaction/dataframe_toolkit/validation.py` incorrectly validates nullable integer columns. When a DataFrame has an integer column with null values (dtype `Int64`), the validation fails with a false negative, claiming the column is a float when it should pass as an integer type.
+The `validate_column_types()` function in `src/my_library/dataframe_toolkit/validation.py` incorrectly validates nullable integer columns. When a DataFrame has an integer column with null values (dtype `Int64`), the validation fails with a false negative, claiming the column is a float when it should pass as an integer type.
 
 **Bug Report:**
 - **Expected**: DataFrame with `Int64` column (nullable integer) should pass integer type validation
@@ -36,7 +36,7 @@ This bug fix follows **Test-Driven Development (TDD)** principles:
 **Goal**: Locate the buggy code and understand the root cause
 
 #### Step 1.1: Find the buggy function
-- **Action**: Read `src/chain_reaction/dataframe_toolkit/validation.py` to locate `validate_column_types()`
+- **Action**: Read `src/my_library/dataframe_toolkit/validation.py` to locate `validate_column_types()`
 - **Details**:
   - Find the function definition and its type checking logic
   - Identify where integer type validation occurs
@@ -102,7 +102,7 @@ This bug fix follows **Test-Driven Development (TDD)** principles:
 **Pattern**: Minimal change to fix the bug → verify test passes → ensure no regressions
 
 #### Step 3.1: Implement the fix
-- **File**: `src/chain_reaction/dataframe_toolkit/validation.py`
+- **File**: `src/my_library/dataframe_toolkit/validation.py`
 - **Action**: Modify `validate_column_types()` to correctly handle nullable integer types
 - **Details**:
   - Change validation logic from exact dtype matching to category-based checking
@@ -136,9 +136,9 @@ This bug fix follows **Test-Driven Development (TDD)** principles:
 - **Validation**:
   - **Command**: `uv run ruff check --fix && uv run ruff format`
   - **Expected**: No linting errors, code properly formatted
-  - **Command**: `uv run ty check src/chain_reaction/dataframe_toolkit/validation.py`
+  - **Command**: `uv run ty check src/my_library/dataframe_toolkit/validation.py`
   - **Expected**: No type errors
-  - **Command**: `uv tool run pydoclint --style=google --allow-init-docstring=True src/chain_reaction/dataframe_toolkit/validation.py`
+  - **Command**: `uv tool run pydoclint --style=google --allow-init-docstring=True src/my_library/dataframe_toolkit/validation.py`
   - **Expected**: Docstring format is valid
   - **Manual Check**: Updated docstring mentions nullable type support
 
@@ -176,7 +176,7 @@ This bug fix follows **Test-Driven Development (TDD)** principles:
 #### Step 4.3: Verify complete test coverage
 - **Action**: Check test coverage for the validation module
 - **Validation**:
-  - **Command**: `uv run pytest tests/dataframe_toolkit/test_validation.py -v --cov=src/chain_reaction/dataframe_toolkit/validation --cov-report=term-missing`
+  - **Command**: `uv run pytest tests/dataframe_toolkit/test_validation.py -v --cov=src/my_library/dataframe_toolkit/validation --cov-report=term-missing`
   - **Expected**: Coverage >= 95% for validation.py
   - **Manual Check**: All branches of type validation logic are covered
 
@@ -208,7 +208,7 @@ This bug fix follows **Test-Driven Development (TDD)** principles:
 #### Step 5.3: Final quality checks
 - **Action**: Run all quality checks
 - **Validation**:
-  - **Command**: `uv run ruff check && uv run ty check . && uv tool run pydoclint --style=google --allow-init-docstring=True src/chain_reaction/dataframe_toolkit/`
+  - **Command**: `uv run ruff check && uv run ty check . && uv tool run pydoclint --style=google --allow-init-docstring=True src/my_library/dataframe_toolkit/`
   - **Expected**: All quality checks pass
   - **Manual Check**: Code follows project conventions
 
@@ -217,7 +217,7 @@ This bug fix follows **Test-Driven Development (TDD)** principles:
 ## Files Modified
 
 ### Implementation File
-- `src/chain_reaction/dataframe_toolkit/validation.py` - Fixed type validation logic
+- `src/my_library/dataframe_toolkit/validation.py` - Fixed type validation logic
 
 ### Test File
 - `tests/dataframe_toolkit/test_validation.py` - Added reproduction test and edge case tests

@@ -99,8 +99,8 @@ When `--tests-only` is specified, source files are excluded even if explicitly l
 
 **Examples:**
 ```
-/review src/chain_reaction/tools/parser.py
-/review src/chain_reaction/tools/parser.py tests/tools/test_parser.py
+/review src/my_library/tools/parser.py
+/review src/my_library/tools/parser.py tests/tools/test_parser.py
 /review tests/tools/test_parser.py
 ```
 
