@@ -2,7 +2,7 @@
 
 ## Quick Take
 
-**The core insight:** Your AI assistant's context window is a fixed-size clipboard. Everything it knows about your project must fit on that clipboard—and the fuller it gets, the worse the AI performs. This isn't gradual degradation; it's a cliff.
+**The core insight:** Your AI assistant's context window is a fixed-size knapsack. Everything it knows about your project must fit inside that knapsack, and the fuller it gets, the worse the AI performs. This isn't gradual degradation; it's a cliff.
 
 **What the research shows:** The 2024 "Lost in the Middle" study found that LLM accuracy drops by 30%+ when relevant information is buried in the middle of long contexts. In some cases, adding more context made models perform *worse* than having no context at all.
 
