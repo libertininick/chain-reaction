@@ -120,7 +120,7 @@ class DataFrameReference(BaseModel):
     Invariant:
         ``parent_ids`` and ``source_query`` must be consistent: both empty/None (base)
         or both populated (derivative). A model validator enforces this at construction
-        time, so ``not ref.parent_ids`` is a reliable test for base references.
+        time, so ``ref.is_base`` is a reliable test for base references.
 
     Attributes:
         id (DataFrameId): Unique identifier to reference the DataFrame in the registry and SQL queries.
@@ -163,6 +163,11 @@ class DataFrameReference(BaseModel):
         ),
         min_length=1,
     )
+
+    @property
+    def is_base(self) -> bool:
+        """Whether this is a base (user-provided) reference with no lineage."""
+        return not self.parent_ids
 
     @model_validator(mode="after")
     def _validate_base_derivative_consistency(self) -> DataFrameReference:

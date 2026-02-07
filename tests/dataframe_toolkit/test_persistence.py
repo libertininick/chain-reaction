@@ -6,8 +6,6 @@ import polars as pl
 import pytest
 from pytest_check import check
 
-from chain_reaction.dataframe_toolkit.context import DataFrameContext
-from chain_reaction.dataframe_toolkit.identifier import DataFrameId
 from chain_reaction.dataframe_toolkit.models import (
     ColumnSummary,
     DataFrameReference,
@@ -21,6 +19,7 @@ from chain_reaction.dataframe_toolkit.persistence import (
     _values_nearly_equal,
     restore_from_state,
 )
+from chain_reaction.dataframe_toolkit.registry import DataFrameRegistry
 
 
 class TestValuesNearlyEqual:
@@ -717,19 +716,18 @@ class TestRestoreFromState:
         df = pl.DataFrame({"a": [1, 2, 3]})
         ref = DataFrameReference.from_dataframe("test", df)
         state = DataFrameToolkitState(references=[ref])
-        context = DataFrameContext()
-        references: dict[DataFrameId, DataFrameReference] = {}
+        registry = DataFrameRegistry()
 
         # Act
-        restore_from_state(state=state, base_dataframes={"test": df}, context=context, references=references)
+        restore_from_state(state=state, base_dataframes={"test": df}, registry=registry)
 
         # Assert
         with check:
-            assert len(references) == 1
+            assert len(registry.references) == 1
         with check:
-            assert ref.id in references
+            assert ref.id in registry.references
         with check:
-            assert ref.id in context
+            assert ref.id in registry.context
 
     def test_restore_from_state_multiple_bases(self) -> None:
         """Given state with multiple base DataFrames, When restored, Then all in context."""
@@ -739,25 +737,22 @@ class TestRestoreFromState:
         ref1 = DataFrameReference.from_dataframe("first", df1)
         ref2 = DataFrameReference.from_dataframe("second", df2)
         state = DataFrameToolkitState(references=[ref1, ref2])
-        context = DataFrameContext()
-        references: dict[DataFrameId, DataFrameReference] = {}
+        registry = DataFrameRegistry()
 
         # Act
-        restore_from_state(
-            state=state, base_dataframes={"first": df1, "second": df2}, context=context, references=references
-        )
+        restore_from_state(state=state, base_dataframes={"first": df1, "second": df2}, registry=registry)
 
         # Assert
         with check:
-            assert len(references) == 2
+            assert len(registry.references) == 2
         with check:
-            assert ref1.id in references
+            assert ref1.id in registry.references
         with check:
-            assert ref2.id in references
+            assert ref2.id in registry.references
         with check:
-            assert ref1.id in context
+            assert ref1.id in registry.context
         with check:
-            assert ref2.id in context
+            assert ref2.id in registry.context
 
     def test_restore_from_state_with_derivative(self) -> None:
         """Given state with derivative, When restored, Then derivative reconstructed."""
@@ -780,24 +775,23 @@ class TestRestoreFromState:
         )
 
         state = DataFrameToolkitState(references=[base_ref, derived_ref])
-        context = DataFrameContext()
-        references: dict[DataFrameId, DataFrameReference] = {}
+        registry = DataFrameRegistry()
 
         # Act
-        restore_from_state(state=state, base_dataframes={"base": base_df}, context=context, references=references)
+        restore_from_state(state=state, base_dataframes={"base": base_df}, registry=registry)
 
         # Assert
         with check:
-            assert len(references) == 2
+            assert len(registry.references) == 2
         with check:
-            assert base_ref.id in references
+            assert base_ref.id in registry.references
         with check:
-            assert derived_ref.id in references
+            assert derived_ref.id in registry.references
         with check:
-            assert derived_ref.id in context
+            assert derived_ref.id in registry.context
 
         # Verify reconstructed data
-        reconstructed = context.get_dataframe(derived_ref.id)
+        reconstructed = registry.context.get_dataframe(derived_ref.id)
         with check:
             assert reconstructed.shape == (2, 1)
         with check:
@@ -811,23 +805,21 @@ class TestRestoreFromState:
         ref1 = DataFrameReference.from_dataframe("first", df1)
         ref2 = DataFrameReference.from_dataframe("second", df2)
         state = DataFrameToolkitState(references=[ref1, ref2])
-        context = DataFrameContext()
-        references: dict[DataFrameId, DataFrameReference] = {}
+        registry = DataFrameRegistry()
 
         # Act/Assert - only provide one of two required bases
         with pytest.raises(ValueError, match="Missing base dataframes"):
-            restore_from_state(state=state, base_dataframes={"first": df1}, context=context, references=references)
+            restore_from_state(state=state, base_dataframes={"first": df1}, registry=registry)
 
     def test_restore_from_state_empty_state(self) -> None:
         """Given empty state with no references, When restored, Then references remain empty."""
         # Arrange
         state = DataFrameToolkitState(references=[])
-        context = DataFrameContext()
-        references: dict[DataFrameId, DataFrameReference] = {}
+        registry = DataFrameRegistry()
 
         # Act
-        restore_from_state(state=state, base_dataframes={}, context=context, references=references)
+        restore_from_state(state=state, base_dataframes={}, registry=registry)
 
         # Assert
         with check:
-            assert len(references) == 0
+            assert len(registry.references) == 0

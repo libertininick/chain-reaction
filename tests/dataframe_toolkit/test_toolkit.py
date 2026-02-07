@@ -853,8 +853,8 @@ class TestGetTools:
 class TestConversationResumptionScenarios:
     """End-to-end tests for conversation resumption workflow using from_state.
 
-    TODO(testability): These tests directly access `toolkit._context` and
-    `toolkit._references` to simulate derivative creation. Once `execute_sql`
+    TODO(testability): These tests directly access `toolkit._registry.context` and
+    `toolkit._registry.references` to simulate derivative creation. Once `execute_sql`
     is implemented (Phase 6), refactor these tests to use the public API instead.
     See: .claude/agent-outputs/reviews/2026-02-04T033041Z-main-HEAD-review.md
     """
@@ -874,7 +874,7 @@ class TestConversationResumptionScenarios:
 
         # Execute SQL to create derivative (simulating agent tool call)
         query = f"SELECT id, name, score FROM {base_ref.id} WHERE score >= 85"  # noqa: S608
-        result = original_toolkit._context.execute_sql(query, eager=True)
+        result = original_toolkit._registry.context.execute_sql(query, eager=True)
         result_df = result if isinstance(result, pl.DataFrame) else result.collect()
 
         # Register derivative with source_query
@@ -885,8 +885,8 @@ class TestConversationResumptionScenarios:
             source_query=query,
             parent_ids=[base_ref.id],
         )
-        original_toolkit._context.register(derived_ref.id, result_df)
-        original_toolkit._references[derived_ref.id] = derived_ref
+        original_toolkit._registry.context.register(derived_ref.id, result_df)
+        original_toolkit._registry.references[derived_ref.id] = derived_ref
 
         # Export state (would be persisted to conversation thread)
         state = original_toolkit.export_state()
@@ -905,7 +905,7 @@ class TestConversationResumptionScenarios:
             assert ref_names == {"students", "high_scorers"}
 
         # Verify reconstructed data matches
-        reconstructed_df = new_toolkit._context.get_dataframe(derived_ref.id)
+        reconstructed_df = new_toolkit._registry.context.get_dataframe(derived_ref.id)
         with check:
             assert reconstructed_df.shape == (4, 3)  # 4 students with score >= 85
         with check:
@@ -923,19 +923,19 @@ class TestConversationResumptionScenarios:
 
         # Create B from A
         b_query = f"SELECT x, y FROM {a_ref.id} WHERE x <= 5"  # noqa: S608
-        b_result = original_toolkit._context.execute_sql(b_query, eager=True)
+        b_result = original_toolkit._registry.context.execute_sql(b_query, eager=True)
         b_df = b_result if isinstance(b_result, pl.DataFrame) else b_result.collect()
         b_ref = DataFrameReference.from_dataframe("B", b_df, source_query=b_query, parent_ids=[a_ref.id])
-        original_toolkit._context.register(b_ref.id, b_df)
-        original_toolkit._references[b_ref.id] = b_ref
+        original_toolkit._registry.context.register(b_ref.id, b_df)
+        original_toolkit._registry.references[b_ref.id] = b_ref
 
         # Create C from B
         c_query = f"SELECT x, y FROM {b_ref.id} WHERE x <= 2"  # noqa: S608
-        c_result = original_toolkit._context.execute_sql(c_query, eager=True)
+        c_result = original_toolkit._registry.context.execute_sql(c_query, eager=True)
         c_df = c_result if isinstance(c_result, pl.DataFrame) else c_result.collect()
         c_ref = DataFrameReference.from_dataframe("C", c_df, source_query=c_query, parent_ids=[b_ref.id])
-        original_toolkit._context.register(c_ref.id, c_df)
-        original_toolkit._references[c_ref.id] = c_ref
+        original_toolkit._registry.context.register(c_ref.id, c_df)
+        original_toolkit._registry.references[c_ref.id] = c_ref
 
         # Export and restore using from_state
         state = original_toolkit.export_state()
@@ -950,7 +950,7 @@ class TestConversationResumptionScenarios:
             assert ref_names == {"A", "B", "C"}
 
         # Verify data
-        c_reconstructed = new_toolkit._context.get_dataframe(c_ref.id)
+        c_reconstructed = new_toolkit._registry.context.get_dataframe(c_ref.id)
         with check:
             assert c_reconstructed.shape == (2, 2)
         with check:
@@ -980,7 +980,7 @@ class TestConversationResumptionScenarios:
             FROM {users_ref.id} u
             JOIN {orders_ref.id} o ON u.user_id = o.user_id
         """  # noqa: S608
-        join_result = original_toolkit._context.execute_sql(join_query, eager=True)
+        join_result = original_toolkit._registry.context.execute_sql(join_query, eager=True)
         joined_df = join_result if isinstance(join_result, pl.DataFrame) else join_result.collect()
         joined_ref = DataFrameReference.from_dataframe(
             "user_orders",
@@ -988,8 +988,8 @@ class TestConversationResumptionScenarios:
             source_query=join_query,
             parent_ids=[users_ref.id, orders_ref.id],
         )
-        original_toolkit._context.register(joined_ref.id, joined_df)
-        original_toolkit._references[joined_ref.id] = joined_ref
+        original_toolkit._registry.context.register(joined_ref.id, joined_df)
+        original_toolkit._registry.references[joined_ref.id] = joined_ref
 
         # Export and restore using from_state
         state = original_toolkit.export_state()
@@ -1007,7 +1007,7 @@ class TestConversationResumptionScenarios:
             assert ref_names == {"users", "orders", "user_orders"}
 
         # Verify data
-        reconstructed_df = new_toolkit._context.get_dataframe(joined_ref.id)
+        reconstructed_df = new_toolkit._registry.context.get_dataframe(joined_ref.id)
         with check:
             assert reconstructed_df.shape == (4, 3)
         with check:
@@ -1037,7 +1037,7 @@ class TestConversationResumptionScenarios:
 
         # Derive: filter to rows with non-null revenue
         query = f"SELECT event_id, event_date, category, revenue FROM {events_ref.id} WHERE revenue IS NOT NULL"  # noqa: S608
-        result = original_toolkit._context.execute_sql(query, eager=True)
+        result = original_toolkit._registry.context.execute_sql(query, eager=True)
         result_df = result if isinstance(result, pl.DataFrame) else result.collect()
 
         derived_ref = DataFrameReference.from_dataframe(
@@ -1046,8 +1046,8 @@ class TestConversationResumptionScenarios:
             source_query=query,
             parent_ids=[events_ref.id],
         )
-        original_toolkit._context.register(derived_ref.id, result_df)
-        original_toolkit._references[derived_ref.id] = derived_ref
+        original_toolkit._registry.context.register(derived_ref.id, result_df)
+        original_toolkit._registry.references[derived_ref.id] = derived_ref
 
         # Export and restore
         state = original_toolkit.export_state()
@@ -1057,7 +1057,7 @@ class TestConversationResumptionScenarios:
         with check:
             assert len(new_toolkit.references) == 2
 
-        reconstructed_df = new_toolkit._context.get_dataframe(derived_ref.id)
+        reconstructed_df = new_toolkit._registry.context.get_dataframe(derived_ref.id)
         with check:
             assert reconstructed_df.shape == (3, 4)  # 3 rows with non-null revenue
         with check:

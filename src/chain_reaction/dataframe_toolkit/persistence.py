@@ -21,7 +21,6 @@ from typing import Final
 
 import polars as pl
 
-from chain_reaction.dataframe_toolkit.context import DataFrameContext
 from chain_reaction.dataframe_toolkit.identifier import (
     DATAFRAME_ID_PATTERN,
     DataFrameId,
@@ -31,6 +30,7 @@ from chain_reaction.dataframe_toolkit.models import (
     DataFrameReference,
     DataFrameToolkitState,
 )
+from chain_reaction.dataframe_toolkit.registry import DataFrameRegistry
 
 __all__ = ["REL_TOL_DEFAULT", "restore_from_state"]
 
@@ -41,13 +41,12 @@ def restore_from_state(
     *,
     state: DataFrameToolkitState,
     base_dataframes: Mapping[str, pl.DataFrame],
-    context: DataFrameContext,
-    references: dict[DataFrameId, DataFrameReference],
+    registry: DataFrameRegistry,
     rel_tol: float = REL_TOL_DEFAULT,
 ) -> None:
     """Restore DataFrameToolkit state by registering base dataframes and reconstructing derivatives.
 
-    This function mutates the provided context and references in place. It is the
+    This function mutates the provided registry in place. It is the
     main entry point for state restoration, handling:
 
     1. Finding all base references in the state (those without parent dependencies)
@@ -62,9 +61,7 @@ def restore_from_state(
             DataFrame for all base tables. Keys can be either names or IDs
             (df_xxxxxxxx format). DataFrames must match the schema and
             statistics from when the state was exported.
-        context (DataFrameContext): The DataFrameContext to restore into. Modified in place.
-        references (dict[DataFrameId, DataFrameReference]): The references dict
-            to restore into. Modified in place.
+        registry (DataFrameRegistry): The registry to restore into. Modified in place.
         rel_tol (float): Relative tolerance for floating point comparisons
             during validation. Defaults to 1e-9.
 
@@ -77,21 +74,18 @@ def restore_from_state(
         Restore a toolkit from saved state:
 
         >>> from chain_reaction.dataframe_toolkit.persistence import restore_from_state
-        >>> from chain_reaction.dataframe_toolkit.context import DataFrameContext
+        >>> from chain_reaction.dataframe_toolkit.registry import DataFrameRegistry
         >>> from chain_reaction.dataframe_toolkit.models import DataFrameToolkitState
         >>> import polars as pl
-        >>> # Create empty context and references to restore into
-        >>> context = DataFrameContext()
-        >>> references = {}
+        >>> # Create empty registry to restore into
+        >>> registry = DataFrameRegistry()
         >>> # Deserialize state from JSON
         >>> state = DataFrameToolkitState(references=[])
         >>> # Restore with base dataframes
-        >>> restore_from_state(state=state, base_dataframes={}, context=context, references=references)
+        >>> restore_from_state(state=state, base_dataframes={}, registry=registry)
     """
-    # 1. Find base references (no parent_ids). Safe because DataFrameReference's
-    #    model validator guarantees parent_ids and source_query are always consistent:
-    #    base = both empty/None, derivative = both populated.
-    base_refs = {ref.id: ref for ref in state.references if not ref.parent_ids}
+    # 1. Find base references
+    base_refs = {ref.id: ref for ref in state.references if ref.is_base}
 
     # 2. Normalize user keys to DataFrameId
     normalized_bases = _normalize_dataframe_mapping(
@@ -113,10 +107,10 @@ def restore_from_state(
 
     # 5. Register base dataframes with their references
     for df_id, dataframe in normalized_bases.items():
-        _register_with_reference(base_refs[df_id], dataframe, context, references)
+        _register_with_reference(base_refs[df_id], dataframe, registry)
 
     # 6. Reconstruct derivative dataframes via SQL replay in dependency order
-    _reconstruct_derivatives(state, context, references, rel_tol=rel_tol)
+    _reconstruct_derivatives(state, registry, rel_tol=rel_tol)
 
 
 # Private helpers
@@ -224,7 +218,7 @@ def _compare_column_summaries(
     """Compare two column summaries and return any mismatches.
 
     Note: Any field not in exact_fields or approx_fields is ignored for comparison.
-    This allows comparison of data dependant fields fields while ignoring supplemental
+    This allows comparison of data-dependent fields while ignoring supplemental
     metadata fields (e.g., description) that may differ without indicating a data mismatch.
 
     Args:
@@ -314,8 +308,7 @@ def _values_nearly_equal(  # noqa: C901, PLR0911
 def _register_with_reference(
     reference: DataFrameReference,
     dataframe: pl.DataFrame,
-    context: DataFrameContext,
-    references: dict[DataFrameId, DataFrameReference],
+    registry: DataFrameRegistry,
 ) -> None:
     """Register a dataframe with an existing reference, preserving the original ID.
 
@@ -326,17 +319,15 @@ def _register_with_reference(
         reference (DataFrameReference): The reference containing the original ID
             and metadata.
         dataframe (pl.DataFrame): The actual dataframe data to register.
-        context (DataFrameContext): The context to register the dataframe in.
-        references (dict[DataFrameId, DataFrameReference]): The references dict to update.
+        registry (DataFrameRegistry): The registry to update.
     """
-    context.register(reference.id, dataframe)
-    references[reference.id] = reference
+    registry.context.register(reference.id, dataframe)
+    registry.references[reference.id] = reference
 
 
 def _reconstruct_derivatives(
     state: DataFrameToolkitState,
-    context: DataFrameContext,
-    references: dict[DataFrameId, DataFrameReference],
+    registry: DataFrameRegistry,
     *,
     rel_tol: float = REL_TOL_DEFAULT,
 ) -> None:
@@ -357,20 +348,18 @@ def _reconstruct_derivatives(
 
     Args:
         state (DataFrameToolkitState): The state containing derivative references.
-        context (DataFrameContext): The context for SQL execution and registration.
-        references (dict[DataFrameId, DataFrameReference]): The registered references.
+        registry (DataFrameRegistry): The registry for SQL execution and registration.
         rel_tol (float): Relative tolerance for floating point comparisons
             during validation. Defaults to 1e-9.
     """
     for ref in _sort_references_by_dependency_order(state.references):
-        if ref.id in references:
+        if ref.id in registry.references:
             continue
 
-        result_df = _reconstruct_dataframe(ref, context, references)
+        result_df = _reconstruct_dataframe(ref, registry)
         _validate_dataframe_matches_reference(result_df, ref, rel_tol=rel_tol)
 
-        context.register(ref.id, result_df)
-        references[ref.id] = ref
+        _register_with_reference(ref, result_df, registry)
 
 
 def _sort_references_by_dependency_order(references: list[DataFrameReference]) -> list[DataFrameReference]:
@@ -408,15 +397,13 @@ def _sort_references_by_dependency_order(references: list[DataFrameReference]) -
 
 def _reconstruct_dataframe(
     ref: DataFrameReference,
-    context: DataFrameContext,
-    references: dict[DataFrameId, DataFrameReference],
+    registry: DataFrameRegistry,
 ) -> pl.DataFrame:
     """Reconstruct a single derivative dataframe from its reference.
 
     Args:
         ref (DataFrameReference): The reference to reconstruct.
-        context (DataFrameContext): The context for SQL execution.
-        references (dict[DataFrameId, DataFrameReference]): The registered references.
+        registry (DataFrameRegistry): The registry for SQL execution.
 
     Returns:
         pl.DataFrame: The reconstructed dataframe.
@@ -426,7 +413,7 @@ def _reconstruct_dataframe(
             reconstruction, or derivative missing source_query).
         ValueError: If required parents are missing or SQL execution fails.
     """
-    if not ref.parent_ids:
+    if ref.is_base:
         msg = (
             f"Invariant violation: base dataframe '{ref.name}' (id={ref.id}) "
             f"reached _reconstruct_derivative. The topological sort should "
@@ -441,24 +428,24 @@ def _reconstruct_dataframe(
         )
         raise RuntimeError(msg)
 
-    missing_parents = [pid for pid in ref.parent_ids if pid not in references]
+    missing_parents = [pid for pid in ref.parent_ids if pid not in registry.references]
     if missing_parents:
-        available_ids = list(references.keys())
+        available_ids = list(registry.references.keys())
         msg = (
             f"Cannot reconstruct '{ref.name}': missing parent dataframes {missing_parents}. "
             f"Available IDs: {available_ids}"
         )
         raise ValueError(msg)
 
-    return _execute_reconstruction_query(ref, context)
+    return _execute_reconstruction_query(ref, registry)
 
 
-def _execute_reconstruction_query(ref: DataFrameReference, context: DataFrameContext) -> pl.DataFrame:
+def _execute_reconstruction_query(ref: DataFrameReference, registry: DataFrameRegistry) -> pl.DataFrame:
     """Execute the SQL query to reconstruct a dataframe.
 
     Args:
         ref (DataFrameReference): The reference containing the source_query.
-        context (DataFrameContext): The context for SQL execution.
+        registry (DataFrameRegistry): The registry for SQL execution.
 
     Returns:
         pl.DataFrame: The reconstructed dataframe.
@@ -472,7 +459,7 @@ def _execute_reconstruction_query(ref: DataFrameReference, context: DataFrameCon
         raise ValueError(msg)
 
     try:
-        result_df = context.execute_sql(ref.source_query, eager=True)
+        result_df = registry.context.execute_sql(ref.source_query, eager=True)
     except (ValueError, pl.exceptions.PolarsError, RuntimeError) as e:
         msg = f"SQL execution failed while reconstructing '{ref.name}': {e}. Query: {ref.source_query}"
         raise ValueError(msg) from e
