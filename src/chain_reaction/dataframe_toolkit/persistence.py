@@ -300,7 +300,7 @@ def _values_nearly_equal(  # noqa: C901, PLR0911
         return actual == expected
     if isinstance(actual, bool) or isinstance(expected, bool):
         return False
-    if isinstance(actual, numbers.Number) and isinstance(expected, numbers.Number):
+    if isinstance(actual, numbers.Real) and isinstance(expected, numbers.Real):
         return _floats_nearly_equal(float(actual), float(expected), rel_tol=rel_tol)
     return False
 
