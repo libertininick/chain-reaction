@@ -135,23 +135,31 @@ def _normalize_dataframe_mapping(
         dict[DataFrameId, pl.DataFrame]: Dataframes keyed by their DataFrameId.
 
     Raises:
-        ValueError: If a key doesn't match any base reference.
+        ValueError: If a key doesn't match any base reference, or if
+            multiple keys resolve to the same DataFrameId.
     """
     ids = set(names_to_ids.values())
+    name_or_id_to_id: dict[str | DataFrameId, DataFrameId] = names_to_ids | {df_id: df_id for df_id in ids}
 
     normalized: dict[DataFrameId, pl.DataFrame] = {}
-    for key, dataframe in dataframes.items():
-        if DATAFRAME_ID_PATTERN.match(key):
-            if key not in ids:
-                msg = f"ID '{key}' not found in state's base references. Available IDs: {ids}"
-                raise ValueError(msg)
-            normalized[key] = dataframe
-        else:
-            if key not in names_to_ids:
-                available = list(names_to_ids.keys())
-                msg = f"Name '{key}' not found in state's base references. Available names: {available}"
-                raise ValueError(msg)
-            normalized[names_to_ids[key]] = dataframe
+    for name_or_id, dataframe in dataframes.items():
+        # Check if the identifier (name or ID) matches any base reference, and get the corresponding ID
+        if (df_id := name_or_id_to_id.get(name_or_id)) is None:
+            msg = (
+                f"ID '{name_or_id}' not in state's base references. Available IDs: {ids}"
+                if DATAFRAME_ID_PATTERN.match(name_or_id)
+                else f"Name '{name_or_id}' not in state's base references. Available names: {list(names_to_ids.keys())}"
+            )
+            raise ValueError(msg)
+
+        # Check for duplicate IDs (multiple keys resolving to the same ID)
+        if df_id in normalized:
+            msg = f"Duplicate: key '{name_or_id}' resolves to ID '{df_id}' which was already provided"
+            raise ValueError(msg)
+
+        # Store the dataframe under its resolved ID
+        normalized[df_id] = dataframe
+
     return normalized
 
 

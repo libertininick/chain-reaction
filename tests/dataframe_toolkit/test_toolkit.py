@@ -598,7 +598,7 @@ class TestFromState:
         state = original.export_state()
 
         # Act/Assert
-        with pytest.raises(ValueError, match="Name 'wrong_name' not found"):
+        with pytest.raises(ValueError, match="Name 'wrong_name' not in state's base references"):
             DataFrameToolkit.from_state(state, {"wrong_name": base_df})
 
     def test_from_state_unknown_id_raises_error(self) -> None:
@@ -610,7 +610,7 @@ class TestFromState:
         state = original.export_state()
 
         # Act/Assert
-        with pytest.raises(ValueError, match="ID 'df_00000000' not found"):
+        with pytest.raises(ValueError, match="ID 'df_00000000' not in state's base references"):
             DataFrameToolkit.from_state(state, {"df_00000000": base_df})
 
     def test_from_state_preserves_metadata(self) -> None:

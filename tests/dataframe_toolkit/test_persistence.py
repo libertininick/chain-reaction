@@ -397,7 +397,24 @@ class TestNormalizeDataframeMapping:
         dataframes = {"unknown_name": sample_dataframe}
 
         # Act/Assert
-        with pytest.raises(ValueError, match="Name 'unknown_name' not found"):
+        with pytest.raises(ValueError, match="Name 'unknown_name' not in state's base references"):
+            _normalize_dataframe_mapping(
+                dataframes=dataframes,
+                names_to_ids=sample_names_to_ids,
+            )
+
+    def test_normalize_dataframe_mapping_duplicate_name_and_id_raises(
+        self,
+        sample_names_to_ids: dict[str, DataFrameId],
+    ) -> None:
+        """Given same base provided by both name and ID, When normalized, Then raises ValueError."""
+        # Arrange - "users" resolves to "df_00000001", so both keys target the same ID
+        df_a = pl.DataFrame({"a": [1, 2, 3]})
+        df_b = pl.DataFrame({"a": [4, 5, 6]})
+        dataframes = {"users": df_a, "df_00000001": df_b}
+
+        # Act/Assert
+        with pytest.raises(ValueError, match="Duplicate"):
             _normalize_dataframe_mapping(
                 dataframes=dataframes,
                 names_to_ids=sample_names_to_ids,
@@ -413,7 +430,7 @@ class TestNormalizeDataframeMapping:
         dataframes = {"df_99999999": sample_dataframe}
 
         # Act/Assert
-        with pytest.raises(ValueError, match="ID 'df_99999999' not found"):
+        with pytest.raises(ValueError, match="ID 'df_99999999' not in state's base references"):
             _normalize_dataframe_mapping(
                 dataframes=dataframes,
                 names_to_ids=sample_names_to_ids,
