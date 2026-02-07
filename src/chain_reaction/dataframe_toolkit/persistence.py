@@ -275,35 +275,58 @@ def _floats_nearly_equal(actual: float, expected: float, *, rel_tol: float) -> b
     return math.isclose(actual, expected, rel_tol=rel_tol)
 
 
-def _values_nearly_equal(  # noqa: C901, PLR0911
+def _nonfloats_nearly_equal(
     *,
-    actual: bool | float | str | None,
-    expected: bool | float | str | None,
-    rel_tol: float = REL_TOL_DEFAULT,
+    actual: float | str | None,
+    expected: float | str | None,
 ) -> bool:
-    """Check if two values are nearly equal, handling floats, strings, and None.
+    """Compare non-float values for equality.
+
+    Handles None, str, and bool comparisons. Returns False for numeric
+    non-bool pairs that require float comparison.
 
     Args:
-        actual (bool | float | str | None): The actual value to compare.
-        expected (bool | float | str | None): The expected value to compare against.
-        rel_tol (float): Relative tolerance for float comparisons. Defaults to 1e-9.
+        actual (float | str | None): The actual value to compare.
+        expected (float | str | None): The expected value to compare against.
 
     Returns:
-        bool: True if values are considered equal.
+        bool: True if values are equal, False otherwise.
     """
-    if actual is None and expected is None:
-        return True
     if actual is None or expected is None:
-        return False
+        return actual is None and expected is None
     if isinstance(actual, str) and isinstance(expected, str):
         return actual == expected
     if isinstance(actual, bool) and isinstance(expected, bool):
         return actual == expected
     if isinstance(actual, bool) or isinstance(expected, bool):
         return False
-    if isinstance(actual, numbers.Real) and isinstance(expected, numbers.Real):
-        return _floats_nearly_equal(float(actual), float(expected), rel_tol=rel_tol)
     return False
+
+
+def _values_nearly_equal(
+    *,
+    actual: float | str | None,
+    expected: float | str | None,
+    rel_tol: float = REL_TOL_DEFAULT,
+) -> bool:
+    """Check if two values are nearly equal, handling floats, strings, and None.
+
+    Args:
+        actual (float | str | None): The actual value to compare.
+        expected (float | str | None): The expected value to compare against.
+        rel_tol (float): Relative tolerance for float comparisons. Defaults to 1e-9.
+
+    Returns:
+        bool: True if values are considered equal.
+    """
+    if (
+        isinstance(actual, numbers.Real)
+        and isinstance(expected, numbers.Real)
+        and not isinstance(actual, bool)
+        and not isinstance(expected, bool)
+    ):
+        return _floats_nearly_equal(float(actual), float(expected), rel_tol=rel_tol)
+    return _nonfloats_nearly_equal(actual=actual, expected=expected)
 
 
 def _reconstruct_derivatives(
