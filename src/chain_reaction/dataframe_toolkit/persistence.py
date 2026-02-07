@@ -88,7 +88,9 @@ def restore_from_state(
         >>> # Restore with base dataframes
         >>> restore_from_state(state=state, base_dataframes={}, context=context, references=references)
     """
-    # 1. Find all base references in the state (those without parent dependencies)
+    # 1. Find base references (no parent_ids). Safe because DataFrameReference's
+    #    model validator guarantees parent_ids and source_query are always consistent:
+    #    base = both empty/None, derivative = both populated.
     base_refs = {ref.id: ref for ref in state.references if not ref.parent_ids}
 
     # 2. Normalize user keys to DataFrameId
@@ -213,6 +215,8 @@ def _compare_column_summaries(
     actual: ColumnSummary,
     expected: ColumnSummary,
     *,
+    exact_fields: tuple[str, ...] = ("dtype", "count", "null_count", "unique_count"),
+    approx_fields: tuple[str, ...] = ("min", "max", "mean", "std", "p25", "p50", "p75"),
     rel_tol: float = REL_TOL_DEFAULT,
 ) -> dict[str, tuple[object, object]]:
     """Compare two column summaries and return any mismatches.
@@ -220,6 +224,9 @@ def _compare_column_summaries(
     Args:
         actual (ColumnSummary): The actual column summary from the DataFrame.
         expected (ColumnSummary): The expected column summary from the reference.
+        exact_fields (tuple[str, ...]): Fields that must match exactly (e.g. dtype, count).
+        approx_fields (tuple[str, ...]): Fields that can match approximately (e.g. min, max, mean).
+            Defaults to common numeric summaries.
         rel_tol (float): Relative tolerance for floating point comparisons.
 
     Returns:
@@ -228,14 +235,12 @@ def _compare_column_summaries(
     """
     mismatches: dict[str, tuple[object, object]] = {}
 
-    exact_fields = ["dtype", "count", "null_count", "unique_count"]
     for field in exact_fields:
         actual_val = getattr(actual, field)
         expected_val = getattr(expected, field)
         if actual_val != expected_val:
             mismatches[field] = (actual_val, expected_val)
 
-    approx_fields = ["min", "max", "mean", "std", "p25", "p50", "p75"]
     for field in approx_fields:
         actual_val = getattr(actual, field)
         expected_val = getattr(expected, field)
