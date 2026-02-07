@@ -397,7 +397,7 @@ def _reconstruct_dataframe(
     if ref.is_base:
         msg = (
             f"Invariant violation: base dataframe '{ref.name}' (id={ref.id}) "
-            f"reached _reconstruct_derivative. The topological sort should "
+            f"reached _reconstruct_dataframe. The topological sort should "
             f"exclude base dataframes from reconstruction."
         )
         raise RuntimeError(msg)
