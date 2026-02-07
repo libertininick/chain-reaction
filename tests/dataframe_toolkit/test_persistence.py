@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from unittest.mock import patch
+
 import polars as pl
 import pytest
 from pytest_check import check
@@ -13,12 +15,15 @@ from chain_reaction.dataframe_toolkit.models import (
 )
 from chain_reaction.dataframe_toolkit.persistence import (
     _compare_column_summaries,
+    _execute_reconstruction_query,
     _normalize_dataframe_mapping,
+    _reconstruct_dataframe,
     _sort_references_by_dependency_order,
     _validate_dataframe_matches_reference,
     _values_nearly_equal,
     restore_registry_from_state,
 )
+from chain_reaction.dataframe_toolkit.registry import DataFrameRegistry
 
 
 class TestValuesNearlyEqual:
@@ -817,3 +822,54 @@ class TestRestoreRegistryFromState:
         # Assert
         with check:
             assert len(registry.references) == 0
+
+    def test_restore_registry_from_state_extra_base_raises(self) -> None:
+        """Given extra base dataframe not in state, When restored, Then raises ValueError."""
+        # Arrange
+        df = pl.DataFrame({"a": [1, 2, 3]})
+        ref = DataFrameReference.from_dataframe("users", df)
+        state = DataFrameToolkitState(references=[ref])
+
+        extra_df = pl.DataFrame({"b": [4, 5, 6]})
+
+        # Act/Assert - provide required base plus an extra one not in state
+        with pytest.raises(ValueError, match="not in state's base references"):
+            restore_registry_from_state(
+                state=state,
+                base_dataframes={"users": df, "unknown_extra": extra_df},
+            )
+
+
+class TestReconstructDataframe:
+    """Tests for _reconstruct_dataframe function."""
+
+    def test_reconstruct_dataframe_base_reference_raises_runtime_error(self) -> None:
+        """Given a base reference, When reconstructed, Then raises RuntimeError."""
+        # Arrange
+        df = pl.DataFrame({"a": [1, 2, 3]})
+        base_ref = DataFrameReference.from_dataframe("base", df)
+        registry = DataFrameRegistry()
+        registry.register(base_ref, df)
+
+        # Act/Assert
+        with pytest.raises(RuntimeError, match="Invariant violation: base dataframe"):
+            _reconstruct_dataframe(base_ref, registry)
+
+
+class TestExecuteReconstructionQuery:
+    """Tests for _execute_reconstruction_query function."""
+
+    def test_execute_reconstruction_query_non_dataframe_result_raises_type_error(self) -> None:
+        """Given execute_sql returns non-DataFrame, When called, Then raises TypeError."""
+        # Arrange
+        df = pl.DataFrame({"a": [1, 2, 3]})
+        base_ref = DataFrameReference.from_dataframe("base", df)
+        registry = DataFrameRegistry()
+        registry.register(base_ref, df)
+
+        # Act/Assert - patch execute_sql to return a LazyFrame instead of DataFrame
+        with (
+            patch.object(registry.context, "execute_sql", return_value=df.lazy()),
+            pytest.raises(TypeError, match="expected DataFrame"),
+        ):
+            _execute_reconstruction_query("SELECT * FROM base", "derived", registry)
