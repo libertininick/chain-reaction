@@ -16,7 +16,7 @@ from chain_reaction.dataframe_toolkit.models import (
     DataFrameToolkitState,
     ToolCallError,
 )
-from chain_reaction.dataframe_toolkit.persistence import REL_TOL_DEFAULT, restore_from_state
+from chain_reaction.dataframe_toolkit.persistence import REL_TOL_DEFAULT, restore_registry_from_state
 from chain_reaction.dataframe_toolkit.registry import DataFrameRegistry
 
 
@@ -459,11 +459,9 @@ class DataFrameToolkit:
             >>> len(new_toolkit.references)
             1
         """
-        registry = DataFrameRegistry()
-        restore_from_state(
+        registry = restore_registry_from_state(
             state=state,
             base_dataframes=base_dataframes,
-            registry=registry,
             rel_tol=rel_tol,
         )
         return cls(registry=registry)

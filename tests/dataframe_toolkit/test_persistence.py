@@ -17,9 +17,8 @@ from chain_reaction.dataframe_toolkit.persistence import (
     _sort_references_by_dependency_order,
     _validate_dataframe_matches_reference,
     _values_nearly_equal,
-    restore_from_state,
+    restore_registry_from_state,
 )
-from chain_reaction.dataframe_toolkit.registry import DataFrameRegistry
 
 
 class TestValuesNearlyEqual:
@@ -707,19 +706,18 @@ class TestSortReferencesByDependencyOrder:
             _sort_references_by_dependency_order(references)
 
 
-class TestRestoreFromState:
-    """Tests for restore_from_state function."""
+class TestRestoreRegistryFromState:
+    """Tests for restore_registry_from_state function."""
 
-    def test_restore_from_state_single_base(self) -> None:
+    def test_restore_registry_from_state_single_base(self) -> None:
         """Given state with single base DataFrame, When restored, Then context has DataFrame."""
         # Arrange
         df = pl.DataFrame({"a": [1, 2, 3]})
         ref = DataFrameReference.from_dataframe("test", df)
         state = DataFrameToolkitState(references=[ref])
-        registry = DataFrameRegistry()
 
         # Act
-        restore_from_state(state=state, base_dataframes={"test": df}, registry=registry)
+        registry = restore_registry_from_state(state=state, base_dataframes={"test": df})
 
         # Assert
         with check:
@@ -729,7 +727,7 @@ class TestRestoreFromState:
         with check:
             assert ref.id in registry.context
 
-    def test_restore_from_state_multiple_bases(self) -> None:
+    def test_restore_registry_from_state_multiple_bases(self) -> None:
         """Given state with multiple base DataFrames, When restored, Then all in context."""
         # Arrange
         df1 = pl.DataFrame({"a": [1, 2, 3]})
@@ -737,10 +735,9 @@ class TestRestoreFromState:
         ref1 = DataFrameReference.from_dataframe("first", df1)
         ref2 = DataFrameReference.from_dataframe("second", df2)
         state = DataFrameToolkitState(references=[ref1, ref2])
-        registry = DataFrameRegistry()
 
         # Act
-        restore_from_state(state=state, base_dataframes={"first": df1, "second": df2}, registry=registry)
+        registry = restore_registry_from_state(state=state, base_dataframes={"first": df1, "second": df2})
 
         # Assert
         with check:
@@ -754,7 +751,7 @@ class TestRestoreFromState:
         with check:
             assert ref2.id in registry.context
 
-    def test_restore_from_state_with_derivative(self) -> None:
+    def test_restore_registry_from_state_with_derivative(self) -> None:
         """Given state with derivative, When restored, Then derivative reconstructed."""
         # Arrange
         base_df = pl.DataFrame({"a": [1, 2, 3, 4, 5]})
@@ -775,10 +772,9 @@ class TestRestoreFromState:
         )
 
         state = DataFrameToolkitState(references=[base_ref, derived_ref])
-        registry = DataFrameRegistry()
 
         # Act
-        restore_from_state(state=state, base_dataframes={"base": base_df}, registry=registry)
+        registry = restore_registry_from_state(state=state, base_dataframes={"base": base_df})
 
         # Assert
         with check:
@@ -797,7 +793,7 @@ class TestRestoreFromState:
         with check:
             assert set(reconstructed["a"].to_list()) == {1, 2}
 
-    def test_restore_from_state_missing_base_raises(self) -> None:
+    def test_restore_registry_from_state_missing_base_raises(self) -> None:
         """Given state requiring base not provided, When restored, Then raises ValueError."""
         # Arrange
         df1 = pl.DataFrame({"a": [1, 2, 3]})
@@ -805,20 +801,18 @@ class TestRestoreFromState:
         ref1 = DataFrameReference.from_dataframe("first", df1)
         ref2 = DataFrameReference.from_dataframe("second", df2)
         state = DataFrameToolkitState(references=[ref1, ref2])
-        registry = DataFrameRegistry()
 
         # Act/Assert - only provide one of two required bases
         with pytest.raises(ValueError, match="Missing base dataframes"):
-            restore_from_state(state=state, base_dataframes={"first": df1}, registry=registry)
+            restore_registry_from_state(state=state, base_dataframes={"first": df1})
 
-    def test_restore_from_state_empty_state(self) -> None:
-        """Given empty state with no references, When restored, Then references remain empty."""
+    def test_restore_registry_from_state_empty_state(self) -> None:
+        """Given empty state with no references, When restored, Then registry is empty."""
         # Arrange
         state = DataFrameToolkitState(references=[])
-        registry = DataFrameRegistry()
 
         # Act
-        restore_from_state(state=state, base_dataframes={}, registry=registry)
+        registry = restore_registry_from_state(state=state, base_dataframes={})
 
         # Assert
         with check:

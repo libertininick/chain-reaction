@@ -1,7 +1,7 @@
 """State persistence and restoration for DataFrameToolkit.
 
 This module contains functions for restoring a DataFrameToolkit from serialized
-state. The main entry point is `restore_from_state()`, which reconstructs all
+state. The main entry point is `restore_registry_from_state()`, which reconstructs all
 base and derivative dataframes from a saved DataFrameToolkitState.
 
 The restoration process:
@@ -32,22 +32,20 @@ from chain_reaction.dataframe_toolkit.models import (
 )
 from chain_reaction.dataframe_toolkit.registry import DataFrameRegistry
 
-__all__ = ["REL_TOL_DEFAULT", "restore_from_state"]
+__all__ = ["REL_TOL_DEFAULT", "restore_registry_from_state"]
 
 REL_TOL_DEFAULT: Final[float] = 1e-9
 
 
-def restore_from_state(
+def restore_registry_from_state(
     *,
     state: DataFrameToolkitState,
     base_dataframes: Mapping[str, pl.DataFrame],
-    registry: DataFrameRegistry,
     rel_tol: float = REL_TOL_DEFAULT,
-) -> None:
-    """Restore DataFrameToolkit state by registering base dataframes and reconstructing derivatives.
+) -> DataFrameRegistry:
+    """Create a DataFrameRegistry from saved state by registering bases and reconstructing derivatives.
 
-    This function mutates the provided registry in place. It is the
-    main entry point for state restoration, handling:
+    This is the main entry point for state restoration, handling:
 
     1. Finding all base references in the state (those without parent dependencies)
     2. Normalizing user-provided dataframe keys to DataFrameIds
@@ -61,9 +59,12 @@ def restore_from_state(
             DataFrame for all base tables. Keys can be either names or IDs
             (df_xxxxxxxx format). DataFrames must match the schema and
             statistics from when the state was exported.
-        registry (DataFrameRegistry): The registry to restore into. Modified in place.
         rel_tol (float): Relative tolerance for floating point comparisons
             during validation. Defaults to 1e-9.
+
+    Returns:
+        DataFrameRegistry: A fully restored registry with all base and
+            derivative dataframes registered.
 
     Raises:
         ValueError: If a provided key doesn't match any base reference,
@@ -71,19 +72,17 @@ def restore_from_state(
             schema or statistics don't match the expected state.
 
     Examples:
-        Restore a toolkit from saved state:
+        Restore a registry from saved state:
 
-        >>> from chain_reaction.dataframe_toolkit.persistence import restore_from_state
-        >>> from chain_reaction.dataframe_toolkit.registry import DataFrameRegistry
+        >>> from chain_reaction.dataframe_toolkit.persistence import restore_registry_from_state
         >>> from chain_reaction.dataframe_toolkit.models import DataFrameToolkitState
         >>> import polars as pl
-        >>> # Create empty registry to restore into
-        >>> registry = DataFrameRegistry()
-        >>> # Deserialize state from JSON
         >>> state = DataFrameToolkitState(references=[])
-        >>> # Restore with base dataframes
-        >>> restore_from_state(state=state, base_dataframes={}, registry=registry)
+        >>> registry = restore_registry_from_state(state=state, base_dataframes={})
+        >>> len(registry.references)
+        0
     """
+    registry = DataFrameRegistry()
     # 1. Find base references
     base_refs = {ref.id: ref for ref in state.references if ref.is_base}
 
@@ -111,6 +110,8 @@ def restore_from_state(
 
     # 6. Reconstruct derivative dataframes via SQL replay in dependency order
     _reconstruct_derivatives(state, registry, rel_tol=rel_tol)
+
+    return registry
 
 
 # Private helpers
