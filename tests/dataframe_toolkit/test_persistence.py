@@ -195,20 +195,12 @@ class TestValuesNearlyEqual:
 class TestCompareColumnSummaries:
     """Tests for _compare_column_summaries helper function."""
 
-    @pytest.fixture
-    def sample_series(self) -> pl.Series:
-        """Create a sample Polars Series for testing.
-
-        Returns:
-            pl.Series: A sample series with values [1, 2, 3, 4, 5].
-        """
-        return pl.Series("test_col", [1, 2, 3, 4, 5])
-
-    def test_compare_column_summaries_identical_returns_empty_dict(self, sample_series: pl.Series) -> None:
+    def test_compare_column_summaries_identical_returns_empty_dict(self) -> None:
         """Given two identical column summaries, When compared, Then returns empty dict."""
         # Arrange
-        summary1 = ColumnSummary.from_series(sample_series)
-        summary2 = ColumnSummary.from_series(sample_series)
+        series = pl.Series("test_col", [1, 2, 3, 4, 5])
+        summary1 = ColumnSummary.from_series(series)
+        summary2 = ColumnSummary.from_series(series)
 
         # Act
         result = _compare_column_summaries(summary1, summary2)
@@ -327,88 +319,62 @@ class TestValidateDataframeMatchesReference:
 class TestNormalizeDataframeMapping:
     """Tests for _normalize_dataframe_mapping function."""
 
-    @pytest.fixture
-    def sample_dataframe(self) -> pl.DataFrame:
-        """Create a sample DataFrame for testing.
-
-        Returns:
-            pl.DataFrame: A sample DataFrame with column 'a'.
-        """
-        return pl.DataFrame({"a": [1, 2, 3]})
-
-    @pytest.fixture
-    def sample_names_to_ids(self) -> dict[str, DataFrameId]:
-        """Create a sample names-to-IDs mapping.
-
-        Returns:
-            dict[str, DataFrameId]: A mapping from names to DataFrame IDs.
-        """
-        return {"users": "df_00000001", "orders": "df_00000002"}
-
-    def test_normalize_dataframe_mapping_by_name(
-        self,
-        sample_dataframe: pl.DataFrame,
-        sample_names_to_ids: dict[str, DataFrameId],
-    ) -> None:
+    def test_normalize_dataframe_mapping_by_name(self) -> None:
         """Given dataframes keyed by name, When normalized, Then returns ID-keyed mapping."""
         # Arrange
-        dataframes = {"users": sample_dataframe}
+        df = pl.DataFrame({"a": [1, 2, 3]})
+        names_to_ids = {"users": "df_00000001", "orders": "df_00000002"}
+        dataframes = {"users": df}
 
         # Act
         result = _normalize_dataframe_mapping(
             dataframes=dataframes,
-            names_to_ids=sample_names_to_ids,
+            names_to_ids=names_to_ids,
         )
 
         # Assert
         with check:
             assert "df_00000001" in result
         with check:
-            assert result["df_00000001"] is sample_dataframe
+            assert result["df_00000001"] is df
 
-    def test_normalize_dataframe_mapping_by_id(
-        self,
-        sample_dataframe: pl.DataFrame,
-        sample_names_to_ids: dict[str, DataFrameId],
-    ) -> None:
+    def test_normalize_dataframe_mapping_by_id(self) -> None:
         """Given dataframes keyed by ID, When normalized, Then returns ID-keyed mapping."""
         # Arrange
-        dataframes = {"df_00000001": sample_dataframe}
+        df = pl.DataFrame({"a": [1, 2, 3]})
+        names_to_ids = {"users": "df_00000001", "orders": "df_00000002"}
+        dataframes = {"df_00000001": df}
 
         # Act
         result = _normalize_dataframe_mapping(
             dataframes=dataframes,
-            names_to_ids=sample_names_to_ids,
+            names_to_ids=names_to_ids,
         )
 
         # Assert
         with check:
             assert "df_00000001" in result
         with check:
-            assert result["df_00000001"] is sample_dataframe
+            assert result["df_00000001"] is df
 
-    def test_normalize_dataframe_mapping_unknown_name_raises(
-        self,
-        sample_dataframe: pl.DataFrame,
-        sample_names_to_ids: dict[str, DataFrameId],
-    ) -> None:
+    def test_normalize_dataframe_mapping_unknown_name_raises(self) -> None:
         """Given unknown name key, When normalized, Then raises ValueError."""
         # Arrange
-        dataframes = {"unknown_name": sample_dataframe}
+        df = pl.DataFrame({"a": [1, 2, 3]})
+        names_to_ids = {"users": "df_00000001", "orders": "df_00000002"}
+        dataframes = {"unknown_name": df}
 
         # Act/Assert
         with pytest.raises(ValueError, match="Name 'unknown_name' not in state's base references"):
             _normalize_dataframe_mapping(
                 dataframes=dataframes,
-                names_to_ids=sample_names_to_ids,
+                names_to_ids=names_to_ids,
             )
 
-    def test_normalize_dataframe_mapping_duplicate_name_and_id_raises(
-        self,
-        sample_names_to_ids: dict[str, DataFrameId],
-    ) -> None:
+    def test_normalize_dataframe_mapping_duplicate_name_and_id_raises(self) -> None:
         """Given same base provided by both name and ID, When normalized, Then raises ValueError."""
         # Arrange - "users" resolves to "df_00000001", so both keys target the same ID
+        names_to_ids = {"users": "df_00000001", "orders": "df_00000002"}
         df_a = pl.DataFrame({"a": [1, 2, 3]})
         df_b = pl.DataFrame({"a": [4, 5, 6]})
         dataframes = {"users": df_a, "df_00000001": df_b}
@@ -417,23 +383,21 @@ class TestNormalizeDataframeMapping:
         with pytest.raises(ValueError, match="Duplicate"):
             _normalize_dataframe_mapping(
                 dataframes=dataframes,
-                names_to_ids=sample_names_to_ids,
+                names_to_ids=names_to_ids,
             )
 
-    def test_normalize_dataframe_mapping_unknown_id_raises(
-        self,
-        sample_dataframe: pl.DataFrame,
-        sample_names_to_ids: dict[str, DataFrameId],
-    ) -> None:
+    def test_normalize_dataframe_mapping_unknown_id_raises(self) -> None:
         """Given unknown ID key, When normalized, Then raises ValueError."""
         # Arrange
-        dataframes = {"df_99999999": sample_dataframe}
+        df = pl.DataFrame({"a": [1, 2, 3]})
+        names_to_ids = {"users": "df_00000001", "orders": "df_00000002"}
+        dataframes = {"df_99999999": df}
 
         # Act/Assert
         with pytest.raises(ValueError, match="ID 'df_99999999' not in state's base references"):
             _normalize_dataframe_mapping(
                 dataframes=dataframes,
-                names_to_ids=sample_names_to_ids,
+                names_to_ids=names_to_ids,
             )
 
 
