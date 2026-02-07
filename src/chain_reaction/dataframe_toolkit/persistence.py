@@ -223,6 +223,10 @@ def _compare_column_summaries(
 ) -> dict[str, tuple[object, object]]:
     """Compare two column summaries and return any mismatches.
 
+    Note: Any field not in exact_fields or approx_fields is ignored for comparison.
+    This allows comparison of data dependant fields fields while ignoring supplemental
+    metadata fields (e.g., description) that may differ without indicating a data mismatch.
+
     Args:
         actual (ColumnSummary): The actual column summary from the DataFrame.
         expected (ColumnSummary): The expected column summary from the reference.
