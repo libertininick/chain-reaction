@@ -141,7 +141,7 @@ class DataFrameReference(BaseModel):
         default_factory=generate_dataframe_id,
     )
     name: str = Field(description="The name of the DataFrame.")
-    description: str = Field(description="A textual description of the the DataFrame for analysis context.")
+    description: str = Field(description="A textual description of the DataFrame for analysis context.")
     num_rows: int = Field(description="The number of rows in the DataFrame.")
     num_columns: int = Field(description="The number of columns in the DataFrame.")
     column_names: list[str] = Field(description="The names of the columns in the DataFrame.")
