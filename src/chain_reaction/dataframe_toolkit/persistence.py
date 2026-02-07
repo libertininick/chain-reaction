@@ -129,6 +129,8 @@ def _normalize_dataframe_mapping(
 ) -> dict[DataFrameId, pl.DataFrame]:
     """Convert a mapping of names/IDs to DataFrames into a mapping of IDs to DataFrames.
 
+    Note: Extra base dataframes in `dataframes` that aren't in `names_to_ids` are not allowed and will raise an error.
+
     Args:
         dataframes (Mapping[str, pl.DataFrame]): Dataframes keyed by name or ID (df_xxxxxxxx format).
         names_to_ids (dict[str, DataFrameId]): Mapping from names to DataFrameIds.
