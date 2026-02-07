@@ -107,7 +107,7 @@ def restore_from_state(
 
     # 5. Register base dataframes with their references
     for df_id, dataframe in normalized_bases.items():
-        _register_with_reference(base_refs[df_id], dataframe, registry)
+        registry.register(base_refs[df_id], dataframe)
 
     # 6. Reconstruct derivative dataframes via SQL replay in dependency order
     _reconstruct_derivatives(state, registry, rel_tol=rel_tol)
@@ -305,26 +305,6 @@ def _values_nearly_equal(  # noqa: C901, PLR0911
     return False
 
 
-def _register_with_reference(
-    reference: DataFrameReference,
-    dataframe: pl.DataFrame,
-    registry: DataFrameRegistry,
-) -> None:
-    """Register a dataframe with an existing reference, preserving the original ID.
-
-    This is used during state reconstruction to re-associate dataframe data
-    with its original reference metadata and ID.
-
-    Args:
-        reference (DataFrameReference): The reference containing the original ID
-            and metadata.
-        dataframe (pl.DataFrame): The actual dataframe data to register.
-        registry (DataFrameRegistry): The registry to update.
-    """
-    registry.context.register(reference.id, dataframe)
-    registry.references[reference.id] = reference
-
-
 def _reconstruct_derivatives(
     state: DataFrameToolkitState,
     registry: DataFrameRegistry,
@@ -359,7 +339,7 @@ def _reconstruct_derivatives(
         result_df = _reconstruct_dataframe(ref, registry)
         _validate_dataframe_matches_reference(result_df, ref, rel_tol=rel_tol)
 
-        _register_with_reference(ref, result_df, registry)
+        registry.register(ref, result_df)
 
 
 def _sort_references_by_dependency_order(references: list[DataFrameReference]) -> list[DataFrameReference]:

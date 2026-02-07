@@ -195,9 +195,7 @@ class DataFrameToolkit:
             column_descriptions=column_descriptions,
         )
 
-        # Store by ID to align with registry.context (both keyed by ID = single source of truth)
-        self._registry.context.register(reference.id, dataframe)
-        self._registry.references[reference.id] = reference
+        self._registry.register(reference, dataframe)
 
         return reference
 
@@ -265,11 +263,9 @@ class DataFrameToolkit:
             for name, dataframe in dataframes.items()
         ]
 
-        # Commit: register all into context first, then update references.
-        # This ordering ensures references are never updated if context registration fails.
-        context_entries = {ref.id: df for df, ref in zip(dataframes.values(), references, strict=True)}
-        self._registry.context.register_many(context_entries)
-        self._registry.references.update({ref.id: ref for ref in references})
+        # Register each dataframe with its reference atomically
+        for ref, df in zip(references, dataframes.values(), strict=True):
+            self._registry.register(ref, df)
 
         return references
 
@@ -291,9 +287,7 @@ class DataFrameToolkit:
         # Resolve name to reference, raising KeyError if not found
         reference = self._get_reference_by_name(name)
 
-        # Delete by ID from both stores (aligned keys = no sync bugs)
-        self._registry.context.unregister(reference.id)
-        del self._registry.references[reference.id]
+        self._registry.unregister(reference.id)
 
     def get_dataframe_id(self, name: str) -> DataFrameId | ToolCallError:
         """Get the DataFrameId for a DataFrame by its name.

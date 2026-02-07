@@ -885,8 +885,7 @@ class TestConversationResumptionScenarios:
             source_query=query,
             parent_ids=[base_ref.id],
         )
-        original_toolkit._registry.context.register(derived_ref.id, result_df)
-        original_toolkit._registry.references[derived_ref.id] = derived_ref
+        original_toolkit._registry.register(derived_ref, result_df)
 
         # Export state (would be persisted to conversation thread)
         state = original_toolkit.export_state()
@@ -926,16 +925,14 @@ class TestConversationResumptionScenarios:
         b_result = original_toolkit._registry.context.execute_sql(b_query, eager=True)
         b_df = b_result if isinstance(b_result, pl.DataFrame) else b_result.collect()
         b_ref = DataFrameReference.from_dataframe("B", b_df, source_query=b_query, parent_ids=[a_ref.id])
-        original_toolkit._registry.context.register(b_ref.id, b_df)
-        original_toolkit._registry.references[b_ref.id] = b_ref
+        original_toolkit._registry.register(b_ref, b_df)
 
         # Create C from B
         c_query = f"SELECT x, y FROM {b_ref.id} WHERE x <= 2"  # noqa: S608
         c_result = original_toolkit._registry.context.execute_sql(c_query, eager=True)
         c_df = c_result if isinstance(c_result, pl.DataFrame) else c_result.collect()
         c_ref = DataFrameReference.from_dataframe("C", c_df, source_query=c_query, parent_ids=[b_ref.id])
-        original_toolkit._registry.context.register(c_ref.id, c_df)
-        original_toolkit._registry.references[c_ref.id] = c_ref
+        original_toolkit._registry.register(c_ref, c_df)
 
         # Export and restore using from_state
         state = original_toolkit.export_state()
@@ -988,8 +985,7 @@ class TestConversationResumptionScenarios:
             source_query=join_query,
             parent_ids=[users_ref.id, orders_ref.id],
         )
-        original_toolkit._registry.context.register(joined_ref.id, joined_df)
-        original_toolkit._registry.references[joined_ref.id] = joined_ref
+        original_toolkit._registry.register(joined_ref, joined_df)
 
         # Export and restore using from_state
         state = original_toolkit.export_state()
@@ -1046,8 +1042,7 @@ class TestConversationResumptionScenarios:
             source_query=query,
             parent_ids=[events_ref.id],
         )
-        original_toolkit._registry.context.register(derived_ref.id, result_df)
-        original_toolkit._registry.references[derived_ref.id] = derived_ref
+        original_toolkit._registry.register(derived_ref, result_df)
 
         # Export and restore
         state = original_toolkit.export_state()
