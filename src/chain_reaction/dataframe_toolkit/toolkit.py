@@ -77,9 +77,14 @@ class DataFrameToolkit:
         >>> new_toolkit = DataFrameToolkit.from_state(state, {"sales": df1})
     """
 
-    def __init__(self) -> None:
-        """Initialize the toolkit with an empty DataFrame registry."""
-        self._registry = DataFrameRegistry()
+    def __init__(self, registry: DataFrameRegistry | None = None) -> None:
+        """Initialize the toolkit with an optional DataFrame registry.
+
+        Args:
+            registry (DataFrameRegistry | None): An existing registry to use.
+                If None, a new empty registry is created. Defaults to None.
+        """
+        self._registry = registry if registry is not None else DataFrameRegistry()
 
     # -------------------------------------------------------------------------
     # Tool Access (Main API)
@@ -454,14 +459,14 @@ class DataFrameToolkit:
             >>> len(new_toolkit.references)
             1
         """
-        toolkit = cls()
+        registry = DataFrameRegistry()
         restore_from_state(
             state=state,
             base_dataframes=base_dataframes,
-            registry=toolkit._registry,
+            registry=registry,
             rel_tol=rel_tol,
         )
-        return toolkit
+        return cls(registry=registry)
 
     # -------------------------------------------------------------------------
     # Private Helpers
