@@ -76,7 +76,7 @@ Tools are described in the system prompt alongside everything else. Each tool ha
 │  + Tool: write_file                      │
 │      "Write content to a file"           │
 │                                          │
-│  User: "Run the tests for my project"   │
+│  User: "Run the tests for my project"    │
 │                                          │
 │  ──────────────────────────►             │
 │  Model output:                           │
