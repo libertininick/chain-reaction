@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import date
+
 import polars as pl
 import pytest
 from pytest_check import check
@@ -1014,3 +1016,54 @@ class TestConversationResumptionScenarios:
             assert "Alice" in reconstructed_df["name"].to_list()
         with check:
             assert reconstructed_df["name"].to_list().count("Alice") == 2  # Alice has 2 orders
+
+    def test_null_heavy_dataframe_reconstruction(self) -> None:
+        """Test reconstruction with null-heavy DataFrames and date columns."""
+        original_toolkit = DataFrameToolkit()
+
+        # Base dataframe with nulls across multiple columns and date data
+        events_df = pl.DataFrame({
+            "event_id": [1, 2, 3, 4, 5, 6],
+            "event_date": [
+                date(2025, 1, 15),
+                date(2025, 3, 22),
+                None,
+                date(2025, 6, 1),
+                None,
+                date(2025, 12, 31),
+            ],
+            "category": ["sales", None, "support", None, None, "sales"],
+            "revenue": [100.5, None, None, 250.0, None, 75.25],
+        })
+        events_ref = original_toolkit.register_dataframe("events", events_df)
+
+        # Derive: filter to rows with non-null revenue
+        query = f"SELECT event_id, event_date, category, revenue FROM {events_ref.id} WHERE revenue IS NOT NULL"  # noqa: S608
+        result = original_toolkit._context.execute_sql(query, eager=True)
+        result_df = result if isinstance(result, pl.DataFrame) else result.collect()
+
+        derived_ref = DataFrameReference.from_dataframe(
+            "revenue_events",
+            result_df,
+            source_query=query,
+            parent_ids=[events_ref.id],
+        )
+        original_toolkit._context.register(derived_ref.id, result_df)
+        original_toolkit._references[derived_ref.id] = derived_ref
+
+        # Export and restore
+        state = original_toolkit.export_state()
+        new_toolkit = DataFrameToolkit.from_state(state, {"events": events_df})
+
+        # Verify
+        with check:
+            assert len(new_toolkit.references) == 2
+
+        reconstructed_df = new_toolkit._context.get_dataframe(derived_ref.id)
+        with check:
+            assert reconstructed_df.shape == (3, 4)  # 3 rows with non-null revenue
+        with check:
+            assert set(reconstructed_df["event_id"].to_list()) == {1, 4, 6}
+        # Verify nulls survived round-trip in the derived data
+        with check:
+            assert reconstructed_df["category"].null_count() == 1  # event_id=4 has null category

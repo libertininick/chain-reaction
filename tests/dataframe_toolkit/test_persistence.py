@@ -22,7 +22,7 @@ from chain_reaction.dataframe_toolkit.persistence import (
     restore_from_state,
 )
 
-# ruff: noqa: PLR6301, S608
+# ruff: noqa: PLR6301, PLR0904, S608
 
 
 class TestValuesNearlyEqual:
@@ -190,6 +190,87 @@ class TestValuesNearlyEqual:
             assert _values_nearly_equal(actual=True, expected="True") is False
         with check:
             assert _values_nearly_equal(actual="True", expected=True) is False
+
+    def test_values_nearly_equal_very_large_floats_returns_true(self) -> None:
+        """Given two very large floats within tolerance, When called, Then returns True."""
+        # Arrange
+        actual = 1e308
+        expected = 1e308
+
+        # Act
+        result = _values_nearly_equal(actual=actual, expected=expected)
+
+        # Assert
+        with check:
+            assert result is True
+
+    def test_values_nearly_equal_very_large_floats_different_returns_false(self) -> None:
+        """Given two very large floats that differ, When called, Then returns False."""
+        # Arrange
+        actual = 1e308
+        expected = 1e307
+
+        # Act
+        result = _values_nearly_equal(actual=actual, expected=expected)
+
+        # Assert
+        with check:
+            assert result is False
+
+    def test_values_nearly_equal_positive_infinity_returns_true(self) -> None:
+        """Given both values are positive infinity, When called, Then returns True."""
+        # Arrange
+        actual = float("inf")
+        expected = float("inf")
+
+        # Act
+        result = _values_nearly_equal(actual=actual, expected=expected)
+
+        # Assert
+        with check:
+            assert result is True
+
+    def test_values_nearly_equal_negative_infinity_returns_true(self) -> None:
+        """Given both values are negative infinity, When called, Then returns True."""
+        # Arrange
+        actual = float("-inf")
+        expected = float("-inf")
+
+        # Act
+        result = _values_nearly_equal(actual=actual, expected=expected)
+
+        # Assert
+        with check:
+            assert result is True
+
+    def test_values_nearly_equal_opposite_infinities_returns_false(self) -> None:
+        """Given positive and negative infinity, When called, Then returns False."""
+        # Arrange/Act/Assert
+        with check:
+            assert _values_nearly_equal(actual=float("inf"), expected=float("-inf")) is False
+        with check:
+            assert _values_nearly_equal(actual=float("-inf"), expected=float("inf")) is False
+
+    def test_values_nearly_equal_infinity_vs_finite_returns_false(self) -> None:
+        """Given infinity and a finite number, When called, Then returns False."""
+        # Arrange/Act/Assert
+        with check:
+            assert _values_nearly_equal(actual=float("inf"), expected=1e308) is False
+        with check:
+            assert _values_nearly_equal(actual=1e308, expected=float("inf")) is False
+
+    def test_values_nearly_equal_negative_zero_vs_zero_returns_true(self) -> None:
+        """Given -0.0 and 0.0, When called, Then returns True."""
+        # Arrange
+        actual = -0.0
+        expected = 0.0
+
+        # Act
+        result = _values_nearly_equal(actual=actual, expected=expected)
+
+        # Assert
+        with check:
+            assert result is True
 
 
 class TestCompareColumnSummaries:
