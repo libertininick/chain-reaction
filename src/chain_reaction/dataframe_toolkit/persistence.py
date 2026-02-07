@@ -417,31 +417,31 @@ def _reconstruct_dataframe(
         )
         raise ValueError(msg)
 
-    return _execute_reconstruction_query(ref, registry)
+    return _execute_reconstruction_query(ref.source_query, ref.name, registry)
 
 
-def _execute_reconstruction_query(ref: DataFrameReference, registry: DataFrameRegistry) -> pl.DataFrame:
+def _execute_reconstruction_query(source_query: str, name: str, registry: DataFrameRegistry) -> pl.DataFrame:
     """Execute the SQL query to reconstruct a dataframe.
 
+    The caller is responsible for validating that source_query is non-empty
+    before calling this function.
+
     Args:
-        ref (DataFrameReference): The reference containing the source_query.
+        source_query (str): The SQL query to execute.
+        name (str): The reference name, used for error messages.
         registry (DataFrameRegistry): The registry for SQL execution.
 
     Returns:
         pl.DataFrame: The reconstructed dataframe.
 
     Raises:
-        ValueError: If SQL query is None or execution fails.
+        ValueError: If SQL execution fails.
         TypeError: If execute_sql(eager=True) returns non-DataFrame type.
     """
-    if not ref.source_query:
-        msg = f"Reference '{ref.name}' has no source_query for reconstruction"
-        raise ValueError(msg)
-
     try:
-        result_df = registry.context.execute_sql(ref.source_query, eager=True)
+        result_df = registry.context.execute_sql(source_query, eager=True)
     except (ValueError, pl.exceptions.PolarsError, RuntimeError) as e:
-        msg = f"SQL execution failed while reconstructing '{ref.name}': {e}. Query: {ref.source_query}"
+        msg = f"SQL execution failed while reconstructing '{name}': {e}. Query: {source_query}"
         raise ValueError(msg) from e
 
     if not isinstance(result_df, pl.DataFrame):
