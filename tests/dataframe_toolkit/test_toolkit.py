@@ -15,8 +15,6 @@ from chain_reaction.dataframe_toolkit.models import (
 )
 from chain_reaction.dataframe_toolkit.toolkit import DataFrameToolkit
 
-# ruff: noqa: PLR6301
-
 
 class TestDataFrameToolkitInit:
     """Tests for DataFrameToolkit initialization."""

@@ -16,8 +16,6 @@ from chain_reaction.dataframe_toolkit.models import (
     ToolCallError,
 )
 
-# ruff: noqa: PLR6301, PLR0904
-
 
 class TestToolCallError:
     """Tests for the ToolCallError model."""

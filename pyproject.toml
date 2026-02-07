@@ -124,6 +124,11 @@ per-file-ignores = {"**/{tests}/*" = [
   "PLR2004", "S101", "TID252",
   # Tests can import private names
   "PLC2701",
+  # Test classes can have methods that don't use self. Don't need to decorate as static.
+  "PLR6301",
+  # Test classes can have as many public methods as needed
+  "PLR0904", 
+
 ]}
 extend-unsafe-fixes = ["E", "F401"]
 

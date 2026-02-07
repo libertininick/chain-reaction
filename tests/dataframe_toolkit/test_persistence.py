@@ -22,8 +22,6 @@ from chain_reaction.dataframe_toolkit.persistence import (
     restore_from_state,
 )
 
-# ruff: noqa: PLR6301, PLR0904, S608
-
 
 class TestValuesNearlyEqual:
     """Tests for _values_nearly_equal helper function."""
@@ -778,7 +776,7 @@ class TestRestoreFromState:
             column_names=["a"],
             column_summaries={"a": ColumnSummary.from_series(derived_df["a"])},
             parent_ids=[base_ref.id],
-            source_query=f"SELECT * FROM {base_ref.id} WHERE a < 3",
+            source_query=f"SELECT * FROM {base_ref.id} WHERE a < 3",  # noqa: S608
         )
 
         state = DataFrameToolkitState(references=[base_ref, derived_ref])
