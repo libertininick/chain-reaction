@@ -335,6 +335,9 @@ def _reconstruct_derivatives(
     """
     for ref in _sort_references_by_dependency_order(state.references):
         if ref.id in registry.references:
+            # Skip base dataframes that MUST already be registered,
+            # and any derivatives that were already reconstructed by a previous reference
+            # (e.g. if multiple references point to the same derivative ID)
             continue
 
         result_df = _reconstruct_dataframe(ref, registry)
