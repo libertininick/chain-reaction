@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import math
 import numbers
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from graphlib import CycleError, TopologicalSorter
 from typing import Final
 
@@ -212,8 +212,8 @@ def _compare_column_summaries(
     actual: ColumnSummary,
     expected: ColumnSummary,
     *,
-    exact_fields: tuple[str, ...] = ("dtype", "count", "null_count", "unique_count"),
-    approx_fields: tuple[str, ...] = ("min", "max", "mean", "std", "p25", "p50", "p75"),
+    exact_fields: Sequence[str] = ("dtype", "count", "null_count", "unique_count"),
+    approx_fields: Sequence[str] = ("min", "max", "mean", "std", "p25", "p50", "p75"),
     rel_tol: float = REL_TOL_DEFAULT,
 ) -> dict[str, tuple[object, object]]:
     """Compare two column summaries and return any mismatches.
@@ -225,8 +225,8 @@ def _compare_column_summaries(
     Args:
         actual (ColumnSummary): The actual column summary from the DataFrame.
         expected (ColumnSummary): The expected column summary from the reference.
-        exact_fields (tuple[str, ...]): Fields that must match exactly (e.g. dtype, count).
-        approx_fields (tuple[str, ...]): Fields that can match approximately (e.g. min, max, mean).
+        exact_fields (Sequence[str]): Fields that must match exactly (e.g. dtype, count).
+        approx_fields (Sequence[str]): Fields that can match approximately (e.g. min, max, mean).
             Defaults to common numeric summaries.
         rel_tol (float): Relative tolerance for floating point comparisons.
 
