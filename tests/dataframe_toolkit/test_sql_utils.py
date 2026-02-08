@@ -1128,8 +1128,8 @@ class TestValidateSQLTables:
         valid_tables set should pass validation without error.
         """
         # Arrange
-        query = "SELECT a FROM users"
-        valid_tables = {"users"}
+        query = "SELECT price FROM products WHERE price > 0"
+        valid_tables = {"products"}
 
         # Act & Assert - should not raise
         _validate_sql_tables(parse_sql(query), valid_tables, query)
@@ -1141,8 +1141,8 @@ class TestValidateSQLTables:
         valid_tables set should pass validation without error.
         """
         # Arrange
-        query = "SELECT * FROM users u JOIN orders o ON u.id = o.user_id"
-        valid_tables = {"users", "orders"}
+        query = "SELECT * FROM employees e JOIN departments d ON e.dept_id = d.id"
+        valid_tables = {"employees", "departments"}
 
         # Act & Assert - should not raise
         _validate_sql_tables(parse_sql(query), valid_tables, query)
@@ -1154,8 +1154,8 @@ class TestValidateSQLTables:
         query should match 'users' in valid_tables.
         """
         # Arrange
-        query = "SELECT * FROM USERS"
-        valid_tables = {"users"}
+        query = "SELECT * FROM INVENTORY"
+        valid_tables = {"inventory"}
 
         # Act & Assert - should not raise
         _validate_sql_tables(parse_sql(query), valid_tables, query)
@@ -1163,12 +1163,12 @@ class TestValidateSQLTables:
     def test_validate_sql_tables_case_insensitive_valid_tables_uppercase_succeeds(self) -> None:
         """Query with lowercase table name should match uppercase valid_tables.
 
-        Table name matching should be case-insensitive, so users in the
-        query should match 'USERS' in valid_tables.
+        Table name matching should be case-insensitive, so transactions in the
+        query should match 'TRANSACTIONS' in valid_tables.
         """
         # Arrange
-        query = "SELECT * FROM users"
-        valid_tables = {"USERS"}
+        query = "SELECT * FROM transactions"
+        valid_tables = {"TRANSACTIONS"}
 
         # Act & Assert - should not raise
         _validate_sql_tables(parse_sql(query), valid_tables, query)
@@ -1180,8 +1180,8 @@ class TestValidateSQLTables:
         the underlying table name should be checked against valid_tables.
         """
         # Arrange
-        query = "SELECT u.id FROM users u"
-        valid_tables = {"users"}
+        query = "SELECT p.name, p.price FROM products p"
+        valid_tables = {"products"}
 
         # Act & Assert - should not raise
         _validate_sql_tables(parse_sql(query), valid_tables, query)
@@ -1192,9 +1192,9 @@ class TestValidateSQLTables:
         The function accepts a pre-parsed sqlglot Expression from parse_sql().
         """
         # Arrange
-        query = "SELECT * FROM users"
+        query = "SELECT COUNT(*) FROM orders WHERE status = 'shipped'"
         expression = parse_sql(query)
-        valid_tables = {"users"}
+        valid_tables = {"orders"}
 
         # Act & Assert - should not raise
         _validate_sql_tables(expression, valid_tables, query)
@@ -1210,15 +1210,17 @@ class TestValidateSQLTables:
         should be raised with the invalid table name in the invalid_tables list.
         """
         # Arrange
-        query = "SELECT * FROM unknown_table"
-        valid_tables = {"users"}
+        query = "SELECT * FROM nonexistent_data"
+        valid_tables = {"products", "orders"}
 
         # Act & Assert
         with pytest.raises(SQLTableError) as exc_info:
             _validate_sql_tables(parse_sql(query), valid_tables, query)
 
         with check:
-            assert "unknown_table" in exc_info.value.invalid_tables, "invalid_tables should contain 'unknown_table'"
+            assert "nonexistent_data" in exc_info.value.invalid_tables, (
+                "invalid_tables should contain 'nonexistent_data'"
+            )
 
     def test_validate_sql_tables_mix_valid_invalid_raises_error(self) -> None:
         """Query with mix of valid and invalid tables should raise SQLTableError.
@@ -1227,15 +1229,15 @@ class TestValidateSQLTables:
         be raised listing only the invalid tables.
         """
         # Arrange
-        query = "SELECT * FROM users JOIN bad_table ON users.id = bad_table.user_id"
-        valid_tables = {"users"}
+        query = "SELECT * FROM customers JOIN ghost_table ON customers.id = ghost_table.cust_id"
+        valid_tables = {"customers"}
 
         # Act & Assert
         with pytest.raises(SQLTableError) as exc_info:
             _validate_sql_tables(parse_sql(query), valid_tables, query)
 
         with check:
-            assert exc_info.value.invalid_tables == ["bad_table"], "invalid_tables should contain only 'bad_table'"
+            assert exc_info.value.invalid_tables == ["ghost_table"], "invalid_tables should contain only 'ghost_table'"
 
     def test_validate_sql_tables_no_tables_raises_error(self) -> None:
         """Query without table references should raise SQLTableError.
@@ -1245,7 +1247,7 @@ class TestValidateSQLTables:
         """
         # Arrange
         query = "SELECT 1"
-        valid_tables = {"users"}
+        valid_tables = {"metrics"}
 
         # Act & Assert
         with pytest.raises(SQLTableError) as exc_info:
@@ -1263,17 +1265,17 @@ class TestValidateSQLTables:
         table names should be included in the SQLTableError.
         """
         # Arrange
-        query = "SELECT * FROM foo JOIN bar ON foo.id = bar.foo_id"
-        valid_tables = {"users"}
+        query = "SELECT * FROM alpha JOIN beta ON alpha.id = beta.alpha_id"
+        valid_tables = {"gamma", "delta"}
 
         # Act & Assert
         with pytest.raises(SQLTableError) as exc_info:
             _validate_sql_tables(parse_sql(query), valid_tables, query)
 
         with check:
-            assert "foo" in exc_info.value.invalid_tables, "invalid_tables should contain 'foo'"
+            assert "alpha" in exc_info.value.invalid_tables, "invalid_tables should contain 'alpha'"
         with check:
-            assert "bar" in exc_info.value.invalid_tables, "invalid_tables should contain 'bar'"
+            assert "beta" in exc_info.value.invalid_tables, "invalid_tables should contain 'beta'"
 
     # -------------------------------------------------------------------------
     # CTE and Subquery Tests
@@ -1287,10 +1289,10 @@ class TestValidateSQLTables:
         database tables referenced within the CTE should be validated.
         """
         # Arrange
-        query = "WITH temp AS (SELECT * FROM users) SELECT * FROM temp"
-        valid_tables = {"users"}
+        query = "WITH recent AS (SELECT * FROM events) SELECT * FROM recent"
+        valid_tables = {"events"}
 
-        # Act & Assert - should not raise because 'temp' is a CTE, not a table
+        # Act & Assert - should not raise because 'recent' is a CTE, not a table
         _validate_sql_tables(parse_sql(query), valid_tables, query)
 
     def test_validate_sql_tables_subquery_table_validated_succeeds(self) -> None:
@@ -1300,8 +1302,8 @@ class TestValidateSQLTables:
         validation, not just tables in the main query.
         """
         # Arrange
-        query = "SELECT * FROM users WHERE id IN (SELECT user_id FROM orders)"
-        valid_tables = {"users", "orders"}
+        query = "SELECT * FROM products WHERE category_id IN (SELECT id FROM categories)"
+        valid_tables = {"products", "categories"}
 
         # Act & Assert - should not raise
         _validate_sql_tables(parse_sql(query), valid_tables, query)
@@ -1317,8 +1319,8 @@ class TestValidateSQLTables:
         validated, enabling debugging and error reporting.
         """
         # Arrange
-        query = "SELECT * FROM invalid_table"
-        valid_tables = {"users"}
+        query = "SELECT * FROM phantom_records"
+        valid_tables = {"accounts", "ledger"}
 
         # Act & Assert
         with pytest.raises(SQLTableError) as exc_info:
@@ -1334,8 +1336,8 @@ class TestValidateSQLTables:
         the names of tables that failed validation.
         """
         # Arrange
-        query = "SELECT * FROM bad_table"
-        valid_tables = {"users"}
+        query = "SELECT * FROM missing_data"
+        valid_tables = {"reports"}
 
         # Act & Assert
         with pytest.raises(SQLTableError) as exc_info:

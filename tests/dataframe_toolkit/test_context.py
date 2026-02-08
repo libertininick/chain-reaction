@@ -17,7 +17,7 @@ def sample_df() -> pl.DataFrame:
     Returns:
         pl.DataFrame: DataFrame with columns 'a' and 'b'.
     """
-    return pl.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
+    return pl.DataFrame({"a": [3, 1, 3], "b": [None, -5, 42]})
 
 
 @pytest.fixture
@@ -27,7 +27,7 @@ def sample_lazy_df() -> pl.LazyFrame:
     Returns:
         pl.LazyFrame: LazyFrame with columns 'x' and 'y'.
     """
-    return pl.DataFrame({"x": [10, 20, 30], "y": [40, 50, 60]}).lazy()
+    return pl.DataFrame({"x": [50, 10, 30], "y": [-8, 0, 100]}).lazy()
 
 
 @pytest.fixture
@@ -342,7 +342,7 @@ class TestSQLQueryExecution:
         with check:
             assert result.shape == (2, 1), "Result should have 2 rows and 1 column"
         with check:
-            assert result["a"].to_list() == [2, 3], "Result should contain filtered values"
+            assert result["a"].to_list() == [3, 3], "Result should contain filtered values"
 
     def test_execute_sql_successful_query_lazy(self, sample_lazy_df: pl.LazyFrame) -> None:
         """Verify successful SQL query execution in lazy mode.
@@ -363,7 +363,7 @@ class TestSQLQueryExecution:
         with check:
             assert collected.shape == (2, 1), "Collected result should have 2 rows and 1 column"
         with check:
-            assert collected["x"].to_list() == [20, 30], "Result should contain filtered values"
+            assert collected["x"].to_list() == [50, 30], "Result should contain filtered values"
 
     def test_execute_sql_join_multiple_frames(self, sample_df: pl.DataFrame, sample_df_2: pl.DataFrame) -> None:
         """Verify SQL queries across multiple registered dataframes.
