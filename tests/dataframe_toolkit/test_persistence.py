@@ -17,6 +17,7 @@ from chain_reaction.dataframe_toolkit.persistence import (
     _compare_column_summaries,
     _execute_reconstruction_query,
     _reconstruct_dataframe,
+    _reconstruct_derivatives,
     _resolve_dataframe_keys_to_ids,
     _sort_references_by_dependency_order,
     _validate_dataframe_matches_reference,
@@ -873,3 +874,42 @@ class TestExecuteReconstructionQuery:
             pytest.raises(TypeError, match="expected DataFrame"),
         ):
             _execute_reconstruction_query("SELECT * FROM base", "derived", registry)
+
+
+class TestReconstructDerivatives:
+    """Tests for _reconstruct_derivatives function."""
+
+    def test_reconstruct_derivatives_validation_failure_propagates_value_error(self) -> None:
+        """Given derivative SQL produces data mismatching saved statistics, When reconstructed, Then raises ValueError.
+
+        Simulates a non-deterministic query scenario where replay produces different
+        data than the original execution (e.g., ORDER BY without LIMIT affecting
+        percentile statistics).
+        """
+        # Arrange - register base dataframe
+        base_df = pl.DataFrame({"a": [1, 2, 3, 4, 5]})
+        base_ref = DataFrameReference.from_dataframe("base", base_df)
+        registry = DataFrameRegistry()
+        registry.register(base_ref, base_df)
+
+        # Create derivative reference with statistics from [1, 2] (original result),
+        # but source_query that produces [4, 5] (non-deterministic replay).
+        # Same shape, different values -> statistics mismatch on min/max/mean.
+        original_result = pl.DataFrame({"a": [1, 2]})
+        derived_ref = DataFrameReference(
+            id="df_de11ed11",
+            name="derived",
+            description="Non-deterministic derivative",
+            num_rows=2,
+            num_columns=1,
+            column_names=["a"],
+            column_summaries={"a": ColumnSummary.from_series(original_result["a"])},
+            parent_ids=[base_ref.id],
+            source_query=f"SELECT * FROM {base_ref.id} WHERE a > 3",  # noqa: S608
+        )
+
+        state = DataFrameToolkitState(references=[base_ref, derived_ref])
+
+        # Act/Assert - validation catches the statistics mismatch
+        with pytest.raises(ValueError, match="statistics mismatch"):
+            _reconstruct_derivatives(state, registry)
