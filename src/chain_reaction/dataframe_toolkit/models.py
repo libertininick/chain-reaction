@@ -230,7 +230,6 @@ class DataFrameReference(BaseModel):
             column_descriptions = {}
 
         return cls(
-            id=generate_dataframe_id(),
             name=name,
             num_rows=dataframe.height,
             num_columns=dataframe.width,
