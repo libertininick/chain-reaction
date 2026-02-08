@@ -4,48 +4,74 @@
 
 ## Quick Start
 
-After pulling `.claude/`:
-1. Add `context7` MCP server to Claude:
-   - Sign up for the free Contex7 account: https://context7.com/sign-up
-   - Generate an API key
-   - Connect Claude to the context7 MCP server: https://context7.com/docs/clients/claude-code#local-server
+### Prerequisites
 
-      ```sh
-      claude mcp add context7 -- npx -y @upstash/context7-mcp --api-key YOUR_API_KEY
-      ```
-   - Confirm connection by running `/mcp` inside a Claude session, you should see:
-      ```sh
-      Manage MCP servers                                                                                                        
-      1 server                                                                                                                  
-                                                                                                                                 
-         Local MCPs (../.claude.json [project: ../repos/buzzai])                     
-      ❯ context7 · ✔ connected  
-      ```
-2. Inside a Claude session run `/sync` command to generate bundles (they're gitignored):
+This configuration assumes you already have:
+
+1. **[Claude Code](https://docs.anthropic.com/en/docs/claude-code)** installed and working
+2. **[uv](https://docs.astral.sh/uv/)** managing your project virtualenv
+3. **Dev tools installed and configured** in your venv:
+   - `ruff` (formatting + linting)
+   - `ty` (type checking)
+   - `pytest` + `pytest-check` + `pytest-cov` (testing + coverage)
+4. **[Context7](https://context7.com/sign-up) free account** for fetching up-to-date framework documentation via MCP
+
+### Setup
+
+After pulling `.claude/`:
+
+1. **Connect the Context7 MCP server** to Claude Code:
+
+   ```sh
+   # Generate an API key at https://context7.com after signing up
+   claude mcp add context7 -- npx -y @upstash/context7-mcp --api-key YOUR_API_KEY
+   ```
+
+   Verify it's connected by running `/mcp` inside a Claude session — you should see `context7 · ✔ connected`.
+
+2. **Run `/sync`** inside a Claude session to generate context bundles (they're gitignored):
 
    ```sh
    /sync
-   # Or manually from your terminal: uv run python .claude/scripts/sync_context.py
    ```
 
-   Note, each time you pull changes from .claude, add a skill, command, or agent, or update a setting you should run `/sync` to ensure the context bundles are up to date.
+   Re-run `/sync` any time you pull changes to `.claude/`, add a skill/command/agent, or update a setting.
 
-## Core Workflow
-The core workflow is: **plan → implement → review → verify tests → commit**
+### Core Workflow
 
-Custom Claude commands for project:
+The core loop is: **plan → implement → review → commit → update plan**, one phase at a time.
 
-```bash
-/plan <description>           # Create implementation plan
-/implement Phase 1 from ...   # Execute a phase
-/review                       # Full review (style + substance + test quality)
-/review --src-only            # Review source code only
-/review --tests-only          # Review tests only
-git commit                    # Commit manually
-/update-plan                  # Mark phase complete, continue
+Here's what a typical session looks like:
+
+```sh
+# 1. Create a plan — the planner agent explores the codebase, asks
+#    clarifying questions, and writes a phased implementation plan.
+/plan Add retry logic to the API client
+
+#    Output: .claude/agent-outputs/plans/<timestamp>-api-client-plan.md
+#    Review the plan and iterate until you're happy with it.
+
+# 2. Implement Phase 1 — code-writer and test-writer agents execute
+#    the first phase, then validate with ruff, ty, and pytest.
+/implement Phase 1 from .claude/agent-outputs/plans/<timestamp>-api-client-plan.md
+
+# 3. Review Phase 1 — style, substance, and test-quality reviewers
+#    run in parallel and produce a unified review report.
+/review --staged --plan .claude/agent-outputs/plans/<timestamp>-api-client-plan.md --phase 1
+
+#    Address any findings, then stage your changes.
+
+# 4. Commit — once the review is clean, commit the phase.
+git add -p && git commit
+
+# 5. Update the plan — syncs with main, marks Phase 1 complete,
+#    and adjusts remaining phases if main has changed.
+/update-plan .claude/agent-outputs/plans/<timestamp>-api-client-plan.md --completed-phases 1
+
+# 6. Repeat from step 2 for Phase 2, 3, etc.
 ```
 
-Every command supports `--help` to show usage and examples (e.g., `/review --help`).
+Every command supports `--help` for usage and examples (e.g., `/review --help`).
 
 ## Usage Guides
 

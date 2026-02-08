@@ -15,10 +15,10 @@ Adds batch processing support for the data pipeline, enabling processing of up t
 ## What's Included
 
 **Source Code:**
-- `src/chain_reaction/pipeline/batch_processor.py` - New batch processing module with `BatchProcessor` class
-- `src/chain_reaction/pipeline/processor.py` - Updated to support batch mode via `batch_size` parameter
-- `src/chain_reaction/pipeline/retry.py` - New retry logic with exponential backoff
-- `src/chain_reaction/pipeline/__init__.py` - Export new public APIs
+- `src/my_library/pipeline/batch_processor.py` - New batch processing module with `BatchProcessor` class
+- `src/my_library/pipeline/processor.py` - Updated to support batch mode via `batch_size` parameter
+- `src/my_library/pipeline/retry.py` - New retry logic with exponential backoff
+- `src/my_library/pipeline/__init__.py` - Export new public APIs
 
 **Tests:**
 - `tests/pipeline/test_batch_processor.py` - Unit tests for `BatchProcessor` class
@@ -43,9 +43,9 @@ Adds batch processing support for the data pipeline, enabling processing of up t
 
 ## Critical Areas for Review
 
-1. **`src/chain_reaction/pipeline/batch_processor.py:L45-L78`** - Core batch chunking logic. Please verify the boundary conditions are correct, especially for the last partial batch.
+1. **`src/my_library/pipeline/batch_processor.py:L45-L78`** - Core batch chunking logic. Please verify the boundary conditions are correct, especially for the last partial batch.
 
-2. **`src/chain_reaction/pipeline/retry.py:L20-L35`** - Exception classification logic that determines which errors trigger retries. Important for reliability - wrong classification could cause infinite retries or premature failures.
+2. **`src/my_library/pipeline/retry.py:L20-L35`** - Exception classification logic that determines which errors trigger retries. Important for reliability - wrong classification could cause infinite retries or premature failures.
 
 3. **Memory management** - The `BatchProcessor` holds one chunk in memory at a time. For 10K records with our average record size of 2KB, peak memory is ~20MB. Please verify this is acceptable for production.
 

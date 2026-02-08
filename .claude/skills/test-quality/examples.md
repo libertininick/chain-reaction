@@ -206,7 +206,7 @@ class TestDivide:
 ## 5. Test Data Variety
 
 ```python
-# INCORRECT - repetitive, unrealistic data
+# INCORRECT - repetitive, unrealistic data with no variety
 def test_user_1():
     user = User(name="test", email="test@test.com")
     assert user.is_valid()
@@ -223,6 +223,13 @@ def test_user_3():
 # INCORRECT - magic numbers without context
 def test_pricing():
     assert calculate_price(100, 0.2, 5) == 96  # What are these numbers?
+
+
+# INCORRECT - only simple integers, no edge values
+def test_summarize():
+    df = pl.DataFrame({"value": [1, 2, 3]})  # No nulls, no floats, no extremes
+    result = summarize(df)
+    assert result["mean"] == 2.0
 
 
 # CORRECT - varied, realistic, parametrized
@@ -260,11 +267,30 @@ def test_pricing_with_discount():
     # Assert
     # $100 - 20% = $80, then - $5 coupon = $75
     assert final_price == 75.00
+
+
+# CORRECT - diverse data types and edge values
+def test_summarize_with_nulls_and_extremes():
+    """Summarize should handle nulls, infinity, and negative zero."""
+    # Arrange - data inline with diverse edge cases
+    df = pl.DataFrame({
+        "value": [None, -0.0, 1e15, None, float("inf")],
+        "category": ["sales", None, "support", None, ""],
+    })
+
+    # Act
+    result = summarize(df)
+
+    # Assert
+    with check:
+        assert result["null_count"] == 2
 ```
 
 ---
 
 ## 6. Fixture Usage
+
+Fixtures are for **dependency instances** (connections, services, clients), not for test data.
 
 ```python
 # INCORRECT - fixture modifies global state
@@ -277,13 +303,23 @@ def setup_global_config():
     # Oops, forgot to reset!
 
 
-# INCORRECT - single-use fixture (should be inline)
+# INCORRECT - fixture defines test data (should be inline)
 @pytest.fixture
 def single_user():
     return User(name="Test")
 
-def test_something(single_user):  # Just define inline
+def test_something(single_user):  # Reader must jump to fixture to see data
     assert single_user.name == "Test"
+
+
+# INCORRECT - fixture defines test data (dict/DataFrame/simple values)
+@pytest.fixture
+def user_data() -> dict:
+    return {"name": "Alice", "email": "alice@example.com"}
+
+def test_create_user(user_data):  # Data hidden — define inline instead
+    user = User(**user_data)
+    assert user.is_valid()
 
 
 # INCORRECT - complex fixture chain
@@ -308,7 +344,7 @@ def test_service(prepared_service):  # 4 fixtures deep!
     ...
 
 
-# CORRECT - shared fixture with proper scope and cleanup
+# CORRECT - fixture for a dependency instance with cleanup
 @pytest.fixture
 def db_connection():
     """Create test database connection with automatic cleanup."""
@@ -318,15 +354,28 @@ def db_connection():
     drop_test_database()
 
 
-# CORRECT - fixture for shared, non-trivial setup
+# CORRECT - fixture for a reusable dependency instance
 @pytest.fixture
-def sample_orders() -> list[Order]:
-    """Provide realistic order data for testing."""
-    return [
-        Order(id=1, customer="alice@example.com", total=150.00, status="pending"),
-        Order(id=2, customer="bob@example.com", total=75.50, status="shipped"),
-        Order(id=3, customer="charlie@example.com", total=200.00, status="pending"),
+def processor() -> DataProcessor:
+    """Create a DataProcessor instance for testing."""
+    return DataProcessor(max_size=1000, validate=True)
+
+
+# CORRECT - test data defined inline, fixture only for the dependency
+def test_load_data_success(processor: DataProcessor) -> None:
+    """Test successful data loading with valid input."""
+    # Arrange - data inline so reader sees exactly what's loaded
+    sample_data = [
+        {"id": 1, "value": 10.5, "name": "Alice"},
+        {"id": 2, "value": 20.0, "name": "Bob"},
     ]
+
+    # Act
+    processor.load_data(sample_data)
+
+    # Assert
+    with check:
+        assert processor.record_count == 2
 
 
 # CORRECT - simple data defined inline

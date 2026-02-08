@@ -24,7 +24,7 @@ Add a text sanitization utility module to clean and normalize user input before 
 ## Architecture Decisions
 
 ### Module Location
-**Decision:** Create `src/chain_reaction/utils/text_sanitizer.py`
+**Decision:** Create `src/my_library/utils/text_sanitizer.py`
 **Reason:** Groups utility functions together, keeps core logic separate from agent code
 
 ### Function Design
@@ -38,7 +38,7 @@ Follow the **write → test → validate** cycle for each function before moving
 ### 1. Setup: Create module structure
 
 **Action:** Create empty module files
-- Create `src/chain_reaction/utils/text_sanitizer.py` with module docstring
+- Create `src/my_library/utils/text_sanitizer.py` with module docstring
 - Create `tests/utils/test_text_sanitizer.py` with basic structure
 
 **Module docstring:**
@@ -55,7 +55,7 @@ and validating text length before processing in agents.
 ### 2. Function 1: `remove_control_characters`
 
 #### 2.1 Implement the function
-**File:** `src/chain_reaction/utils/text_sanitizer.py`
+**File:** `src/my_library/utils/text_sanitizer.py`
 
 **Implementation requirements:**
 - Function signature: `remove_control_characters(text: str) -> str`
@@ -79,8 +79,8 @@ and validating text length before processing in agents.
 **Run validation commands:**
 ```bash
 uv run pytest tests/utils/test_text_sanitizer.py::test_remove_control_characters -v
-uv run ty check src/chain_reaction/utils/text_sanitizer.py
-uv tool run pydoclint --style=google --allow-init-docstring=True src/chain_reaction/utils/text_sanitizer.py
+uv run ty check src/my_library/utils/text_sanitizer.py
+uv tool run pydoclint --style=google --allow-init-docstring=True src/my_library/utils/text_sanitizer.py
 ```
 
 **Acceptance criteria:**
@@ -94,7 +94,7 @@ uv tool run pydoclint --style=google --allow-init-docstring=True src/chain_react
 ### 3. Function 2: `normalize_whitespace`
 
 #### 3.1 Implement the function
-**File:** `src/chain_reaction/utils/text_sanitizer.py`
+**File:** `src/my_library/utils/text_sanitizer.py`
 
 **Implementation requirements:**
 - Function signature: `normalize_whitespace(text: str, max_consecutive: int = 2) -> str`
@@ -121,8 +121,8 @@ uv tool run pydoclint --style=google --allow-init-docstring=True src/chain_react
 **Run validation commands:**
 ```bash
 uv run pytest tests/utils/test_text_sanitizer.py::test_normalize_whitespace -v
-uv run ty check src/chain_reaction/utils/text_sanitizer.py
-uv tool run pydoclint --style=google --allow-init-docstring=True src/chain_reaction/utils/text_sanitizer.py
+uv run ty check src/my_library/utils/text_sanitizer.py
+uv tool run pydoclint --style=google --allow-init-docstring=True src/my_library/utils/text_sanitizer.py
 ```
 
 **Acceptance criteria:**
@@ -136,7 +136,7 @@ uv tool run pydoclint --style=google --allow-init-docstring=True src/chain_react
 ### 4. Function 3: `validate_text_length`
 
 #### 4.1 Implement the function
-**File:** `src/chain_reaction/utils/text_sanitizer.py`
+**File:** `src/my_library/utils/text_sanitizer.py`
 
 **Implementation requirements:**
 - Function signature: `validate_text_length(text: str, min_length: int = 1, max_length: int = 10000) -> str`
@@ -162,8 +162,8 @@ uv tool run pydoclint --style=google --allow-init-docstring=True src/chain_react
 **Run validation commands:**
 ```bash
 uv run pytest tests/utils/test_text_sanitizer.py::test_validate_text_length -v
-uv run ty check src/chain_reaction/utils/text_sanitizer.py
-uv tool run pydoclint --style=google --allow-init-docstring=True src/chain_reaction/utils/text_sanitizer.py
+uv run ty check src/my_library/utils/text_sanitizer.py
+uv tool run pydoclint --style=google --allow-init-docstring=True src/my_library/utils/text_sanitizer.py
 ```
 
 **Acceptance criteria:**
@@ -186,7 +186,7 @@ uv tool run pydoclint --style=google --allow-init-docstring=True src/chain_react
 - Test realistic workflow: messy input → all sanitizers → clean output
 
 #### 5.2 Update package exports (if needed)
-**File:** `src/chain_reaction/utils/__init__.py`
+**File:** `src/my_library/utils/__init__.py`
 
 - Add imports for the three new functions
 - Update `__all__` list if it exists
@@ -197,7 +197,7 @@ uv tool run pydoclint --style=google --allow-init-docstring=True src/chain_react
 uv run ruff check --fix && uv run ruff format
 uv run pytest tests/utils/test_text_sanitizer.py -v
 uv run ty check .
-uv tool run pydoclint --style=google --allow-init-docstring=True src/chain_reaction/utils/
+uv tool run pydoclint --style=google --allow-init-docstring=True src/my_library/utils/
 ```
 
 **Final acceptance criteria:**
@@ -219,11 +219,11 @@ uv tool run pydoclint --style=google --allow-init-docstring=True src/chain_react
 - Monitor for performance issues with large texts
 
 ## Files to Create
-1. `src/chain_reaction/utils/text_sanitizer.py` - Main implementation (created in step 1, populated iteratively)
+1. `src/my_library/utils/text_sanitizer.py` - Main implementation (created in step 1, populated iteratively)
 2. `tests/utils/test_text_sanitizer.py` - Test suite (created in step 1, populated iteratively)
 
 ## Files to Modify
-1. `src/chain_reaction/utils/__init__.py` - Add exports (step 5.2, if file exists)
+1. `src/my_library/utils/__init__.py` - Add exports (step 5.2, if file exists)
 
 ## Summary of Validation Points
 

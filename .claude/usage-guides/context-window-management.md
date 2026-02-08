@@ -1,8 +1,8 @@
-# Context Window Management for chain-reaction
+# Context Window Management
 
 ## Quick Take
 
-**The core insight:** Your AI assistant's context window is a fixed-size clipboard. Everything it knows about your project must fit on that clipboard—and the fuller it gets, the worse the AI performs. This isn't gradual degradation; it's a cliff.
+**The core insight:** Your AI assistant's context window is a fixed-size knapsack. Everything it knows about your project must fit inside that knapsack, and the fuller it gets, the worse the AI performs. This isn't gradual degradation; it's a cliff.
 
 **What the research shows:** The 2024 "Lost in the Middle" study found that LLM accuracy drops by 30%+ when relevant information is buried in the middle of long contexts. In some cases, adding more context made models perform *worse* than having no context at all.
 
@@ -125,7 +125,7 @@ Runs code review with two specialized agents.
 ```
 /review --staged                    # Review staged changes
 /review --commit HEAD               # Review last commit
-/review src/chain_reaction/tools/   # Review specific files
+/review src/my_library/tools/   # Review specific files
 ```
 
 ### `/update-plan <plan-path>`
@@ -232,7 +232,7 @@ This resets context rather than dragging along stale history.
 
 Don't wait for auto-compaction. Compact proactively:
 ```
-/compact preserve the API changes we made to src/chain_reaction/tools/
+/compact preserve the API changes we made to src/my_library/tools/
 ```
 
 Good compaction points:
@@ -262,7 +262,7 @@ Each phase gets clean context. Work persists in commits, not context.
 For investigation tasks, don't do this in your main session:
 ```
 # Don't do this directly - uses your context
-Read all the files in src/chain_reaction/tools/
+Read all the files in src/my_library/tools/
 ```
 
 Instead:

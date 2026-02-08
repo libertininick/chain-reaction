@@ -15,12 +15,12 @@ Extracts validation logic from the monolithic `processor.py` (800+ lines) into a
 ## What's Included
 
 **Source Code:**
-- `src/chain_reaction/pipeline/validators/__init__.py` - New module exports
-- `src/chain_reaction/pipeline/validators/schema.py` - Schema validation (extracted from processor.py)
-- `src/chain_reaction/pipeline/validators/type_coercion.py` - Type coercion validation (extracted)
-- `src/chain_reaction/pipeline/validators/constraints.py` - Constraint validation (extracted)
-- `src/chain_reaction/pipeline/validators/base.py` - Base validator protocol and utilities
-- `src/chain_reaction/pipeline/processor.py` - Removed validation logic, now imports from validators
+- `src/my_library/pipeline/validators/__init__.py` - New module exports
+- `src/my_library/pipeline/validators/schema.py` - Schema validation (extracted from processor.py)
+- `src/my_library/pipeline/validators/type_coercion.py` - Type coercion validation (extracted)
+- `src/my_library/pipeline/validators/constraints.py` - Constraint validation (extracted)
+- `src/my_library/pipeline/validators/base.py` - Base validator protocol and utilities
+- `src/my_library/pipeline/processor.py` - Removed validation logic, now imports from validators
 
 **Tests:**
 - `tests/pipeline/validators/test_schema.py` - Dedicated tests for schema validator
@@ -47,9 +47,9 @@ Extracts validation logic from the monolithic `processor.py` (800+ lines) into a
 
 ## Critical Areas for Review
 
-1. **`src/chain_reaction/pipeline/validators/base.py`** - The `Validator` protocol definition. This is the contract all validators must follow. Please verify the interface is minimal and doesn't leak implementation details.
+1. **`src/my_library/pipeline/validators/base.py`** - The `Validator` protocol definition. This is the contract all validators must follow. Please verify the interface is minimal and doesn't leak implementation details.
 
-2. **`src/chain_reaction/pipeline/processor.py:L45-L60`** - The integration point where processor calls validators. Verify the orchestration logic is correct and validators are called in the right order.
+2. **`src/my_library/pipeline/processor.py:L45-L60`** - The integration point where processor calls validators. Verify the orchestration logic is correct and validators are called in the right order.
 
 3. **Import structure** - Please verify no circular imports were introduced. The dependency direction should be: `processor` -> `validators` (never the reverse).
 

@@ -15,7 +15,7 @@ Fixes a bug where `validate_column_types()` incorrectly rejected DataFrames with
 ## What's Included
 
 **Source Code:**
-- `src/chain_reaction/dataframe_toolkit/validation.py` - Updated type checking logic to handle nullable integer types
+- `src/my_library/dataframe_toolkit/validation.py` - Updated type checking logic to handle nullable integer types
 
 **Tests:**
 - `tests/dataframe_toolkit/test_validation.py` - Added reproduction test and edge case tests for nullable types
@@ -36,7 +36,7 @@ Fixes a bug where `validate_column_types()` incorrectly rejected DataFrames with
 
 ## Critical Areas for Review
 
-1. **`src/chain_reaction/dataframe_toolkit/validation.py:L42-L58`** - The updated type checking logic. Please verify that category-based checking doesn't inadvertently accept types that should be rejected (e.g., accepting floats when integers are expected).
+1. **`src/my_library/dataframe_toolkit/validation.py:L42-L58`** - The updated type checking logic. Please verify that category-based checking doesn't inadvertently accept types that should be rejected (e.g., accepting floats when integers are expected).
 
 2. **`tests/dataframe_toolkit/test_validation.py:L120-L145`** - Edge case tests for nullable types. Please verify the test cases cover the scenarios from the bug report.
 
@@ -46,7 +46,7 @@ The bug was reported with this reproduction case:
 
 ```python
 import polars as pl
-from chain_reaction.dataframe_toolkit import validate_column_types
+from my_library.dataframe_toolkit import validate_column_types
 
 # This should pass but was raising TypeError
 df = pl.DataFrame({"id": [1, 2, None]}).cast({"id": pl.Int64})

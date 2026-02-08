@@ -40,10 +40,10 @@ This command dispatches the `code-cleaner` agent to analyze and fix code quality
 
 ```bash
 # Clean a single file
-/clean src/chain_reaction/utils/parser.py
+/clean src/my_library/utils/parser.py
 
 # Clean all files in a directory
-/clean src/chain_reaction/**/*.py
+/clean src/my_library/**/*.py
 
 # Clean only staged files before commit
 /clean staged

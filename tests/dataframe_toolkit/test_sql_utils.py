@@ -29,8 +29,6 @@ from chain_reaction.dataframe_toolkit.sql_utils import (
     validate_sql,
 )
 
-# ruff: noqa: PLR6301
-
 
 class TestParseSQLValidQueries:
     """Tests for parse_sql with valid SQL queries.

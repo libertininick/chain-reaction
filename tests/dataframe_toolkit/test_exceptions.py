@@ -19,8 +19,6 @@ from chain_reaction.dataframe_toolkit.exceptions import (
     SQLValidationError,
 )
 
-# ruff: noqa: PLR6301
-
 
 class TestSQLValidationErrorBase:
     """Tests for SQLValidationError base exception class."""

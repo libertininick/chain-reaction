@@ -72,15 +72,15 @@ import numpy as np
 from pydantic import BaseModel
 
 # 3. Local application imports
-from chain_reaction.core import Config
-from chain_reaction.utils import validate_input
+from my_library.core import Config
+from my_library.utils import validate_input
 ```
 
 ### Import Rules
 
 | Rule | Correct | Incorrect |
 |------|---------|-----------|
-| Use absolute imports | `from chain_reaction.core import X` | `from .core import X` |
+| Use absolute imports | `from my_library.core import X` | `from .core import X` |
 | No wildcard imports | `from module import func1, func2` | `from module import *` |
 | Group related imports | `from typing import Final, TypeVar` | Separate lines for same module |
 
@@ -123,13 +123,13 @@ Group code by feature or responsibility:
 
 ```python
 # CORRECT - user module contains all user-related code
-# src/chain_reaction/users/repository.py
+# src/my_library/users/repository.py
 def fetch_user_by_id(user_id: int) -> User: ...
 def create_user(data: UserCreate) -> User: ...
 def update_user(user_id: int, data: UserUpdate) -> User: ...
 
 # INCORRECT - mixed responsibilities
-# src/chain_reaction/database.py
+# src/my_library/database.py
 def fetch_user_by_id(user_id: int) -> User: ...
 def fetch_order_by_id(order_id: int) -> Order: ...
 def create_user(data: UserCreate) -> User: ...
@@ -142,13 +142,13 @@ Changes to one module should not require changes to others:
 
 ```python
 # CORRECT - module depends on abstraction
-from chain_reaction.interfaces import Storage
+from my_library.interfaces import Storage
 
 def save_data(storage: Storage, data: Data) -> None:
     storage.write(data)
 
 # INCORRECT - module depends on concrete implementation
-from chain_reaction.s3 import S3Client
+from my_library.s3 import S3Client
 
 def save_data(data: Data) -> None:
     client = S3Client()

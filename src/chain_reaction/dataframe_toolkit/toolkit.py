@@ -7,12 +7,17 @@ from collections.abc import Mapping
 import polars as pl
 from langchain_core.tools import BaseTool, tool
 
-from chain_reaction.dataframe_toolkit.context import DataFrameContext
 from chain_reaction.dataframe_toolkit.identifier import (
     DATAFRAME_ID_PATTERN,
     DataFrameId,
 )
-from chain_reaction.dataframe_toolkit.models import DataFrameReference, ToolCallError
+from chain_reaction.dataframe_toolkit.models import (
+    DataFrameReference,
+    DataFrameToolkitState,
+    ToolCallError,
+)
+from chain_reaction.dataframe_toolkit.persistence import REL_TOL_DEFAULT, restore_registry_from_state
+from chain_reaction.dataframe_toolkit.registry import DataFrameRegistry
 
 
 class DataFrameToolkit:
@@ -66,12 +71,24 @@ class DataFrameToolkit:
 
         Unregister a DataFrame:
         >>> toolkit.unregister_dataframe("products")
+
+        Restore from saved state:
+        >>> state = toolkit.export_state()
+        >>> new_toolkit = DataFrameToolkit.from_state(state, {"sales": df1})
     """
 
-    def __init__(self) -> None:
-        """Initialize the toolkit with an empty DataFrame registry."""
-        self._context = DataFrameContext()
-        self._references: dict[DataFrameId, DataFrameReference] = {}
+    def __init__(self, registry: DataFrameRegistry | None = None) -> None:
+        """Initialize the toolkit with an optional DataFrame registry.
+
+        Args:
+            registry (DataFrameRegistry | None): An existing registry to use.
+                If None, a new empty registry is created. Defaults to None.
+        """
+        self._registry = registry if registry is not None else DataFrameRegistry()
+        self._core_tools = (
+            tool(self.get_dataframe_id),
+            tool(self.get_dataframe_reference),
+        )
 
     # -------------------------------------------------------------------------
     # Tool Access (Main API)
@@ -95,7 +112,7 @@ class DataFrameToolkit:
             True
         """
         return [
-            *self.get_core_tools(),
+            *self._core_tools,
         ]
 
     def get_core_tools(self) -> list[BaseTool]:
@@ -115,10 +132,7 @@ class DataFrameToolkit:
             >>> len(core_tools) >= 1
             True
         """
-        return [
-            tool(self.get_dataframe_id),
-            tool(self.get_dataframe_reference),
-        ]
+        return list(self._core_tools)
 
     # -------------------------------------------------------------------------
     # Public Methods
@@ -127,7 +141,7 @@ class DataFrameToolkit:
     @property
     def references(self) -> tuple[DataFrameReference, ...]:
         """tuple[DataFrameReference, ...]: All registered DataFrame references."""
-        return tuple(self._references.values())
+        return tuple(self._registry.references.values())
 
     def register_dataframe(
         self,
@@ -181,15 +195,13 @@ class DataFrameToolkit:
             raise ValueError(msg)
 
         reference = DataFrameReference.from_dataframe(
+            name,
             dataframe,
-            name=name,
             description=description,
             column_descriptions=column_descriptions,
         )
 
-        # Store by ID to align with _context (both keyed by ID = single source of truth)
-        self._context.register(reference.id, dataframe)
-        self._references[reference.id] = reference
+        self._registry.register(reference, dataframe)
 
         return reference
 
@@ -202,8 +214,8 @@ class DataFrameToolkit:
     ) -> list[DataFrameReference]:
         """Register multiple DataFrames with the toolkit.
 
-        Validates that all names are unique before registering any DataFrames,
-        ensuring atomicity of the operation.
+        Validates all inputs before modifying state and commits to the SQL
+        context before updating references, so the two stores stay in sync.
 
         Args:
             dataframes (Mapping[str, pl.DataFrame]): Mapping of names to DataFrames.
@@ -237,7 +249,7 @@ class DataFrameToolkit:
         column_descriptions = column_descriptions or {}
 
         # Validate all names before modifying state
-        existing_names = {ref.name for ref in self._references.values()}
+        existing_names = {ref.name for ref in self._registry.references.values()}
         for name in dataframes:
             if DATAFRAME_ID_PATTERN.match(name):
                 msg = f"DataFrame name '{name}' cannot match ID pattern 'df_<8 hex chars>'"
@@ -249,19 +261,17 @@ class DataFrameToolkit:
         # Build all references first without modifying state (can fail without side effects)
         references = [
             DataFrameReference.from_dataframe(
+                name,
                 dataframe,
-                name=name,
                 description=descriptions.get(name),
                 column_descriptions=column_descriptions.get(name),
             )
             for name, dataframe in dataframes.items()
         ]
 
-        # Commit all at once (only after all references built successfully)
-        # Store by ID to align with _context (both keyed by ID = single source of truth)
-        for dataframe, reference in zip(dataframes.values(), references, strict=True):
-            self._context.register(reference.id, dataframe)
-            self._references[reference.id] = reference
+        # Register each dataframe with its reference atomically
+        for ref, df in zip(references, dataframes.values(), strict=True):
+            self._registry.register(ref, df)
 
         return references
 
@@ -283,9 +293,7 @@ class DataFrameToolkit:
         # Resolve name to reference, raising KeyError if not found
         reference = self._get_reference_by_name(name)
 
-        # Delete by ID from both stores (aligned keys = no sync bugs)
-        self._context.unregister(reference.id)
-        del self._references[reference.id]
+        self._registry.unregister(reference.id)
 
     def get_dataframe_id(self, name: str) -> DataFrameId | ToolCallError:
         """Get the DataFrameId for a DataFrame by its name.
@@ -322,7 +330,7 @@ class DataFrameToolkit:
                     "Use the name to look up the ID, or use get_dataframe_reference "
                     "if you need schema details from an ID."
                 ),
-                details={"available_names": [ref.name for ref in self._references.values()]},
+                details={"available_names": [ref.name for ref in self._registry.references.values()]},
             )
 
         try:
@@ -332,7 +340,7 @@ class DataFrameToolkit:
             return ToolCallError(
                 error_type="DataFrameNotFound",
                 message=f"DataFrame '{name}' is not registered",
-                details={"available_names": [ref.name for ref in self._references.values()]},
+                details={"available_names": [ref.name for ref in self._registry.references.values()]},
             )
 
     def get_dataframe_reference(self, identifier: str) -> DataFrameReference | ToolCallError:
@@ -358,9 +366,9 @@ class DataFrameToolkit:
             >>> toolkit.get_dataframe_reference(ref.id)  # doctest: +ELLIPSIS
             DataFrameReference(...)
         """
-        # Try lookup by ID first (O(1) since _references is keyed by ID)
-        if identifier in self._references:
-            return self._references[identifier]
+        # Try lookup by ID first (O(1) since registry.references is keyed by ID)
+        if identifier in self._registry.references:
+            return self._registry.references[identifier]
 
         # Try lookup by name (O(n) scan)
         try:
@@ -372,10 +380,92 @@ class DataFrameToolkit:
             error_type="DataFrameNotFound",
             message=f"DataFrame '{identifier}' not found by name or ID",
             details={
-                "available_names": [ref.name for ref in self._references.values()],
-                "available_ids": list(self._references.keys()),
+                "available_names": [ref.name for ref in self._registry.references.values()],
+                "available_ids": list(self._registry.references.keys()),
             },
         )
+
+    def export_state(self) -> DataFrameToolkitState:
+        """Export the current toolkit state for serialization.
+
+        Returns a DataFrameToolkitState containing all registered references.
+        The actual DataFrame data is NOT included - only metadata and provenance.
+
+        Returns:
+            DataFrameToolkitState: Serializable state containing all references.
+
+        Examples:
+            >>> import polars as pl
+            >>> toolkit = DataFrameToolkit()
+            >>> _ = toolkit.register_dataframe("sales", pl.DataFrame({"a": [1, 2, 3]}))
+            >>> state = toolkit.export_state()
+            >>> len(state.references)
+            1
+        """
+        return DataFrameToolkitState(references=list(self._registry.references.values()))
+
+    # -------------------------------------------------------------------------
+    # Public Class Methods
+    # -------------------------------------------------------------------------
+
+    @classmethod
+    def from_state(
+        cls,
+        state: DataFrameToolkitState,
+        base_dataframes: Mapping[str, pl.DataFrame],
+        *,
+        rel_tol: float = REL_TOL_DEFAULT,
+    ) -> DataFrameToolkit:
+        """Create a toolkit from saved state and base dataframes.
+
+        This is the recommended way to restore a toolkit from serialized state.
+        Matches base dataframes to their state references by name or ID,
+        preserving original IDs for proper derivative reconstruction.
+
+        Provided base dataframes are validated against the expected schema
+        and column statistics from the saved state to ensure data consistency.
+
+        Validation checks: shape, column names/order, dtype, count, null_count,
+        unique_count, min, max, mean, std, p25, p50, p75.
+
+        Args:
+            state (DataFrameToolkitState): Serialized state from export_state().
+            base_dataframes (Mapping[str, pl.DataFrame]): Mapping of identifier to
+                DataFrame for all base tables. Keys can be either names or IDs
+                (df_xxxxxxxx format). DataFrames must match the schema and
+                statistics from when the state was exported.
+            rel_tol (float): Relative tolerance for floating point comparisons
+                during validation. Defaults to 1e-9.
+
+        Returns:
+            DataFrameToolkit: Fully reconstructed toolkit with all base and
+                derivative dataframes.
+
+        Examples:
+            Restore by name (most common):
+
+            >>> import polars as pl
+            >>> toolkit = DataFrameToolkit()
+            >>> df = pl.DataFrame({"a": [1, 2, 3]})
+            >>> _ = toolkit.register_dataframe("sales", df)
+            >>> state = toolkit.export_state()
+            >>> new_toolkit = DataFrameToolkit.from_state(state, {"sales": df})
+            >>> len(new_toolkit.references)
+            1
+
+            Restore by ID:
+
+            >>> ref = toolkit.references[0]
+            >>> new_toolkit = DataFrameToolkit.from_state(state, {ref.id: df})
+            >>> len(new_toolkit.references)
+            1
+        """
+        registry = restore_registry_from_state(
+            state=state,
+            base_dataframes=base_dataframes,
+            rel_tol=rel_tol,
+        )
+        return cls(registry=registry)
 
     # -------------------------------------------------------------------------
     # Private Helpers
@@ -397,7 +487,7 @@ class DataFrameToolkit:
         Raises:
             KeyError: If no DataFrame with the given name is registered.
         """
-        for ref in self._references.values():
+        for ref in self._registry.references.values():
             if ref.name == name:
                 return ref
         msg = f"DataFrame '{name}' is not registered"
@@ -412,4 +502,4 @@ class DataFrameToolkit:
         Returns:
             bool: True if a DataFrame with this name exists, False otherwise.
         """
-        return any(ref.name == name for ref in self._references.values())
+        return any(ref.name == name for ref in self._registry.references.values())

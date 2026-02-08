@@ -9,8 +9,6 @@ from pytest_check import check
 
 from chain_reaction.dataframe_toolkit.context import DataFrameContext
 
-# ruff: noqa: PLR6301
-
 
 @pytest.fixture
 def sample_df() -> pl.DataFrame:
