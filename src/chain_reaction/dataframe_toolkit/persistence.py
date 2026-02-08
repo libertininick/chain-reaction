@@ -275,10 +275,10 @@ def _floats_nearly_equal(actual: float, expected: float, *, rel_tol: float) -> b
     return math.isclose(actual, expected, rel_tol=rel_tol)
 
 
-def _nonfloats_nearly_equal(
+def _exact_values_equal(
     *,
-    actual: float | str | None,
-    expected: float | str | None,
+    actual: int | str | None,
+    expected: int | str | None,
 ) -> bool:
     """Compare non-float values for equality.
 
@@ -286,20 +286,16 @@ def _nonfloats_nearly_equal(
     non-bool pairs that require float comparison.
 
     Args:
-        actual (float | str | None): The actual value to compare.
-        expected (float | str | None): The expected value to compare against.
+        actual (int | str | None): The actual value to compare.
+        expected (int | str | None): The expected value to compare against.
 
     Returns:
         bool: True if values are equal, False otherwise.
     """
     if actual is None or expected is None:
         return actual is None and expected is None
-    if isinstance(actual, str) and isinstance(expected, str):
+    if type(actual) is type(expected):
         return actual == expected
-    if isinstance(actual, bool) and isinstance(expected, bool):
-        return actual == expected
-    if isinstance(actual, bool) or isinstance(expected, bool):
-        return False
     return False
 
 
@@ -326,7 +322,10 @@ def _values_nearly_equal(
         and not isinstance(expected, bool)
     ):
         return _floats_nearly_equal(float(actual), float(expected), rel_tol=rel_tol)
-    return _nonfloats_nearly_equal(actual=actual, expected=expected)
+    elif not isinstance(actual, float) and not isinstance(expected, float):
+        return _exact_values_equal(actual=actual, expected=expected)
+    else:
+        return False
 
 
 def _reconstruct_derivatives(
