@@ -15,8 +15,6 @@ from chain_reaction.dataframe_toolkit.models import (
 )
 from chain_reaction.dataframe_toolkit.persistence import (
     _compare_column_summaries,
-    _execute_reconstruction_query,
-    _reconstruct_dataframe,
     _reconstruct_derivatives,
     _resolve_dataframe_keys_to_ids,
     _sort_references_by_dependency_order,
@@ -840,40 +838,36 @@ class TestRestoreRegistryFromState:
                 base_dataframes={"users": df, "unknown_extra": extra_df},
             )
 
-
-class TestReconstructDataframe:
-    """Tests for _reconstruct_dataframe function."""
-
-    def test_reconstruct_dataframe_base_reference_raises_runtime_error(self) -> None:
-        """Given a base reference, When reconstructed, Then raises RuntimeError."""
+    def test_restore_registry_from_state_non_dataframe_sql_result_raises_type_error(self) -> None:
+        """Given execute_sql returns non-DataFrame during reconstruction, When restored, Then raises TypeError."""
         # Arrange
-        df = pl.DataFrame({"a": [1, 2, 3]})
-        base_ref = DataFrameReference.from_dataframe("base", df)
-        registry = DataFrameRegistry()
-        registry.register(base_ref, df)
+        base_df = pl.DataFrame({"a": [1, 2, 3, 4, 5]})
+        base_ref = DataFrameReference.from_dataframe("base", base_df)
 
-        # Act/Assert
-        with pytest.raises(RuntimeError, match="Invariant violation: base dataframe"):
-            _reconstruct_dataframe(base_ref, registry)
+        derived_df = pl.DataFrame({"a": [1, 2]})
+        derived_ref = DataFrameReference(
+            id="df_de11ed11",
+            name="derived",
+            description="Filtered data",
+            num_rows=2,
+            num_columns=1,
+            column_names=["a"],
+            column_summaries={"a": ColumnSummary.from_series(derived_df["a"])},
+            parent_ids=[base_ref.id],
+            source_query=f"SELECT * FROM {base_ref.id} WHERE a < 3",  # noqa: S608
+        )
 
-
-class TestExecuteReconstructionQuery:
-    """Tests for _execute_reconstruction_query function."""
-
-    def test_execute_reconstruction_query_non_dataframe_result_raises_type_error(self) -> None:
-        """Given execute_sql returns non-DataFrame, When called, Then raises TypeError."""
-        # Arrange
-        df = pl.DataFrame({"a": [1, 2, 3]})
-        base_ref = DataFrameReference.from_dataframe("base", df)
-        registry = DataFrameRegistry()
-        registry.register(base_ref, df)
+        state = DataFrameToolkitState(references=[base_ref, derived_ref])
 
         # Act/Assert - patch execute_sql to return a LazyFrame instead of DataFrame
         with (
-            patch.object(registry.context, "execute_sql", return_value=df.lazy()),
+            patch(
+                "chain_reaction.dataframe_toolkit.context.DataFrameContext.execute_sql",
+                return_value=base_df.lazy(),
+            ),
             pytest.raises(TypeError, match="expected DataFrame"),
         ):
-            _execute_reconstruction_query("SELECT * FROM base", "derived", registry)
+            restore_registry_from_state(state=state, base_dataframes={"base": base_df})
 
 
 class TestReconstructDerivatives:
