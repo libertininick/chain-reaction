@@ -16,8 +16,8 @@ from chain_reaction.dataframe_toolkit.models import (
 from chain_reaction.dataframe_toolkit.persistence import (
     _compare_column_summaries,
     _execute_reconstruction_query,
-    _normalize_dataframe_mapping,
     _reconstruct_dataframe,
+    _resolve_dataframe_keys_to_ids,
     _sort_references_by_dependency_order,
     _validate_dataframe_matches_reference,
     _values_nearly_equal,
@@ -398,10 +398,10 @@ class TestValidateDataframeMatchesReference:
             _validate_dataframe_matches_reference(df_different, reference)
 
 
-class TestNormalizeDataframeMapping:
-    """Tests for _normalize_dataframe_mapping function."""
+class TestResolveDataframeKeysToIds:
+    """Tests for _resolve_dataframe_keys_to_ids function."""
 
-    def test_normalize_dataframe_mapping_by_name(self) -> None:
+    def test_resolve_dataframe_keys_to_ids_by_name(self) -> None:
         """Given dataframes keyed by name, When normalized, Then returns ID-keyed mapping."""
         # Arrange
         df = pl.DataFrame({"a": [1, 2, 3]})
@@ -409,7 +409,7 @@ class TestNormalizeDataframeMapping:
         dataframes = {"users": df}
 
         # Act
-        result = _normalize_dataframe_mapping(
+        result = _resolve_dataframe_keys_to_ids(
             dataframes=dataframes,
             names_to_ids=names_to_ids,
         )
@@ -420,7 +420,7 @@ class TestNormalizeDataframeMapping:
         with check:
             assert result["df_00000001"] is df
 
-    def test_normalize_dataframe_mapping_by_id(self) -> None:
+    def test_resolve_dataframe_keys_to_ids_by_id(self) -> None:
         """Given dataframes keyed by ID, When normalized, Then returns ID-keyed mapping."""
         # Arrange
         df = pl.DataFrame({"a": [1, 2, 3]})
@@ -428,7 +428,7 @@ class TestNormalizeDataframeMapping:
         dataframes = {"df_00000001": df}
 
         # Act
-        result = _normalize_dataframe_mapping(
+        result = _resolve_dataframe_keys_to_ids(
             dataframes=dataframes,
             names_to_ids=names_to_ids,
         )
@@ -439,7 +439,7 @@ class TestNormalizeDataframeMapping:
         with check:
             assert result["df_00000001"] is df
 
-    def test_normalize_dataframe_mapping_unknown_name_raises(self) -> None:
+    def test_resolve_dataframe_keys_to_ids_unknown_name_raises(self) -> None:
         """Given unknown name key, When normalized, Then raises ValueError."""
         # Arrange
         df = pl.DataFrame({"a": [1, 2, 3]})
@@ -448,12 +448,12 @@ class TestNormalizeDataframeMapping:
 
         # Act/Assert
         with pytest.raises(ValueError, match="Name 'unknown_name' not in state's base references"):
-            _normalize_dataframe_mapping(
+            _resolve_dataframe_keys_to_ids(
                 dataframes=dataframes,
                 names_to_ids=names_to_ids,
             )
 
-    def test_normalize_dataframe_mapping_duplicate_name_and_id_raises(self) -> None:
+    def test_resolve_dataframe_keys_to_ids_duplicate_name_and_id_raises(self) -> None:
         """Given same base provided by both name and ID, When normalized, Then raises ValueError."""
         # Arrange - "users" resolves to "df_00000001", so both keys target the same ID
         names_to_ids = {"users": "df_00000001", "orders": "df_00000002"}
@@ -463,12 +463,12 @@ class TestNormalizeDataframeMapping:
 
         # Act/Assert
         with pytest.raises(ValueError, match="Duplicate"):
-            _normalize_dataframe_mapping(
+            _resolve_dataframe_keys_to_ids(
                 dataframes=dataframes,
                 names_to_ids=names_to_ids,
             )
 
-    def test_normalize_dataframe_mapping_unknown_id_raises(self) -> None:
+    def test_resolve_dataframe_keys_to_ids_unknown_id_raises(self) -> None:
         """Given unknown ID key, When normalized, Then raises ValueError."""
         # Arrange
         df = pl.DataFrame({"a": [1, 2, 3]})
@@ -477,7 +477,7 @@ class TestNormalizeDataframeMapping:
 
         # Act/Assert
         with pytest.raises(ValueError, match="ID 'df_99999999' not in state's base references"):
-            _normalize_dataframe_mapping(
+            _resolve_dataframe_keys_to_ids(
                 dataframes=dataframes,
                 names_to_ids=names_to_ids,
             )

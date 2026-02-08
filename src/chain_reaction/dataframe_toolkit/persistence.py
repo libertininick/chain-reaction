@@ -87,7 +87,7 @@ def restore_registry_from_state(
     base_refs = {ref.id: ref for ref in state.references if ref.is_base}
 
     # 2. Normalize user keys to DataFrameId
-    normalized_bases = _normalize_dataframe_mapping(
+    normalized_bases = _resolve_dataframe_keys_to_ids(
         dataframes=base_dataframes,
         names_to_ids={ref.name: ref.id for ref in base_refs.values()},
     )
@@ -117,7 +117,7 @@ def restore_registry_from_state(
 # Private helpers
 
 
-def _normalize_dataframe_mapping(
+def _resolve_dataframe_keys_to_ids(
     *,
     dataframes: Mapping[str, pl.DataFrame],
     names_to_ids: dict[str, DataFrameId],
