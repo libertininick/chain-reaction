@@ -66,7 +66,7 @@ class TestValuesNearlyEqual:
         with check:
             assert result is True
 
-    def test_values_nearly_equal_nearly_equal_floats_within_tolerance_returns_true(
+    def test_values_nearly_equal_floats_within_tolerance_returns_true(
         self,
     ) -> None:
         """Given two floats within relative tolerance, When called, Then returns True."""
