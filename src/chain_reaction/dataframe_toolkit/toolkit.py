@@ -85,6 +85,10 @@ class DataFrameToolkit:
                 If None, a new empty registry is created. Defaults to None.
         """
         self._registry = registry if registry is not None else DataFrameRegistry()
+        self._core_tools = (
+            tool(self.get_dataframe_id),
+            tool(self.get_dataframe_reference),
+        )
 
     # -------------------------------------------------------------------------
     # Tool Access (Main API)
@@ -108,7 +112,7 @@ class DataFrameToolkit:
             True
         """
         return [
-            *self.get_core_tools(),
+            *self._core_tools,
         ]
 
     def get_core_tools(self) -> list[BaseTool]:
@@ -128,10 +132,7 @@ class DataFrameToolkit:
             >>> len(core_tools) >= 1
             True
         """
-        return [
-            tool(self.get_dataframe_id),
-            tool(self.get_dataframe_reference),
-        ]
+        return list(self._core_tools)
 
     # -------------------------------------------------------------------------
     # Public Methods
