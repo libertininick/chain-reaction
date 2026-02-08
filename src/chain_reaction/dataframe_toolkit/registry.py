@@ -45,6 +45,11 @@ class DataFrameRegistry:
 
         Args:
             dataframe_id (DataFrameId): The ID of the dataframe to unregister.
+
+        Raises:
+            KeyError: If the dataframe_id is not present in both stores.
         """
+        if dataframe_id not in self.context or dataframe_id not in self.references:
+            raise KeyError(dataframe_id)
         self.context.unregister(dataframe_id)
         del self.references[dataframe_id]
