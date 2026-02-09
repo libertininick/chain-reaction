@@ -1,135 +1,148 @@
-# Understanding LLM Coding Agents
+# Understanding Your AI Coding Agent: Some Assembly Require
 
-A step-by-step guide to demystifying how AI coding agents actually work.
+AI coding agents feel like magic. You describe a feature, and the agent writes code, runs tests, reads the errors, fixes the bugs, and iterates until everything passes (usually). It looks like thinking. It looks like understanding. And sometimes it feels like gambling.
+
+That gambling feeling comes from not understanding the machine. Once you grok the mechanisms driving AI coding agents, you'll use these tools far more effectively.
 
 ---
 
-## Step 1: The LLM Generates Code by Pattern Matching
+## The engine: pattern matching at scale
 
-An LLM has been trained on billions of lines of code. Every design pattern, every framework idiom, every common algorithm — it has seen countless examples. When you give it a prompt, it activates the neural pathways most associated with that input and produces the statistically most likely output.
+The centerpiece of every coding agent is a large language model (LLM) that has been trained on billions of lines of code. It has seen countless examples of every design pattern, every framework idiom, and every common algorithm. When you give the LLM a prompt, it activates the neural pathways most associated with that input and produces a statistically likely output. This makes LLMs remarkably good at generating code that's indistinguishable from human-written code, because they've absorbed these patterns across an enormous corpus.
 
-That's it. There is no "understanding." There is no memory. There is no reasoning engine hiding inside. The model receives input tokens, activates neurons, and generates output tokens — one at a time, each one being the most probable next token given everything before it.
+But there are important caveats:
 
-This makes LLMs remarkably good at generating code that *looks right*, because they have absorbed the patterns of what right looks like across an enormous corpus.
+- **The knowledge is stale.** Training has a cutoff date. The model doesn't know about the library you released last month or the API that changed last week.
+- **Modern usage is underrepresented.** Training data skews toward whatever was publicly available at scale, so newer patterns and frameworks are less well-represented than established ones.
+- **The model was trained on the kitchen sink.** The model was trained on *all* code, not just the best code. Stack Overflow answers, tutorial snippets, abandoned repos, copy-pasted boilerplate — it's all in there. Post-training techniques are used to reinforce good answers and guide the model toward higher-quality outputs, but without specific prompting it's still drawing on a very broad distribution.
 
-But there are caveats:
+---
 
-- **The knowledge is stale.** Training has a cutoff date. The model doesn't know about the library version you released last month or the API that changed last week.
-- **Modern usage is underrepresented.** The training data skews toward whatever was publicly available at scale — which means newer patterns, frameworks, and idioms are less well-represented than established ones.
-- **Most code is mediocre.** The model trained on *all* code, not just the best code. Stack Overflow answers, tutorial snippets, abandoned repos, copy-pasted boilerplate — it's all in there. The model's "default" output reflects the average, not the exceptional.
+## Steering the output by controlling the input
 
-## Step 2: We Shape the Output by Controlling the Input
+Two properties of how LLMs work make your input the most important lever you have.
 
-Here's the key insight: since the model generates output based entirely on its input, **we can influence the output by controlling what goes into the input.**
+**First: every output token looks at your input.** When the model generates code, each token it produces attends directly to the tokens you sent in. If your input contains three well-written functions that follow your team's naming conventions, the model can — and will — copy those patterns into its output. This is called *in-context learning*. The model doesn't need to have seen your conventions during training. It just needs to see them in the input right now. A few concrete examples in the prompt act as a template that the model will mimic, often more reliably than any written instruction.
 
-This is why prompting matters. If you paste your team's coding conventions, a few examples of well-written functions in your style, and a clear description of what you want — the model will mimic *those* patterns instead of defaulting to the average of its training data.
+**Second: your input activates stored knowledge.** During training, the model encoded an enormous amount of knowledge — design patterns, framework idioms, algorithms, debugging strategies — distributed across different parts of its network. All of that knowledge is sitting there, but only a fraction of it is relevant to any given task. Your prompt is the map. It determines which pockets of stored knowledge light up and which stay dormant. The model has the ability to combine what it knows in virtually limitless ways, but it needs your input to guide it down the right path and unlock the right pieces for *this* specific task.
 
-```
-┌─────────────────────────────────┐
-│         Context Window          │
-│                                 │
-│  System prompt                  │
-│  + Your coding standards        │
-│  + Examples of preferred style  │
-│  + Description of the task      │
-│                                 │
-│  ──────────────────────────►    │
-│         Model generates         │
-│     code that mirrors YOUR      │
-│     patterns, not generic ones  │
-└─────────────────────────────────┘
-```
+These two mechanisms work together. Your input simultaneously gives the model patterns to mimic *and* tells it which region of its vast training to draw from. This is the entire mechanism behind "skills," "custom instructions," and "system prompts" — they're text prepended to the input that both demonstrates the patterns you want and activates the relevant knowledge the model already has.
 
-This is the entire mechanism behind "skills," "custom instructions," and "system prompts" — they are just text prepended to the input so the model's pattern matching locks onto your preferred patterns rather than the internet's average.
+Here's a useful mental model: **think of the LLM as the world's biggest choose your own adventure book.** Every prompt is a fork in the path. A vague prompt — "write clean code" — leaves millions of paths open. The model picks one based on probability, and you're essentially playing the lottery. But a specific prompt collapses those branching paths into a narrow corridor.
 
-## Step 3: The Agent Wrapper Creates the Illusion of Memory
+Consider the difference between these two role prompts:
 
-The LLM itself has no memory. Each time it generates a response, it starts completely fresh. It does not remember what you asked five minutes ago. It does not know it just wrote a function for you.
+> *"You are an expert Python test writer specializing in the pytest framework."*
 
-The **agent wrapper** solves this by replaying the entire conversation history as input every single turn.
+> *"You are a battle-hardened Rust developer, an expert at writing performance-critical code."*
 
-```
-Turn 1:  [system prompt] + [user message]                    → LLM → response
-Turn 2:  [system prompt] + [user msg + response + user msg]  → LLM → response
-Turn 3:  [system prompt] + [entire conversation so far]      → LLM → response
-```
+Same model, radically different adventures. The first activates knowledge about test fixtures, parametrization, assertion patterns, and mocking. The second activates knowledge about ownership, zero-cost abstractions, unsafe blocks, and benchmarking.
 
-From the model's perspective, every turn is the first turn. It just happens to receive a very detailed input that includes everything that "happened" before. The continuity you experience — the sense that the model "remembers" your project, your preferences, the bug you're chasing — is constructed entirely by the wrapper feeding the full history back in.
+The practical takeaway: **the more specific your input, the narrower the adventure.** Vague prompts wander through the model's vast, generic knowledge and produce average code. Detailed prompts with examples and constraints guide the model down a specific path, activating precise knowledge and giving it concrete patterns to follow, resulting in code that looks like your best engineer wrote it.
+
+---
+
+## Persistent context: standardizing the adventure
+
+If every prompt determines which adventure the model takes, then coding agents have a bootstrapping problem: every new conversation starts from zero. The model doesn't remember that your team uses Google-style docstrings, prefers composition over inheritance, or names test files a certain way. Without persistent context, you'd need to re-specify all of this every single turn.
+
+This is the purpose of agent configuration files — system prompts, custom instructions, CLAUDE.md files, cursor rules, whatever your tool calls them. They're text that gets prepended to every conversation, ensuring the model starts every session on the same page, aimed at the same adventure.
+
+In theory, this is enormously powerful. In practice, most agent configuration files are terrible.
+
+The typical agent file is full of directives like "write clean, maintainable code" and "follow best practices." This is the prompt equivalent of telling someone to "be good at your job." It's vague, it's generic, and it wastes precious context window space activating nothing in particular. The model already tries to write decent code by default — you don't need to burn tokens telling it to.
+
+What actually works is *concrete specificity*:
+
+- **Bad:** "Follow good naming conventions"
+- **Good:** "Use snake_case for functions and variables. Prefix private methods with underscore. Name test files `test_{module}.py` and test functions `test_{function}_{scenario}`."
+
+- **Bad:** "Write well-structured code"
+- **Good:** "Functions should do one thing. If a function exceeds 20 lines, extract helpers. Use Pydantic models for data validation at boundaries, dataclasses for internal data transfer."
+
+- **Bad:** "Include appropriate error handling"
+- **Good:** "Raise `ValueError` for invalid arguments. Use custom exception classes defined in `exceptions.py`. Never catch bare `Exception` — catch specific types."
+
+Every vague directive is a missed opportunity. You have a finite context window, and every token counts. Fill it with the specific patterns, examples, and constraints that actually narrow the model's path to the specific adventure your team wants to be on, every single session.
+
+---
+
+## The illusion of memory
+
+The LLM itself has no memory. Each time it generates a response, it starts completely fresh. It doesn't remember what you asked five minutes ago. It doesn't know it just wrote a function for you.
+
+The **agent wrapper** solves this by replaying the entire conversation history as input every single turn:
+
+- **Turn 1:** system prompt + your message → response
+- **Turn 2:** system prompt + full conversation so far → response
+- **Turn 3:** system prompt + *entire* conversation so far → response
+
+From the model's perspective, every turn is the first turn. It just happens to receive a very detailed input that includes everything that "happened" before. The continuity you experience — the sense that the agent "remembers" your project, your preferences, the bug you're chasing — is constructed entirely by the wrapper feeding the full history back in.
 
 This also explains why long conversations degrade. The context window has a finite size. As the conversation grows, older content gets truncated or compressed, and the model loses access to earlier context. It's not "forgetting" — it literally can't see it anymore.
 
-## Step 4: Tool Calling Gives the System Agency
+**Practical implication:** Start fresh conversations for new tasks. Don't expect a session from the feature you just implemented to carry useful context into an unrelated bug hunting session.
 
-Up to this point, the model can only generate text. It can *suggest* running a test or *describe* a file change, but it can't actually do anything. Tool calling changes this.
+---
 
-Tools are described in the system prompt alongside everything else. Each tool has a name, a description, and a schema for its parameters. The model has been trained to recognize when a tool would help and to emit a structured tool call instead of plain text.
+## Tool calling: from suggestions to actions
 
-```
-┌──────────────────────────────────────────┐
-│              Context Window              │
-│                                          │
-│  System prompt                           │
-│  + Tool: run_terminal_command            │
-│      "Execute a shell command"           │
-│  + Tool: read_file                       │
-│      "Read contents of a file"           │
-│  + Tool: write_file                      │
-│      "Write content to a file"           │
-│                                          │
-│  User: "Run the tests for my project"    │
-│                                          │
-│  ──────────────────────────►             │
-│  Model output:                           │
-│    call run_terminal_command             │
-│    args: {"command": "uv run pytest"}    │
-└──────────────────────────────────────────┘
-```
+It's important to recognize that, on its own, the model can only generate text. Without tools, the workflow looks like this: you ask the model for help, it suggests a shell command or writes a function, and then *you* copy that output, switch to your terminal or editor, paste it in, run it, read the result, copy the result back, and feed it to the model for the next step. You're the gofer. The model does the thinking, but you do all the doing — copying, pasting, navigating between windows, running commands, shuttling context back and forth. It works, but it's slow, error-prone, and exhausting for anything beyond a quick question.
 
-The model isn't "deciding" in any deep sense. It's doing the same thing it always does — generating the most likely next tokens given the input. But because the input includes tool descriptions and the model has been trained to emit tool calls when appropriate, the output happens to be a structured action instead of prose.
+Tool calling changes this completely. Instead of suggesting actions in prose, the model can generate structured commands that the agent wrapper executes directly in your environment. Read a file. Write code to the correct path. Run a shell command. Search the web for documentation. The model emits the action and the wrapper carries it out.
 
-A tool can be as simple as a hardcoded router: *if the user mentions running tests, execute `uv run pytest`*. Or it can be a full-featured function that reads files, queries databases, or makes API calls. The model doesn't care — it just emits the call. The agent wrapper handles execution.
+The mechanics are the same as everything else we've discussed — the model generates tokens based on probability given the input. But the system prompt includes tool descriptions (name, purpose, parameter schema), and the model has been trained to emit structured tool calls when they're appropriate. So instead of outputting "you should run `pytest`," it outputs a tool call that *actually runs pytest*. Instead of printing a function and telling you where to put it, it writes the function directly to the correct file.
 
-## Step 5: The Feedback Loop Is Where the Power Lives
+This is the difference between an LLM that advises and an agent that acts. The model doesn't need you to be its hands anymore — it can read your codebase, make changes, and execute commands without you touching the keyboard.
 
-Everything up to this point is useful but limited. The model generates code, we shape it with context, the wrapper maintains history, and tools let it take actions. But the real power of a coding agent comes from **closing the loop**: feeding the results of tool calls back into the model as new input.
+---
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                    The Agent Loop                       │
-│                                                         │
-│  1. Model sees: conversation + task                     │
-│     → generates: tool call (write code to file)         │
-│                                                         │
-│  2. Wrapper executes tool, captures output              │
-│     → feeds result back into context                    │
-│                                                         │
-│  3. Model sees: conversation + task + code + result     │
-│     → generates: tool call (run tests)                  │
-│                                                         │
-│  4. Wrapper executes tests, captures output             │
-│     → feeds result back into context                    │
-│                                                         │
-│  5. Model sees: conversation + task + code + test fail  │
-│     → generates: tool call (fix the code)               │
-│                                                         │
-│  6. ... loop continues until done                       │
-└─────────────────────────────────────────────────────────┘
-```
+## The feedback loop: where the real power lives
 
-Now the model can see — in real time — whether its code actually works. It wrote a function, the tests failed, the failure traceback is right there in the context, and it generates a fix. Then the tests run again. Then it sees the new result. Each iteration, it is pattern-matching against a richer, more specific input that includes *actual outcomes* from the real environment.
+But acting alone isn't enough. If the model writes code and never sees whether it worked, it's just generating text into the void — faster than copy-paste, but not fundamentally smarter. The real power of a coding agent comes from **closing the loop**: the wrapper feeds the results of each tool call back into the conversation as new input, so the model can react to what actually happened:
 
-This is the same mechanism from Step 1 — pattern matching on input — but now the input includes live feedback from the real world. The model doesn't need to "reason" about whether its code is correct. It can *see* the test output and match against patterns it's seen a million times: "this traceback means this kind of bug, which is typically fixed by this kind of change."
+1. The model sees your task and generates code
+2. The wrapper writes the code to a file and runs the tests
+3. The test output (including any failures) goes back into the context
+4. The model sees the failure, recognizes the pattern, and generates a fix
+5. The wrapper applies the fix and runs the tests again
+6. The loop continues until the tests pass
 
-## Putting It All Together
+Now the model can see whether its code actually works. Each iteration, it's pattern-matching against a richer, more specific input that includes *actual outcomes* from the real environment.
 
-An LLM coding agent is not magic. It is a loop built from simple pieces:
+The model doesn't need to reason from first principles about whether its code is correct. It can *see* the test output and match against patterns it's seen a million times: "this traceback means this kind of bug, which is typically fixed by this kind of change."
 
-| Layer | What it does | Why it matters |
-|---|---|---|
-| **LLM** | Generates the most likely output from its input | It has seen billions of lines of code — it knows the patterns |
-| **Context control** | Shapes the input with examples, conventions, and instructions | Steers the model away from "average internet code" toward your standards |
-| **Conversation history** | Replays the full conversation each turn | Creates the illusion of memory so the model stays coherent across a session |
-| **Tool calling** | Lets the model emit structured actions instead of just text | Gives the system the ability to interact with the real world |
-| **Feedback loop** | Feeds tool results back as input for the next turn | The model can observe real outcomes and self-correct |
+It's still using the same fundamental mechanism: pattern matching on input, but now the input includes live feedback from your coding environment.
 
-Every "smart" behavior you see from a coding agent — writing code, running tests, reading errors, fixing bugs, iterating until things work — emerges from this loop. The model itself is doing the same thing every time: reading its input and generating the most probable output. The intelligence of the system comes from what we put in that input and how we close the loop.
+---
+
+## The complete picture
+
+An LLM coding agent is not magic. It's a handful of straightforward pieces wired together in a logical loop:
+
+| Layer | What it does |
+|---|---|
+| **LLM** | Generates probable output from input, drawing on billions of lines of training code and post-training preference tuning |
+| **Context control** | Shapes the input with your conventions, examples, and instructions |
+| **Persistent context** | Agent files that standardize the adventure across sessions with concrete patterns and examples |
+| **Conversation history** | Replays the full conversation each turn, creating the illusion of memory |
+| **Tool calling** | Lets the model emit structured actions instead of just text |
+| **Feedback loop** | Feeds real-world results back as input so the model can self-correct |
+
+Every "smart" behavior you see — writing code, running tests, reading errors, fixing bugs, iterating until things work — emerges from this loop. The model itself does the same thing every time: reads its input and generates output based on probability and training.
+
+---
+
+## What this means for how you use these tools
+
+Understanding the mechanism changes how you work with it:
+
+1. **Invest in context.** The single highest-leverage thing you can do is give the model better input: coding standards, examples, clear constraints. This isn't optional polish — it's the primary control surface.
+
+2. **Keep sessions focused.** Long, sprawling conversations degrade because the context window fills up. Start fresh when you change topics.
+
+3. **Trust the loop, not the first attempt.** The first output is a starting point. The real value comes from the feedback cycle — let the agent run tests, see failures, and iterate.
+
+4. **Don't over-anthropomorphize.** Whatever's happening inside the model, the most useful framing when things go wrong is "it's matching against the wrong patterns." When it gets stuck in a loop or produces nonsense, it's your job to clear the context and change the input.
+
+The choose your own adventure book is always there, with all of its paths. Your job is to make sure the model is reading the right chapter.
