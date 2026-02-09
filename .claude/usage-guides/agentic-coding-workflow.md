@@ -372,8 +372,10 @@ After completing and committing a phase, sync the plan with current state.
 1. Fetches and merges latest main (resolves conflicts if any)
 2. Analyzes what changed in main that affects the plan
 3. Reviews completed phases against actual implementation
-4. Updates remaining phases based on lessons learned
-5. Marks completed phases as done
+4. Creates a new versioned plan file (e.g., `plan-version-2.md`) with updates applied
+5. Marks completed phases as done in the new file
+
+> **Note:** The original plan file is never modified. All updates are written to a new versioned copy.
 
 **Why this matters:**
 
@@ -450,7 +452,7 @@ This creates a structured PR description at `.claude/agent-outputs/pr-descriptio
 | `/review [target]` | Full review (style + substance + test quality) | `agent-outputs/reviews/` |
 | `/review --src-only` | Source code review only | `agent-outputs/reviews/` |
 | `/review --tests-only` | Test quality review only | `agent-outputs/reviews/` |
-| `/update-plan <path>` | Sync plan with reality | Updated plan file |
+| `/update-plan <path>` | Sync plan with reality | New versioned plan file |
 | `/pr-description` | Generate PR description | `agent-outputs/pr-descriptions/` |
 | `/create-skill` | Scaffold new skill | `skills/<name>/` |
 | `/sync` | Regenerate CLAUDE.md and bundles | Various config files |

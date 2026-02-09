@@ -1,6 +1,6 @@
 ---
 name: update-plan
-version: 1.0.0
+version: 2.0.0
 description: Sync plan with main and update completed phases
 depends_on_skills:
   - plan-template
@@ -34,6 +34,31 @@ The update process will:
 /update-plan .claude/agent-outputs/plans/2024-01-22T143052Z-api-refactor-plan.md
 /update-plan .claude/agent-outputs/plans/2024-01-22T143052Z-api-refactor-plan.md --completed-phases 1,2
 ```
+
+## Versioning Behavior
+
+**The original plan file is NEVER modified.** Instead, a new versioned copy is created with all updates applied.
+
+### Naming Convention
+
+The new file is named by appending `-version-N` before the `.md` extension:
+
+- **First update**: `original-plan.md` → `original-plan-version-2.md`
+- **Subsequent updates**: If the input is already a versioned file (e.g., `original-plan-version-2.md`), increment the version: `original-plan-version-3.md`
+
+### Detection Logic
+
+1. Check if the filename matches the pattern `*-version-N.md` (where N is a number)
+2. If yes: strip `-version-N.md`, increment N, and create `-version-(N+1).md`
+3. If no: append `-version-2.md` (the original is implicitly version 1)
+
+### Example:
+
+| Input file | Output file |
+|------------|-------------|
+| `api-refactor-plan.md` | `api-refactor-plan-version-2.md` |
+| `api-refactor-plan-version-2.md` | `api-refactor-plan-version-3.md` |
+| `api-refactor-plan-version-5.md` | `api-refactor-plan-version-6.md` |
 
 ## Prerequisites
 
@@ -69,9 +94,15 @@ Check which phases are complete by:
 - Verifying tests exist for implemented phases
 - Checking validation criteria from the plan
 
-### 4. Update the Plan Document
+### 4. Create Versioned Plan Copy
 
-Modify the plan to:
+**Do NOT modify the original plan file.** Instead:
+
+1. Determine the output filename using the versioning logic described above
+2. Copy the original plan file contents into the new versioned file
+3. Apply all updates to the **new file only**
+
+Updates to apply in the new file:
 - Mark completed phases as `[COMPLETED]`
 - Update file paths if they've changed
 - Adjust implementation steps based on main changes
@@ -100,9 +131,11 @@ The updated plan will include:
 
 ## Output
 
-- The plan document is updated in place
-- An "Update History" section is added/appended
-- Completed phases are clearly marked
+- A **new versioned plan file** is created with all updates applied
+- The **original plan file remains untouched**
+- An "Update History" section is added/appended in the new file
+- Completed phases are clearly marked in the new file
+- The output message includes the path to the new versioned file
 
 ## When to Use This Command
 
@@ -113,6 +146,7 @@ The updated plan will include:
 
 ## Important Notes
 
+- **The original plan file is NEVER modified** - all updates go into a new versioned copy
 - **Always commit your work** before running this command
 - **Review the merge carefully** if conflicts occur
 - The planner agent **does NOT write implementation code** during updates

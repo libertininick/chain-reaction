@@ -43,7 +43,7 @@ Reusable workflows in `.claude/commands/`. See each file for details.
 | `/pr-description` | Generate PR description |
 | `/review` | Unified code review (source + tests) |
 | `/sync` | Sync Claude context files with skills, agents, and commands on disk |
-| `/update-plan` | Sync plan with main |
+| `/update-plan` | Sync plan with main and create versioned update |
 
 
 ---
