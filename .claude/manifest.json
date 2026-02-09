@@ -345,8 +345,8 @@
     },
     {
       "name": "update-plan",
-      "description": "Sync plan with main",
-      "version": "1.0.0",
+      "description": "Sync plan with main and create versioned update",
+      "version": "2.0.0",
       "depends_on_skills": [
         "plan-template"
       ]

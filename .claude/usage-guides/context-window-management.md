@@ -130,7 +130,7 @@ Runs code review with two specialized agents.
 
 ### `/update-plan <plan-path>`
 
-Syncs a plan with changes from main branch.
+Syncs a plan with changes from main branch, creating a new versioned copy with updates applied. The original plan file is never modified.
 
 **Context benefit:** Keeps plans current without rebuilding context from scratch.
 

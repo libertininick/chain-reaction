@@ -65,7 +65,8 @@ Here's what a typical session looks like:
 git add -p && git commit
 
 # 5. Update the plan — syncs with main, marks Phase 1 complete,
-#    and adjusts remaining phases if main has changed.
+#    and creates a new versioned plan file with adjustments.
+#    (The original plan is never modified.)
 /update-plan .claude/agent-outputs/plans/<timestamp>-api-client-plan.md --completed-phases 1
 
 # 6. Repeat from step 2 for Phase 2, 3, etc.
