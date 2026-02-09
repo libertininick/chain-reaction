@@ -120,13 +120,10 @@ View examples for your change type:
 
 ### Validate Agent Output
 
-Run the validation commands from CLAUDE.md:
+Run all validation checks with a single command:
 
 ```bash
-uv run ruff format              # Format code
-uv run ruff check               # Lint code
-uv run ty check                 # Type check
-uv run pytest                   # Run tests
+uv run python .claude/scripts/validate_code.py
 ```
 
 ### Self-Review Checklist

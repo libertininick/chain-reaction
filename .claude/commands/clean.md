@@ -1,6 +1,6 @@
 ---
 name: clean
-version: 1.0.0
+version: 1.1.0
 description: Clean Python code by organizing, simplifying, and removing bloat
 depends_on_agents:
   - code-cleaner
@@ -90,11 +90,11 @@ git ls-files "*.py"
 3. **Process each file**:
    - Read and analyze
    - Apply fixes (unless --dry-run)
-   - Validate with ruff, ty, pydoclint
+   - Validate with `validate-code` skill: `uv run python .claude/scripts/validate_code.py`
 4. **Report results** - Summary of changes/findings
 
 ## After Cleaning
 
 - Review changes with `git diff`
-- Run tests: `uv run pytest`
+- Run full validation: `uv run python .claude/scripts/validate_code.py`
 - Commit cleaned code

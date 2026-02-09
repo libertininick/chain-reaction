@@ -7,6 +7,8 @@ Guidance for Claude Code when working in this repository.
 | Task | Command |
 |------|---------|
 | Install/sync dependencies | `uv sync` |
+| **Validate all** | **`uv run python .claude/scripts/validate_code.py`** |
+| Validate (selective) | `uv run python .claude/scripts/validate_code.py --lint --type` |
 | Format code | `uv run ruff format` |
 | Lint code | `uv run ruff check` |
 | Docstring check | `uv tool run pydoclint --style=google --allow-init-docstring=True` |
@@ -17,7 +19,7 @@ Guidance for Claude Code when working in this repository.
 ## Critical Rules
 
 > **PYTHON EXECUTION**: When running generated Python via Bash, use `run-python-safely` skill first.
-> Exceptions: `uv run pytest`, `ruff`, `ty check`, other standard CLI tools.
+> Exceptions: `uv run pytest`, `ruff`, `ty check`, `uv run python .claude/scripts/validate_code.py`, other standard CLI tools.
 
 1. **Approved frameworks only** - Use `frameworks` skill; never substitute alternatives
 2. **Apply convention skills** - Skills provide coding standards
@@ -95,7 +97,7 @@ Skills provide coding standards and conventions. See `.claude/manifest.json` for
 - **Conventions**: `class-design`, `code-organization`, `complexity-refactoring`, `data-structures`, `docstring-conventions`, `frameworks`, `function-design`, `naming-conventions`, `pythonic-conventions`, `test-writing`, `type-hints`
 - **Assessment**: `maintainability`, `test-quality`, `testability`
 - **Templates**: `plan-template`, `pr-description-template`, `review-template`, `skill-template`
-- **Utilities**: `explore-project`, `run-python-safely`, `validate-manifest`, `write-markdown-output`
+- **Utilities**: `explore-project`, `run-python-safely`, `validate-code`, `validate-manifest`, `write-markdown-output`
 
 **Note**: Agents should load their context bundles (above) rather than invoking skills individually.
 

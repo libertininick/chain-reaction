@@ -1,6 +1,6 @@
 ---
 name: type-hints
-version: 1.0.0
+version: 1.1.0
 description: Python type hint conventions for this codebase. Apply when writing or reviewing Python code that needs type annotations on functions, classes, or variables.
 user-invocable: false
 ---
@@ -184,8 +184,9 @@ def update_status(task_id: int, status: Status) -> None:
     ...
 ```
 
-## Validation Commands
+## Validation
 
-| Check | Command |
-|-------|---------|
-| Type checking | `uv run ty check <path>` |
+Run type checking via the `validate-code` skill:
+```bash
+uv run python .claude/scripts/validate_code.py --type <path>
+```

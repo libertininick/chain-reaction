@@ -1,6 +1,6 @@
 ---
 name: complexity-refactoring
-version: 1.0.0
+version: 1.1.0
 description: Refactoring complex functions into smaller, pure helper functions. Apply when function complexity is exceeded or when extracting helper functions during refactoring. If tasked with fixing ruff lint errors related to complexity, ALWAYS trigger this skill.
 user-invocable: false
 ---
@@ -232,10 +232,10 @@ If any answer is "no", redesign the helper.
 
 ## Validation
 
-Check complexity after refactoring:
+Check complexity after refactoring via the `validate-code` skill:
 
 ```bash
-ruff check --select C901 <file>
+uv run python .claude/scripts/validate_code.py --lint <file>
 ```
 
-The refactored code should have no functions exceeding McCabe complexity of 5.
+The `--lint` flag runs `ruff check`, which includes C901 complexity checks. The refactored code should have no functions exceeding McCabe complexity of 5.

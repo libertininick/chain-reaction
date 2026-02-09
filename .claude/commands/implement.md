@@ -1,6 +1,6 @@
 ---
 name: implement
-version: 1.2.0
+version: 1.3.0
 description: Execute plan phases using specialized agents
 depends_on_agents:
   - python-code-writer
@@ -64,7 +64,8 @@ For each specified phase:
    - Agent checks that docstrings, type hints, and testing conventions are properly followed
 
 4. **Validate**
-   - Run validation commands per [CLAUDE.md](../CLAUDE.md)
+   - Run the `validate-code` skill: `uv run python .claude/scripts/validate_code.py`
+   - All checks must pass before proceeding
 
 5. **Clean Code (default, skip with --no-clean)**
    - Dispatch to `code-cleaner` agent
