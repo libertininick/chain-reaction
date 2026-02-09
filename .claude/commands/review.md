@@ -1,6 +1,6 @@
 ---
 name: review
-version: 2.0.0
+version: 2.1.0
 description: Unified code review for source and test files
 depends_on_agents:
   - code-style-reviewer
@@ -34,7 +34,7 @@ Determine which files to review based on arguments, then classify them:
 
 ### Phase 2: Run Tests (if test files in scope)
 
-If test files are being reviewed, execute `uv run pytest <test-files> -v` to verify tests pass before reviewing.
+If test files are being reviewed, execute `uv run pytest <test-files> -v` to verify tests pass before reviewing. For full validation, use `uv run python .claude/scripts/validate_code.py`.
 
 ### Phase 3: Launch Reviews (parallel)
 

@@ -1,6 +1,6 @@
 ---
 name: run-python-safely
-version: 1.0.0
+version: 1.1.0
 description: Execute Python code safely by checking for dangerous operations first. ALWAYS use when running agent-generated Python code.
 argument-hint: <-c "code" | -f file.py>
 ---
@@ -20,6 +20,7 @@ This is a CRITICAL RULE for all agents in this repository. Before running Python
 
 **Exceptions** (when you can skip this skill):
 - Running tests via `uv run pytest`
+- Running validation via `uv run python .claude/scripts/validate_code.py`
 - Running standard CLI commands (e.g., `ruff format`, `ty check`)
 - User-provided scripts that have already been reviewed
 

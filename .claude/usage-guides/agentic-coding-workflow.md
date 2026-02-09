@@ -54,7 +54,7 @@ This repository is configured with specialized agents and commands that automate
 │  │    └──────────┘    └──────────┘    └──────────┘                        │ │
 │  │         │                                                              │ │
 │  │         ▼                                                              │ │
-│  │    Validation (ruff, ty, pytest)                                       │ │
+│  │    Validation (validate_code.py)                                             │ │
 │  │         │                                                              │ │
 │  │         ▼                                                              │ │
 │  │    /review ──▶ Fix Issues ──┐                                          │ │
@@ -184,9 +184,7 @@ The `/plan` command dispatches to the **planner agent** which creates a detailed
 2. Edge case coverage
 
 #### Validation
-- [ ] `uv run ruff format && uv run ruff check`
-- [ ] `uv run ty check`
-- [ ] `uv run pytest tests/path/`
+- [ ] `uv run python .claude/scripts/validate_code.py`
 
 #### Done When
 - Specific completion criteria
@@ -244,12 +242,9 @@ The `/implement` command orchestrates multiple agents to build a single phase.
    - Removes bloat, simplifies structure
 5. **Final validation**: All lint/type/test commands pass
 
-**Validation commands run automatically:**
+**Validation commands run automatically via the validate script:**
 ```bash
-uv run ruff format          # Format code
-uv run ruff check           # Lint (includes complexity checks)
-uv run ty check             # Type check
-uv run pytest tests/        # Run tests
+uv run python .claude/scripts/validate_code.py
 ```
 
 ### Step 2b: Review with `/review`
@@ -484,15 +479,17 @@ Each agent loads a **context bundle**—pre-composed skill content that gives it
 These run automatically during `/implement` and should pass before committing:
 
 ```bash
-uv run ruff format                    # Format code
-uv run ruff check                     # Lint (includes C901 complexity)
-uv run ty check                       # Type check
-uv run pydoclint \                    # Docstring validation
-    --style=google \
-    --allow-init-docstring=True       
-uv run pytest                         # Run tests
-uv run pytest --cov                   # With coverage
+# Run all checks (lint, format, type, docstring, tests)
+uv run python .claude/scripts/validate_code.py
+
+# Run specific checks
+uv run python .claude/scripts/validate_code.py --lint --type
+
+# Run on specific path
+uv run python .claude/scripts/validate_code.py --lint src/
 ```
+
+See the `validate-code` skill for full usage and flags.
 
 [Back to top](#top)
 

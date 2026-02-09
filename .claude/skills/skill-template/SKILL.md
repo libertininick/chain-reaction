@@ -1,6 +1,6 @@
 ---
 name: skill-template
-version: 1.0.0
+version: 1.1.0
 description: Skill structure, frontmatter options, and writing guidelines. Reference for creating Claude Code skills.
 user-invocable: true
 ---
@@ -109,15 +109,17 @@ Tables are scannable and enforceable:
 
 ### Include Validation Commands
 
-When applicable, show how to verify compliance:
+When applicable, show how to verify compliance using the `validate-code` skill:
 
 ```markdown
-## Validation Commands
+## Validation
 
-| Check | Command |
-|-------|---------|
-| Docstring style | `uv tool run pydoclint --style=google <path>` |
-| Type checking | `uv run ty check <path>` |
+Run checks via the `validate-code` skill:
+```bash
+uv run python .claude/scripts/validate_code.py                    # all checks
+uv run python .claude/scripts/validate_code.py --lint --type      # specific checks
+uv run python .claude/scripts/validate_code.py --docstring <path> # scoped to path
+```
 ```
 
 ## Size Guidelines

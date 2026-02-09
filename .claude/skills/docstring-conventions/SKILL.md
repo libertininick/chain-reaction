@@ -1,6 +1,6 @@
 ---
 name: docstring-conventions
-version: 1.0.0
+version: 1.1.0
 description: Google-style docstring conventions for Python code. Apply when writing or reviewing functions, classes, or modules that need documentation.
 user-invocable: false
 ---
@@ -207,9 +207,14 @@ def add_vectors(a: list[float], b: list[float]) -> list[float]:
     """
 ```
 
-## Validation Commands
+## Validation
 
-| Check | Command |
-|-------|---------|
-| Docstring style/completeness | `uv tool run pydoclint --style=google --allow-init-docstring=True <path>` |
-| Doctest examples | `uv run pytest --doctest-modules` |
+Run docstring checks via the `validate-code` skill:
+```bash
+uv run python .claude/scripts/validate_code.py --docstring <path>
+```
+
+For doctest examples specifically:
+```bash
+uv run python .claude/scripts/validate_code.py --doctest <path>
+```

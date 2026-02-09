@@ -14,6 +14,7 @@ This configuration assumes you already have:
    - `ruff` (formatting + linting)
    - `ty` (type checking)
    - `pytest` + `pytest-check` + `pytest-cov` (testing + coverage)
+   - All tools are runnable via `uv run python .claude/scripts/validate_code.py`
 4. **[Context7](https://context7.com/sign-up) free account** for fetching up-to-date framework documentation via MCP
 
 ### Setup

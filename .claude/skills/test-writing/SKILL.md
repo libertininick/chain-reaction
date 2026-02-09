@@ -1,6 +1,6 @@
 ---
 name: test-writing
-version: 1.0.0
+version: 1.1.0
 description: Pytest testing conventions for this codebase. Apply when writing or reviewing tests including test naming, structure, fixtures, and parametrization.
 user-invocable: false
 ---
@@ -345,6 +345,13 @@ class TestDataProcessor:
 | Public APIs | 100% |
 
 ## Validation Commands
+
+For full validation (lint + format + type + docstring + tests), use the `validate-code` skill:
+```bash
+uv run python .claude/scripts/validate_code.py
+```
+
+For test-specific commands during development:
 
 | Task | Command |
 |------|---------|

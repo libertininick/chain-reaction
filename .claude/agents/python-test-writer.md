@@ -1,6 +1,6 @@
 ---
 name: python-test-writer
-version: 1.1.0
+version: 1.2.0
 description: Creates comprehensive pytest test suites. Use when writing tests for new functions/classes, updating tests after logic changes, or creating edge case coverage.
 model: sonnet
 color: red
@@ -64,4 +64,9 @@ The bundle contains: testing, frameworks, naming-conventions, docstring-conventi
 uv run pytest path/to/test.py::test_name  # Specific test
 uv run pytest path/to/test.py             # All tests in file
 uv run pytest path/to/package             # Package tests
+```
+
+For full validation (lint + format + type + docstring + tests), use the `validate-code` skill:
+```bash
+uv run python .claude/scripts/validate_code.py
 ```

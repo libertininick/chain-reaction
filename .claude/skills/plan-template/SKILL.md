@@ -1,6 +1,6 @@
 ---
 name: plan-template
-version: 1.0.0
+version: 1.1.0
 description: Implementation plan templates with format specifications, validation criteria, and examples. Use when creating plans for features, bug fixes, or refactoring. Provides the complete plan structure and writing guidance.
 argument-hint: "[template-type: bugfix | refactor | feature | format | help]"
 allowed-tools: Read, Glob
@@ -205,9 +205,9 @@ Each phase produces working, tested, validated code before moving to the next.
 #### Validation Steps
 
 ##### Step N.V1: Validate Implementation
-- **Action**: Run all quality checks
+- **Action**: Run all quality checks via `validate-code` skill
 - **Validation**:
-  - **Command**: `uv run pytest tests/test_<module>.py && uv run ty check . && uv run ruff check`
+  - **Command**: `uv run python .claude/scripts/validate_code.py`
   - **Expected**: All checks pass
   - **Manual Check**: Code follows project conventions
 ```
@@ -229,7 +229,7 @@ Every plan MUST end with an E2E validation phase:
 #### Step N.2: Verify Acceptance Criteria
 - **Action**: Check all acceptance criteria from plan overview
 - **Validation**:
-  - **Command**: `uv run ruff check && uv run ty check . && uv tool run pydoclint`
+  - **Command**: `uv run python .claude/scripts/validate_code.py`
   - **Expected**: All quality checks pass
   - **Manual Check**: All acceptance criteria checkboxes complete
 ```
@@ -335,9 +335,7 @@ Include this checklist in every plan:
 - [ ] Code follows project conventions
 - [ ] No code duplication (DRY principle)
 - [ ] Error handling with clear messages
-- [ ] Passes `uv run ruff check`
-- [ ] Passes `uv run ty check .`
-- [ ] Passes docstring linting
+- [ ] Passes validation checks (`uv run python .claude/scripts/validate_code.py`)
 ```
 
 ---
@@ -356,9 +354,7 @@ Include this checklist in every plan:
 - [ ] All unit tests pass (`uv run pytest`)
 - [ ] All public functions have a test
 - [ ] Code coverage >= 90%
-- [ ] Type checking passes (`uv run ty check .`)
-- [ ] Linting passes (`uv run ruff check`)
-- [ ] Docstring validation passes
+- [ ] Validation passes (`uv run python .claude/scripts/validate_code.py`)
 - [ ] No security vulnerabilities
 
 ### Documentation Acceptance

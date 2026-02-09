@@ -1,6 +1,6 @@
 ---
 name: python-code-writer
-version: 1.1.0
+version: 1.2.0
 description: Writes clean, maintainable, testable Python code following repository conventions. Use when implementing new features, functions, classes, or modules.
 model: sonnet
 color: blue
@@ -50,9 +50,9 @@ The bundle contains: frameworks, code-organization, naming-conventions, function
 
 ## Pre-Completion Checklist
 
-- [ ] Code formatted with `ruff format`
+- [ ] Passes validation checks (`uv run python .claude/scripts/validate_code.py --lint --format --type --docstring`)
 - [ ] Type hints on all functions/classes
 - [ ] Google-style docstrings on public APIs
 - [ ] Uses only approved frameworks
-- [ ] Functions under complexity limit (`ruff check --select C901`)
+- [ ] Functions under complexity limit
 - [ ] Error messages are actionable
