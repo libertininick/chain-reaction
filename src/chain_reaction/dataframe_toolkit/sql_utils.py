@@ -22,7 +22,7 @@ from chain_reaction.dataframe_toolkit.exceptions import (
     SQLTableError,
 )
 
-__all__ = ["DESTRUCTIVE_COMMANDS", "parse_sql", "validate_sql"]
+__all__ = ["DESTRUCTIVE_COMMANDS", "extract_table_names", "parse_sql", "validate_sql"]
 
 
 # =============================================================================
@@ -196,7 +196,7 @@ def validate_sql(
     *,
     dialect: str | None = None,
     blacklist: Collection[str] | None = None,
-) -> None:
+) -> exp.Expression:
     """Validate a SQL query through comprehensive multi-step validation.
 
     Orchestrates full SQL validation by running parsing, table validation,
@@ -207,10 +207,6 @@ def validate_sql(
     1. Parse the query using `parse_sql()` with optional blacklist
     2. Validate table references
     3. Validate column references
-
-    Note:
-        This function returns None on success. Validation failures are
-        indicated by raising the appropriate exception type.
 
     Args:
         query (str): The SQL query string to validate.
@@ -223,6 +219,9 @@ def validate_sql(
             types to block (e.g., {"DELETE", "DROP"}). Use `DESTRUCTIVE_COMMANDS`
             for a pre-defined set. Defaults to None (no blacklist checking).
 
+    Returns:
+        exp.Expression: The parsed and validated SQL expression.
+
     Raises:
         SQLSyntaxError: If the query has invalid SQL syntax or is empty.
         SQLBlacklistedCommandError: If the query's command type is in the blacklist.
@@ -231,7 +230,7 @@ def validate_sql(
 
     Examples:
         Successful validation:
-        >>> validate_sql(
+        >>> expression = validate_sql(
         ...     "SELECT id, name FROM users",
         ...     {"users": {"id", "name", "email"}},
         ... )
@@ -286,6 +285,38 @@ def validate_sql(
     # Step 3: Validate column references (includes ambiguity detection)
     _validate_sql_columns(expression, table_columns, query_str=query)
 
+    return expression
+
+
+def extract_table_names(expression: exp.Expression) -> list[str]:
+    """Extract table names from a parsed SQL expression using scope traversal.
+
+    Uses sqlglot's scope analysis to correctly distinguish actual database tables
+    from CTEs and subqueries.
+
+    Args:
+        expression (exp.Expression): A parsed sqlglot expression.
+
+    Returns:
+        list[str]: List of lowercase table names referenced in the query.
+            May contain duplicates if the same table is referenced multiple times
+            (e.g., in self-joins). Returns empty list if no tables are found.
+    """
+    root = build_scope(expression)
+    if root is None:
+        # Defensive: build_scope returns None for non-queryable expressions (e.g., SHOW).
+        # In practice, this shouldn't occur since validate_sql only processes parsed queries.
+        return []  # pragma: no cover
+
+    tables: list[exp.Table] = [
+        source
+        for scope in root.traverse()
+        for _alias, (_node, source) in scope.selected_sources.items()
+        if isinstance(source, exp.Table)
+    ]
+
+    return [table.name.lower() for table in tables]
+
 
 # =============================================================================
 # Private Helpers: Command Type
@@ -327,7 +358,7 @@ def _validate_sql_tables(expression: exp.Expression, valid_tables: Collection[st
         SQLTableError: If no valid tables are referenced, or if unknown tables
             are referenced. The exception includes the list of invalid table names.
     """
-    referenced_table_names = _extract_table_names(expression)
+    referenced_table_names = extract_table_names(expression)
 
     if not referenced_table_names:
         raise SQLTableError(
@@ -345,36 +376,6 @@ def _validate_sql_tables(expression: exp.Expression, valid_tables: Collection[st
             query=query_str,
             invalid_tables=invalid_tables,
         )
-
-
-def _extract_table_names(expression: exp.Expression) -> list[str]:
-    """Extract table names from a parsed SQL expression using scope traversal.
-
-    Uses sqlglot's scope analysis to correctly distinguish actual database tables
-    from CTEs and subqueries.
-
-    Args:
-        expression (exp.Expression): A parsed sqlglot expression.
-
-    Returns:
-        list[str]: List of lowercase table names referenced in the query.
-            May contain duplicates if the same table is referenced multiple times
-            (e.g., in self-joins). Returns empty list if no tables are found.
-    """
-    root = build_scope(expression)
-    if root is None:
-        # Defensive: build_scope returns None for non-queryable expressions (e.g., SHOW).
-        # In practice, this shouldn't occur since validate_sql only processes parsed queries.
-        return []  # pragma: no cover
-
-    tables: list[exp.Table] = [
-        source
-        for scope in root.traverse()
-        for _alias, (_node, source) in scope.selected_sources.items()
-        if isinstance(source, exp.Table)
-    ]
-
-    return [table.name.lower() for table in tables]
 
 
 # =============================================================================
@@ -537,7 +538,7 @@ def _check_qualified_column(
     if base_table is None or base_table not in normalized_schema:
         # No base table found for alias; skip validation
         return _ColumnValidationResult(col_name)
-    elif col_name not in normalized_schema[base_table]:
+    if col_name not in normalized_schema[base_table]:
         # Column not found in the specified table
         return _ColumnValidationResult(col_name, invalid_table=base_table)
     # Column is valid
@@ -613,7 +614,7 @@ def _check_unqualified_column_multi_table(
     if len(tables_with_column) > 1:
         return _ColumnValidationResult(col_name, ambiguous_tables=tables_with_column)
 
-    if len(tables_with_column) == 0:
+    if not tables_with_column:
         tables_searched = [t for t in base_tables if t in normalized_schema]
         if tables_searched:
             return _ColumnValidationResult(col_name, not_found_in_tables=tables_searched)

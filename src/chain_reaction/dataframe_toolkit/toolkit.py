@@ -6,7 +6,14 @@ from collections.abc import Mapping
 
 import polars as pl
 from langchain_core.tools import BaseTool, tool
+from sqlglot import exp
 
+from chain_reaction.dataframe_toolkit.exceptions import (
+    SQLBlacklistedCommandError,
+    SQLColumnError,
+    SQLSyntaxError,
+    SQLTableError,
+)
 from chain_reaction.dataframe_toolkit.identifier import (
     DATAFRAME_ID_PATTERN,
     DataFrameId,
@@ -18,6 +25,7 @@ from chain_reaction.dataframe_toolkit.models import (
 )
 from chain_reaction.dataframe_toolkit.persistence import REL_TOL_DEFAULT, restore_registry_from_state
 from chain_reaction.dataframe_toolkit.registry import DataFrameRegistry
+from chain_reaction.dataframe_toolkit.sql_utils import DESTRUCTIVE_COMMANDS, extract_table_names, validate_sql
 
 
 class DataFrameToolkit:
@@ -88,6 +96,8 @@ class DataFrameToolkit:
         self._core_tools = (
             tool(self.get_dataframe_id),
             tool(self.get_dataframe_reference),
+            tool(self.list_dataframes),
+            tool(self.execute_sql),
         )
 
     # -------------------------------------------------------------------------
@@ -111,9 +121,7 @@ class DataFrameToolkit:
             >>> len(tools) >= 1
             True
         """
-        return [
-            *self._core_tools,
-        ]
+        return list(self._core_tools)
 
     def get_core_tools(self) -> list[BaseTool]:
         """Return core DataFrame management tools.
@@ -343,6 +351,27 @@ class DataFrameToolkit:
                 details={"available_names": [ref.name for ref in self._registry.references.values()]},
             )
 
+    def list_dataframes(self) -> list[DataFrameReference]:
+        """List all available DataFrames in the toolkit.
+
+        Use this tool to discover what DataFrames are available for querying.
+        Returns a list of DataFrameReferences with names, IDs, and schema
+        information for each registered DataFrame.
+
+        Returns:
+            list[DataFrameReference]: List of DataFrameReference objects (may be empty).
+
+        Examples:
+            >>> import polars as pl
+            >>> toolkit = DataFrameToolkit()
+            >>> toolkit.list_dataframes()
+            []
+            >>> _ = toolkit.register_dataframe("sales", pl.DataFrame({"a": [1]}))
+            >>> len(toolkit.list_dataframes())
+            1
+        """
+        return list(self._registry.references.values())
+
     def get_dataframe_reference(self, identifier: str) -> DataFrameReference | ToolCallError:
         """Get detailed information about a DataFrame by name or ID.
 
@@ -384,6 +413,81 @@ class DataFrameToolkit:
                 "available_ids": list(self._registry.references.keys()),
             },
         )
+
+    def execute_sql(
+        self,
+        *,
+        query: str,
+        result_name: str,
+        result_description: str | None = None,
+    ) -> DataFrameReference | ToolCallError:
+        """Execute a SQL query and store the result as a new DataFrame.
+
+        Use this tool to query registered DataFrames using SQL. The query
+        is validated before execution to catch errors early. Use DataFrame
+        IDs (df_xxxxxxxx) as table names in your SQL queries.
+
+        IMPORTANT: Only SELECT queries are allowed. Destructive commands
+        (DELETE, DROP, INSERT, UPDATE, etc.) are blocked.
+
+        Args:
+            query (str): SQL SELECT query using DataFrame IDs as table names.
+            result_name (str): Human-readable name for the result DataFrame.
+            result_description (str | None): Optional description of what this
+                result represents. Defaults to None.
+
+        Returns:
+            DataFrameReference | ToolCallError: DataFrameReference for the query
+                result, or ToolCallError on failure.
+
+        Examples:
+            >>> import polars as pl
+            >>> toolkit = DataFrameToolkit()
+            >>> ref = toolkit.register_dataframe("sales", pl.DataFrame({"id": [1], "amount": [100]}))
+            >>> result = toolkit.execute_sql(
+            ...     query=f"SELECT * FROM {ref.id} WHERE amount > 50",
+            ...     result_name="high_sales",
+            ...     result_description="Sales over $50",
+            ... )
+            >>> isinstance(result, DataFrameReference)
+            True
+        """
+        name_error = self._validate_result_name(result_name)
+        if name_error is not None:
+            return name_error
+
+        validated_expression = self._validate_query(query)
+        if isinstance(validated_expression, ToolCallError):
+            return validated_expression
+
+        try:
+            result_df = self._registry.context.execute_sql(query, eager=True)
+        except pl.exceptions.PolarsError as e:
+            return ToolCallError(
+                error_type="SQLExecutionError",
+                message=f"Query execution failed: {e}",
+                details={"query": query},
+            )
+
+        # Polars SQLContext.execute_sql(eager=True) should always return a DataFrame,
+        # but guard against LazyFrame in case of future API changes.
+        if not isinstance(result_df, pl.DataFrame):
+            result_df = result_df.collect()
+
+        referenced_tables = set(extract_table_names(validated_expression))
+        parent_ids = [ref.id for ref in self._registry.references.values() if ref.id.lower() in referenced_tables]
+
+        reference = DataFrameReference.from_dataframe(
+            result_name,
+            result_df,
+            description=result_description,
+            parent_ids=parent_ids,
+            source_query=query,
+        )
+
+        self._registry.register(reference, result_df)
+
+        return reference
 
     def export_state(self) -> DataFrameToolkitState:
         """Export the current toolkit state for serialization.
@@ -492,6 +596,87 @@ class DataFrameToolkit:
                 return ref
         msg = f"DataFrame '{name}' is not registered"
         raise KeyError(msg)
+
+    def _validate_result_name(self, result_name: str) -> ToolCallError | None:
+        """Validate that a result name is acceptable for registration.
+
+        Args:
+            result_name (str): The proposed name for the result DataFrame.
+
+        Returns:
+            ToolCallError | None: Error if the name is invalid, None if valid.
+        """
+        if DATAFRAME_ID_PATTERN.match(result_name):
+            return ToolCallError(
+                error_type="InvalidArgument",
+                message=f"Result name '{result_name}' cannot match ID pattern 'df_<8 hex chars>'",
+                details={"suggestion": "Choose a descriptive name that doesn't look like a DataFrame ID"},
+            )
+
+        if self._name_exists(result_name):
+            return ToolCallError(
+                error_type="DuplicateName",
+                message=f"DataFrame name '{result_name}' is already registered",
+                details={"suggestion": "Choose a different name for the result"},
+            )
+
+        return None
+
+    def _validate_query(self, query: str) -> exp.Expression | ToolCallError:
+        """Validate a SQL query against registered DataFrames.
+
+        Args:
+            query (str): The SQL query to validate.
+
+        Returns:
+            exp.Expression | ToolCallError: The parsed AST on success,
+                or ToolCallError on failure.
+        """
+        table_columns = self._build_table_columns_schema()
+        try:
+            return validate_sql(query, table_columns, blacklist=DESTRUCTIVE_COMMANDS)
+        except SQLSyntaxError as e:
+            return ToolCallError(
+                error_type="SQLSyntaxError",
+                message=str(e),
+                details={"errors": e.errors, "query": e.query},
+            )
+        except SQLTableError as e:
+            return ToolCallError(
+                error_type="SQLTableError",
+                message=str(e),
+                details={
+                    "invalid_tables": e.invalid_tables,
+                    "available_tables": list(table_columns.keys()),
+                    "query": e.query,
+                },
+            )
+        except SQLColumnError as e:
+            return ToolCallError(
+                error_type="SQLColumnError",
+                message=e.format_details(),
+                details={
+                    "invalid_columns": e.invalid_columns,
+                    "ambiguous_columns": e.ambiguous_columns,
+                    "not_found_columns": e.not_found_columns,
+                    "table_columns": {k: list(v) for k, v in e.table_columns.items()},
+                    "query": e.query,
+                },
+            )
+        except SQLBlacklistedCommandError as e:
+            return ToolCallError(
+                error_type="SQLBlacklistedCommand",
+                message=f"Command '{e.command_type}' is not allowed. Only SELECT queries are permitted.",
+                details={"blocked_command": e.command_type, "query": e.query},
+            )
+
+    def _build_table_columns_schema(self) -> dict[str, set[str]]:
+        """Build table_columns schema from registered references.
+
+        Returns:
+            dict[str, set[str]]: Mapping of DataFrame IDs to their column name sets.
+        """
+        return {ref.id: set(ref.column_names) for ref in self._registry.references.values()}
 
     def _name_exists(self, name: str) -> bool:
         """Check if a name is already registered.
