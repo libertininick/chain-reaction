@@ -209,5 +209,9 @@ __marimo__/
 # LangGraph
 .langgraph_api/
 
+# Claude
+.claude/
+
+# Local data and sandbox directories
 data/
 .sandbox/
