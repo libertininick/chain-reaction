@@ -53,9 +53,9 @@ class ModelName(StrEnum):
         - Anthropic models names: https://docs.claude.com/en/docs/about-claude/models/overview
     """
 
-    CLAUDE_HAIKU = "claude-haiku-4-5-20251001"
-    CLAUDE_SONNET = "claude-sonnet-4-5-20250929"
-    CLAUDE_OPUS = "claude-opus-4-1-20250805"
+    CLAUDE_HAIKU = "claude-haiku-4-5"
+    CLAUDE_SONNET = "claude-sonnet-4-5"
+    CLAUDE_OPUS = "claude-opus-4-6"
 
 
 class ModelBehavior(BaseModel):
