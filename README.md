@@ -44,6 +44,10 @@ My incremental journey learning to create agentic workflows with LangChain, Lang
 ### 🔗 Multi-agent
   - [x] [Multi-agent systems](notebooks/multi-agent-systems.ipynb)
 
+### 🔗 Retrieval Augmented Generation
+  - [x] [Create a ChromaDB vector store](notebooks/RAG/vector-db.ipynb)
+  - [x] [Simple RAG chain](notebooks/RAG/rag-chain.ipynb)
+
 
 ## Setup
 
