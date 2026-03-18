@@ -3,7 +3,7 @@ revision = 3
 requires-python = "==3.13.*"
 
 [options]
-exclude-newer = "2026-03-11T15:34:02.085773Z"
+exclude-newer = "2026-03-11T16:30:27.396296Z"
 exclude-newer-span = "P7D"
 
 [[package]]
@@ -344,6 +344,7 @@ dependencies = [
     { name = "langchain-text-splitters" },
     { name = "langgraph-cli", extra = ["inmem"] },
     { name = "loguru" },
+    { name = "more-itertools" },
     { name = "polars" },
     { name = "pydantic", extra = ["email"] },
     { name = "pydantic-settings" },
@@ -381,6 +382,7 @@ requires-dist = [
     { name = "langchain-text-splitters", specifier = ">=1.1.0" },
     { name = "langgraph-cli", extras = ["inmem"], specifier = ">=0.4.11" },
     { name = "loguru", specifier = ">=0.7.3" },
+    { name = "more-itertools", specifier = ">=10.8.0" },
     { name = "polars", specifier = ">=1.37.0" },
     { name = "pydantic", extras = ["email"], specifier = ">=2.12.5" },
     { name = "pydantic-settings", specifier = ">=2.12.0" },
