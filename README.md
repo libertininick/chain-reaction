@@ -47,6 +47,7 @@ My incremental journey learning to create agentic workflows with LangChain, Lang
 ### 🔗 Retrieval Augmented Generation
   - [x] [Create a ChromaDB vector store](notebooks/RAG/vector-db.ipynb)
   - [x] [Simple RAG chain](notebooks/RAG/rag-chain.ipynb)
+  - [x] [Corrective RAG graph](notebooks/RAG/corrective-rag.ipynb)
 
 
 ## Setup
