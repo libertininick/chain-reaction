@@ -25,7 +25,7 @@ evict_calls(cache, expensive_tool)
 from collections.abc import Callable
 from functools import wraps
 from hashlib import md5
-from typing import Final, cast
+from typing import Any, Final, cast
 
 from diskcache import Cache
 from langchain_core.tools import StructuredTool
@@ -37,7 +37,10 @@ CACHE_LOG_LEVEL_NAME: Final[str] = "CACHE"
 CACHE_LOG_LEVEL = logger.level(name=CACHE_LOG_LEVEL_NAME, no=10, color="<yellow>", icon="💾")
 
 
-def cache_calls[**P, R](cache: Cache | None) -> Callable[[Callable[P, R]], Callable[P, R]]:
+# NOTE: Ideally typed with ParamSpec (PEP 612), but ty does not yet support
+# ParamSpec in nested decorator patterns.  Using a TypeVar bound to Callable
+# preserves the decorated function's identity while keeping ty happy.
+def cache_calls[F: Callable[..., Any]](cache: Cache | None) -> Callable[[F], F]:
     """Decorator to cache function calls using diskcache.
 
     NOTE: Decorated function must have a `__name__` attribute and its arguments must be JSON serializable.
@@ -46,12 +49,12 @@ def cache_calls[**P, R](cache: Cache | None) -> Callable[[Callable[P, R]], Calla
         cache (Cache | None): An instance of diskcache.Cache to store cached results. If None, caching is disabled.
 
     Returns:
-        Callable[[Callable[P, R]], Callable[P, R]]: A decorator that can be applied to functions to enable caching.
+        Callable[[F], F]: A decorator that can be applied to functions to enable caching.
     """
 
-    def decorator(func: Callable[P, R]) -> Callable[P, R]:
+    def decorator(func: F) -> F:
         @wraps(func)
-        def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
             # Check if cache is provided
             if cache is None:
                 # Cache not provided, execute function directly
@@ -69,7 +72,7 @@ def cache_calls[**P, R](cache: Cache | None) -> Callable[[Callable[P, R]], Calla
             # If cached value exists, return it
             if value is not None:
                 logger.log(CACHE_LOG_LEVEL_NAME, f"[CACHE HIT] function: {func_name} key: {cache_key}")
-                return cast(R, value)
+                return cast(Any, value)
 
             # otherwise, execute function
             result = func(*args, **kwargs)
@@ -79,7 +82,7 @@ def cache_calls[**P, R](cache: Cache | None) -> Callable[[Callable[P, R]], Calla
             logger.log(CACHE_LOG_LEVEL_NAME, f"[CACHED] function: {func_name} key: {cache_key}")
             return result
 
-        return wrapper
+        return wrapper  # type: ignore[return-value]
 
     return decorator
 
