@@ -1,5 +1,7 @@
 # Deep Agents
 
+![Deep Agents](deep-agents-overview.png)
+
 A "deep" agent is an AI system designed to autonomously execute complex, long-running tasks that unfold over many steps — often dozens or hundreds of tool calls — rather than answering a single question or performing a one-shot action. The term distinguishes these systems from simpler ReAct-style agents that operate in short loops. Deep agents behave more like junior engineers handed a project than assistants fielding a question: they plan, execute, adapt, and deliver.
 
 Four principles define them:
