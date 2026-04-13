@@ -50,6 +50,7 @@ My incremental journey learning to create agentic workflows with LangChain, Lang
   - [x] [Corrective RAG graph](notebooks/RAG/corrective-rag.ipynb)
 
 ### 🔗 Deep Agents
+  - [x] [Create a simple ReAct agent w/ custom state](notebooks/deep-agents/create-agent.ipynb)
 
 
 ## Setup
