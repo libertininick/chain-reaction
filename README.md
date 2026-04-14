@@ -53,6 +53,7 @@ My incremental journey learning to create agentic workflows with LangChain, Lang
   - [x] [Create a simple ReAct agent w/ custom state](notebooks/deep-agents/create-agent.ipynb)
   - [x] [Agent planning with TODO lists](notebooks/deep-agents/planning.ipynb)
   - [x] [Context offloading with filesystem](notebooks/deep-agents/filesystem.ipynb)
+  - [x] [Subagent delegation](notebooks/deep-agents/subagents.ipynb)
 
 
 ## Setup
