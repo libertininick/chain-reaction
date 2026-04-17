@@ -54,6 +54,7 @@ My incremental journey learning to create agentic workflows with LangChain, Lang
   - [x] [Agent planning with TODO lists](notebooks/deep-agents/planning.ipynb)
   - [x] [Context offloading with filesystem](notebooks/deep-agents/filesystem.ipynb)
   - [x] [Subagent delegation](notebooks/deep-agents/subagents.ipynb)
+  - [x] [Strategic thinking tool](notebooks/deep-agents/thinking.ipynb)
 
 
 ## Setup
