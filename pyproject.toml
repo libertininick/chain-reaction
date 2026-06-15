@@ -135,7 +135,6 @@ per-file-ignores = {"**/{tests}/*" = [
   "PLR6301",
   # Test classes can have as many public methods as needed
   "PLR0904", 
-
 ]}
 extend-unsafe-fixes = ["E", "F401"]
 
