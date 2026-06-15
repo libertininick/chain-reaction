@@ -8,6 +8,8 @@ My incremental journey learning to create agentic workflows with LangChain, Lang
 
 - **FastMCP**: The Model Context Protocol (MCP) is an open standard for connecting LLMs to external data sources, tools, and services through a unified interface. FastMCP is a high-level Python framework that simplifies MCP server creation with decorator-based syntax.
 
+- **OpenTelemetry (OTel)**: *Instrumentation* is the practice of emitting telemetry — traces, metrics, and logs — from a running application so you can see what it actually did. For agents this is especially valuable: their behavior is non-deterministic and spans many steps (model calls, tool invocations, retries, subagent hand-offs), so instrumentation is often the only way to understand why an agent produced a given result, debug failures, track token usage and latency, and measure cost. OpenTelemetry is the open, vendor-neutral standard for this telemetry. Because it's a standard rather than a proprietary SDK, the same instrumentation can be exported to any compatible backend (LangSmith, Phoenix, Jaeger, Grafana, etc.) without rewriting your code, which avoids lock-in to a single observability vendor.
+
 ## Journey
 
 ### 🔗 LangChain & LangGraph fundamentals
@@ -56,6 +58,8 @@ My incremental journey learning to create agentic workflows with LangChain, Lang
   - [x] [Subagent delegation](notebooks/deep-agents/subagents.ipynb)
   - [x] [Strategic thinking tool](notebooks/deep-agents/thinking.ipynb)
 
+### 🔗 Trace analysis & instrumentation
+  - [x] [Agent instrumentation with OTel](notebooks/trace-analysis/agent-instrumentation.ipynb)
 
 ## Setup
 
